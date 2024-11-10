@@ -1,0 +1,194 @@
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offer Management</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <link rel="stylesheet" href="/css/Admin/offers.css">
+</head>
+
+<body>
+  <div class="dashboard-container">
+    <!-- Include Sidebar -->
+    <%- include('../partials/sidebar') %>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <header class="main-header">
+          <h1>Offer Management</h1>
+          <button class="menu-toggle">☰</button>
+        </header>
+
+        <button class="btn btn-primary mx-3 mt-3" onclick="openAddOfferModal()">Add New Offer</button>
+
+        <section class="content">
+          <!-- Offer Table Section -->
+          <div class="card mb-4">
+            <div class="card-header">Available Offers</div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Offer Name</th>
+                      <th>Discount</th>
+                      <th>products</th>
+                      <th>categories</th>
+                      <th>Valid Until</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% if(offers && offers.length>0){ %>
+                      <% offers.forEach((offer, index)=> { %>
+                        <tr>
+                          <td>
+                            <%= index + 1 %>
+                          </td>
+                          <td>
+                            <%= offer.title %>
+                          </td>
+                          <td>
+                            <%= offer.discountValue %> %
+                          </td>
+                          <td>
+                            <%= offer.products.name %>
+                          </td>
+                          <td>
+                            <%= offer.categories.name %>
+                          </td>
+                          <td>
+                            <%= offer.expireDate %>
+                          </td>
+                          <td>
+                            <span class="badge <%= offer.isActive ? 'bg-success' : 'bg-danger' %>">
+                              <%= offer.isActive ? 'Active' : 'Inactive' %>
+                            </span>
+                          </td>
+                          <td>
+                            <button class="btn btn-sm px-0 mb-3 <%= offer.isActive ? 'btn-danger' : 'btn-success' %>"
+                              style="font-size: 14px;"
+                              onclick="toggleOfferStatus('<%= offer._id %>', '<%= offer.isActive %>')">
+                              <%= offer.isActive ? 'Deactivate' : 'Activate' %>
+                            </button>
+                            <button class="btn btn-sm btn-danger" style="font-size: 14px;"
+                              onclick="deleteOffer('<%= offer._id %>')">Delete</button>
+                          </td>
+                        </tr>
+                        <% }) %>
+                          <% } else{ %>
+                            <tr>
+                              <td colspan="9" class="text-center">No offers available. Please add a offer.</td>
+                            </tr>
+                            <% } %>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+  </div>
+
+  <!-- add offer modal-->
+  <div class="modal fade" id="addOfferModal" tabindex="-1" aria-labelledby="addOfferModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addOfferModalLabel">Add New Offer</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="addOfferForm">
+            <div class="mb-3">
+              <label for="offerTitle" class="form-label">Offer Title</label>
+              <input type="text" class="form-control" id="offerTitle" name="title">
+            </div>
+            <div class="mb-3">
+              <label for="discountType" class="form-label">Discount Type</label>
+              <select class="form-control" id="discountType" onchange="toggleDiscountFields()">
+                <option value="percentage">Percentage (%)</option>
+                <option value="amount">Amount</option>
+              </select>
+            </div>
+
+            <!-- Percentage Discount Field -->
+            <div class="mb-3" id="percentageDiscountField">
+              <label for="discountPercentage" class="form-label">Discount Percentage (%)</label>
+              <input type="number" class="form-control" id="discountPercentage" min="1" max="100">
+            </div>
+
+            <!-- Amount Discount Field -->
+            <div class="mb-3" id="amountDiscountField" style="display: none;">
+              <label for="discountAmount" class="form-label">Discount Amount</label>
+              <input type="number" class="form-control" id="discountAmount" min="1">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Apply Offer To:</label>
+              <div>
+                <input type="radio" id="applyToProducts" name="applyTo" value="products" checked
+                  onchange="toggleApplyFields()">
+                <label for="applyToProducts">Products</label>
+              </div>
+              <div>
+                <input type="radio" id="applyToCategories" name="applyTo" value="categories"
+                  onchange="toggleApplyFields()">
+                <label for="applyToCategories">Categories</label>
+              </div>
+            </div>
+
+            <div class="mb-3" id="productsField">
+              <label for="offerProducts" class="form-label">Products</label>
+              <select class="form-select" id="offerProducts" name="products" multiple>
+                <option value="" disabled>Select products</option>
+                <% products.forEach(product=> { %>
+                  <option value="<%= product._id %>">
+                    <%= product.name %>
+                  </option>
+                  <% }) %>
+              </select>
+            </div>
+
+            <div class="mb-3" id="categoriesField" style="display: none;">
+              <label for="offerCategories" class="form-label">Categories</label>
+              <select class="form-select" id="offerCategories" name="categories" multiple>
+                <option value="" disabled>Select categories</option>
+                <% categories.forEach(category=> { %>
+                  <option value="<%= category._id %>">
+                    <%= category.genderType %>
+                      <%= category.name %>
+                  </option>
+                  <% }) %>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label for="expireDate" class="form-label">Expire Date</label>
+              <input type="date" class="form-control" id="expireDate" name="expireDate">
+            </div>
+            <div class="mb-3">
+              <label for="isActive" class="form-label">Status</label>
+              <select class="form-control" id="isActive">
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Offer</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/admin/offer.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,48 @@
+.checkout-container {
+  max-width: 900px;
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.address-card {
+  transition: border 0.3s, box-shadow 0.3s;
+}
+
+hr {
+  border: 2px solid #342626;  /* Change the thickness here (e.g., 3px for thicker line) */
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.address-card.selected {
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+.saved-addresses .address-container {
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.saved-addresses .row.flex-nowrap {
+  flex-wrap: nowrap;
+}
+
+.saved-addresses .col-md-4 {
+  flex: 0 0 auto; /* Keeps the cards from shrinking and maintains width */
+}
+.saved-addresses .address-container {
+  overflow-x: auto; /* Enables horizontal scrolling */
+  white-space: nowrap; /* Prevents automatic wrapping of flex items */
+  padding-bottom: 1rem; /* Adds a bit of padding for the scroll area */
+}
+
+.address-container .row {
+  display: flex;
+  flex-wrap: nowrap; /* Ensures cards are displayed in a single row */
+}
+
+.address-card {
+  width: 100%; /* Ensures the card width fits within the column */
+  word-wrap: break-word; /* Allows text to wrap within the card */
+  white-space: normal; /* Ensures text within the card wraps normally */
+}

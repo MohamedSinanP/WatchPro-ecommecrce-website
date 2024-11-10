@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Account</title>
+    <link rel="stylesheet" href="/css/User/userProfile.css">
+    <link rel="stylesheet" href="/css/User/accountSidebar.css">
+    <link rel="icon" type="image/png" href="/css/User/images/icons/favicon.png" />
+    <link rel="stylesheet" type="text/css" href="/css/User/vendor/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/User/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/User/fonts/iconic/css/material-design-iconic-font.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/User/fonts/linearicons-v1.0.0/icon-font.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/User/vendor/animate/animate.css">
+    <link rel="stylesheet" type="text/css" href="/css/User/vendor/css-hamburgers/hamburgers.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/User/vendor/animsition/css/animsition.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/User/vendor/select2/select2.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/User/vendor/daterangepicker/daterangepicker.css">
+    <link rel="stylesheet" type="text/css" href="/css/User/vendor/slick/slick.css">
+    <link rel="stylesheet" type="text/css" href="/css/User/vendor/MagnificPopup/magnific-popup.css">
+    <link rel="stylesheet" type="text/css" href="/css/User/vendor/perfect-scrollbar/perfect-scrollbar.css">
+    <link rel="stylesheet" type="text/css" href="/css/User/css/util.css">
+    <link rel="stylesheet" type="text/css" href="/css/User/css/main.css">
+</head>
+
+<body>
+
+    <!-- header -->
+    <%- include('../partials/user/header') %>
+
+        <div class="user-account-container">
+            <aside class="sidebar-1">
+                <h2>Account</h2>
+                <nav>
+                    <ul>
+                        <li><a href="/user/profile">User Profile</a></li>
+                        <li><a href="/user/address">Address</a></li>
+                        <li><a href="/user/orders">Orders</a></li>
+                        <li><a href="/user/wallet">Wallet</a></li>
+                        <li><a href="logout.html">Logout</a></li>
+                    </ul>
+                </nav>
+            </aside>
+            <main class="content">
+                <h1>Welcome to Your Account</h1>
+
+                <div class="profile-info">
+                    <P>ReferralCode:<%= user.referralCode %>
+                    </P>
+                    <strong>Full Name: <span id="displayFullName">
+                            <%= user.fullName %>
+                        </span></strong><br>
+                    <strong>Email: <span id="displayEmail">
+                            <%= user.email %>
+                        </span></strong><br>
+                    <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#editProfileModal">Edit
+                        Profile</a>
+                    <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#changePasswordModal">Change
+                        Password</a>
+
+                </div>
+
+            </main>
+        </div>
+
+        <!-- Edit Profile Modal -->
+        <div class="modal fade" id="editProfileModal" tabindex="-1" role="dialog"
+            aria-labelledby="editProfileModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editProfileForm" novalidate>
+                            <div class="form-group">
+                                <input type="hidden" id="userId" name="userId" value="<%= user._id %>">
+                                <label for="fullName">Full Name</label>
+                                <input type="text" class="form-control" id="fullName" name="fullName">
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                <input type="email" class="form-control" id="email" name="email">
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Change Password Modal -->
+        <div class="modal fade" id="changePasswordModal" tabindex="-1" role="dialog"
+            aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="changePasswordModalLabel">Change Password</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="changePasswordForm">
+                            <div class="form-group">
+                                <label for="oldPassword">Old Password</label>
+                                <input type="password" class="form-control" id="oldPassword" name="oldPassword">
+                            </div>
+                            <div class="form-group">
+                                <label for="newPassword">New Password</label>
+                                <input type="password" class="form-control" id="newPassword" name="newPassword">
+                            </div>
+                            <div class="form-group">
+                                <label for="confirmPassword">Confirm New Password</label>
+                                <input type="password" class="form-control" id="confirmPassword" name="confirmPassword">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- Scripts -->
+        <script src="/css/User/vendor/jquery/jquery-3.2.1.min.js"></script>
+        <script src="/css/User/vendor/animsition/js/animsition.min.js"></script>
+        <script src="/css/User/vendor/bootstrap/js/popper.js"></script>
+        <script src="/css/User/vendor/bootstrap/js/bootstrap.min.js"></script>
+        <script src="/css/User/vendor/select2/select2.min.js"></script>
+        <script src="/css/User/vendor/daterangepicker/moment.min.js"></script>
+        <script src="/css/User/vendor/daterangepicker/daterangepicker.js"></script>
+        <script src="/css/User/vendor/slick/slick.min.js"></script>
+        <script src="/css/User/vendor/MagnificPopup/jquery.magnific-popup.min.js"></script>
+        <script src="/css/User/vendor/perfect-scrollbar/perfect-scrollbar.min.js"></script>
+        <script src="/css/User/js/main.js"></script>
+
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script src="/js/user/profile.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,107 @@
+   body {
+     background-color: #f8f9fa;
+     font-family: 'Arial', sans-serif;
+   }
+
+   .user-account-container {
+     display: flex;
+     gap: 20px;
+     max-width: 1200px;
+     margin: 40px auto;
+   }
+
+   .sidebar-1 {
+     width: 200px;
+     background-color: #343a40;
+     padding: 20px;
+     border-radius: 8px;
+     color: #fff;
+   }
+
+   .sidebar-1 h2 {
+     font-size: 1.2rem;
+     margin-bottom: 1rem;
+   }
+
+   .sidebar-1 ul {
+     list-style-type: none;
+     padding: 0;
+   }
+
+   .sidebar-1 a {
+     color: #adb5bd;
+     display: block;
+     padding: 8px 0;
+     text-decoration: none;
+     font-size: 0.95rem;
+     transition: color 0.2s;
+   }
+
+   .sidebar-1 a:hover {
+     color: #fff;
+   }
+
+   .content {
+     flex: 1;
+     background-color: #fff;
+     border-radius: 8px;
+     padding: 20px;
+     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+   }
+
+   .wallet-info {
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     gap: 10px;
+     padding: 20px;
+     border-radius: 8px;
+     background-color: #e9ecef;
+     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+     margin-bottom: 20px;
+   }
+
+   .wallet-info strong {
+     font-size: 1.5rem;
+     color: #28a745;
+   }
+
+   .btn-custom {
+     margin-top: 10px;
+     width: 150px;
+     padding: 10px;
+     border-radius: 20px;
+     font-weight: bold;
+   }
+
+   .transaction-history {
+     margin-top: 20px;
+   }
+
+   .transaction-history h3 {
+     font-size: 1.25rem;
+     color: #343a40;
+   }
+
+   .transaction-list {
+     list-style-type: none;
+     padding: 0;
+     max-height: 250px;
+     overflow-y: auto;
+     background-color: #f8f9fa;
+     border-radius: 8px;
+     padding: 15px;
+   }
+
+   .transaction-list li {
+     margin-bottom: 10px;
+     padding: 10px;
+     border-bottom: 1px solid #e0e0e0;
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+   }
+
+   .transaction-list li:last-child {
+     border-bottom: none;
+   }

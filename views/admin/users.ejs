@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Management</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/Admin/users.css">
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- Include Sidebar -->
+    <%- include('../partials/sidebar') %>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="main-header">
+        <h1>User Management</h1>
+        <button class="menu-toggle">☰</button>
+       
+      </header>
+
+      <section class="content">
+        <!-- User Table Section -->
+        <div class="card mb-4">
+          <div class="card-header">Registered Users</div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-striped table-hover">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Id</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% users.forEach((user, index) => { %>
+                    <tr>
+                      <td><%= index + 1 %></td>
+                      <td><%= user._id %></td>
+                      <td><%= user.fullName %></td>
+                      <td><%= user.email %></td>
+                      <td>
+                        <span class="badge <%= user.isActive ? 'bg-success' : 'bg-danger' %>">
+                          <%= user.isBlocked ? 'Inactive' : 'active' %>
+                        </span>
+                      </td>
+                      <td>
+                        <button class="btn btn-sm <%= user.isBlocked ? 'btn-danger' : 'btn-success' %>"
+                          onclick="toggleListing('<%= user._id %>', '<%= user.isBlocked %>')">
+                          <%= user.isBlocked ? 'unBlock' : 'Block' %>
+                        </button>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/admin/user.js"></script>
+</body>
+</html>

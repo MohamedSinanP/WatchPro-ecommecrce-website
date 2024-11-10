@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+    <link rel="stylesheet" href="/css/Admin/login.css">
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <!-- Company Name -->
+            <div class="company-name">
+                <h1>Admin Login</h1>
+            </div>
+
+            <form action="/admin/login" method="POST" id="form">
+                <div class="input-box">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" >
+                </div>
+                <div class="input-box">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" >
+                </div>
+                <div class="submit-box">
+                    <input type="submit" value="Login">
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="/js/admin/login.js"></script>
+
+</html>

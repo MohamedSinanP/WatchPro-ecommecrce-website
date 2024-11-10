@@ -1,0 +1,156 @@
+/* General Styles */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f8f9fa;
+  color: #343a40;
+  margin: 0;
+  padding: 0;
+}
+.sidebar-1 {
+  width: 200px;
+  background-color: #343a40;
+  padding: 20px;
+  border-radius: 8px;
+  color: #fff;
+}
+
+.sidebar-1 h2 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.sidebar-1 ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.sidebar-1 a {
+  color: #adb5bd;
+  display: block;
+  padding: 8px 0;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.2s;
+}
+
+.sidebar-1 a:hover {
+  color: #fff;
+}
+
+.user-account-container {
+  display: flex;
+  margin: 20px;
+}
+
+/* Main Content Styles */
+.content {
+  flex-grow: 1;
+  margin-left: 20px;
+  padding: 20px;
+  border-radius: 5px;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.profile-info {
+  margin: 20px 0;
+}
+
+.profile-info strong {
+  display: block;
+  margin: 5px 0;
+}
+
+/* Button Styles */
+.btn {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background-color: #0056b3;
+}
+
+/* Modal Styles */
+   .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1050; /* Sit on top of everything */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0, 0, 0, 0.5); /* Black with transparency */
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto; /* 15% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; /* Could be more or less, depending on screen size */
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .modal-title {
+            margin: 0;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        /* Close button styling */
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 5px;
+}
+
+.form-control:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .user-account-container {
+      flex-direction: column;
+  }
+
+  .sidebar-1 {
+      width: 100%;
+      margin-bottom: 20px;
+  }
+
+  .content {
+      margin-left: 0;
+  }
+}

@@ -1,0 +1,146 @@
+/* General Layout */
+body {
+  background-color: #f8f9fa;
+  font-family: 'Arial', sans-serif;
+}
+
+.sidebar-1 {
+  width: 200px;
+  background-color: #0f87ff;
+  padding: 20px;
+  border-radius: 8px;
+  color: #fff;
+}
+
+.sidebar-1 h2 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.sidebar-1 ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.sidebar-1 a {
+  color: #adb5bd;
+  display: block;
+  padding: 8px 0;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.2s;
+}
+
+.sidebar-1 a:hover {
+  color: #fff;
+}
+
+.user-account-container {
+  display: flex;
+  max-width: 1200px;
+  margin: 20px auto;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+/* Content Styles */
+.content {
+  flex: 1;
+  padding: 20px;
+  background-color: #ffffff;
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.content h1 {
+  margin-bottom: 20px;
+  font-size: 28px;
+}
+
+.content .btn {
+  margin-bottom: 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.content .btn:hover {
+  background-color: #0056b3;
+}
+
+/* Order Card Styles */
+.order-card {
+  background-color: #f1f1f1;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  transition: box-shadow 0.3s ease;
+  width: 100%; /* Ensure each card takes full width */
+}
+
+.order-card:hover {
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+}
+
+.order-card p {
+  margin: 5px 0;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 10px;
+}
+
+.actions .btn-danger {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.actions .btn-danger:hover {
+  background-color: #c82333;
+}
+
+/* Address Card Container */
+.address-card-container {
+  display: flex;
+  flex-direction: column; /* Stack cards vertically */
+}
+
+.product-image-container {
+  width: 100px; /* Set desired width */
+  height: 100px; /* Set desired height */
+  overflow: hidden; /* Hide any overflow */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-image-container img {
+  width: 100%; /* Make the image take full width */
+  height: auto; /* Keep the aspect ratio */
+  object-fit: cover; /* Ensures the image covers the container */
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .user-account-container {
+    flex-direction: column;
+  }
+
+  .sidebar-1 {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+
+  .content {
+    margin-left: 0;
+  }
+}

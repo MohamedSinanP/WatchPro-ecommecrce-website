@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout</title>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/User/checkout.css">
+  <!--===============================================================================================-->
+  <link rel="icon" type="image/png" href="/css/User/images/icons/favicon.png" />
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/bootstrap/css/bootstrap.min.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/fonts/iconic/css/material-design-iconic-font.min.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/fonts/linearicons-v1.0.0/icon-font.min.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/animate/animate.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/css-hamburgers/hamburgers.min.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/animsition/css/animsition.min.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/select2/select2.min.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/daterangepicker/daterangepicker.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/slick/slick.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/MagnificPopup/magnific-popup.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/perfect-scrollbar/perfect-scrollbar.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/css/util.css">
+  <link rel="stylesheet" type="text/css" href="/css/User/css/main.css">
+</head>
+
+<body>
+
+  <!-- Header -->
+  <%- include('../partials/user/header') %>
+
+    <div class="container d-flex justify-content-center py-5">
+      <div class="checkout-container row bg-white rounded shadow">
+        <!-- Shipping Information Section -->
+        <div class="checkout-info col-md-8 p-4 border-end">
+          <h2 class="fw-bolder fs-1 ">Checkout</h2>
+          <h3 class="my-3 fw-normal fs-5 text-decoration-underline">Shipping Information</h3>
+
+          <!-- Saved Addresses Section -->
+          <div class="saved-addresses mb-4">
+            <h4 class="my-2 fw-bold fs-4">Saved Addresses</h4>
+            <div class="address-container">
+              <div class="row flex-nowrap">
+                <!-- Address 1 -->
+                <% addresses.forEach(address=> { %>
+                  <div class="col-md-4">
+                    <div class="address-card p-3 mb-3 border rounded" data-address-id="<%= address._id %>">
+                      <p><strong>
+                          <%= address.firstName %>
+                            <%= address.lastName %>
+                        </strong></p>
+                      <p>
+                        <%= address.address %>
+                      </p>
+                      <p>
+                        <%= address.city %>, <%= address.state %> - <%= address.pincode %>
+                      </p>
+                      <p>Phone: <%= address.phoneNumber %>
+                      </p>
+                      <button class="btn btn-outline-primary btn-sm mt-2"
+                        onclick="selectAddress('<%= address._id %>')">Select this address</button>
+                    </div>
+                  </div>
+                  <% }) %>
+              </div>
+            </div>
+          </div>
+
+          <p class="my-2 fw-bold fs-4">Create New address</p>
+          <!-- Shipping Form -->
+          <form id="addAddressForm" action="/user/addDefaultAddress" method="post">
+            <div class="form-row mb-3">
+              <div class="col">
+                <label for="firstName">First Name *</label>
+                <input type="text" class="form-control" id="firstName" name="firstName" placeholder="Enter first name">
+                <div class="invalid-feedback">First Name is required.</div>
+              </div>
+              <div class="col">
+                <label for="lastName">Last Name *</label>
+                <input type="text" class="form-control" id="lastName" name="lastName" placeholder="Enter last name">
+                <div class="invalid-feedback">Last Name is required.</div>
+              </div>
+            </div>
+
+            <div class="form-group mb-3">
+              <label for="address">Address *</label>
+              <textarea class="form-control" id="address" name="address" placeholder="Enter address"></textarea>
+              <div class="invalid-feedback">Address is required.</div>
+            </div>
+
+            <div class="form-row mb-3">
+              <div class="col">
+                <label for="phoneNumber">Phone Number *</label>
+                <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber"
+                  placeholder="Enter phone number">
+                <div class="invalid-feedback">Phone Number is required.</div>
+              </div>
+              <div class="col">
+                <label for="city">City *</label>
+                <input type="text" class="form-control" id="city" name="city" placeholder="Enter city">
+                <div class="invalid-feedback">City is required.</div>
+              </div>
+            </div>
+
+            <div class="form-row mb-3">
+              <div class="col">
+                <label for="state">State *</label>
+                <select class="form-control" id="state" name="state">
+                  <option value="">Choose state</option>
+                  <option value="Andhra Pradesh">Andhra Pradesh</option>
+                  <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                  <option value="Assam">Assam</option>
+                  <option value="Bihar">Bihar</option>
+                  <!-- Add other states here -->
+                </select>
+                <div class="invalid-feedback">State is required.</div>
+              </div>
+              <div class="col">
+                <label for="pincode">Pincode *</label>
+                <input type="number" class="form-control" id="pincode" name="pincode" placeholder="Enter pincode">
+                <div class="invalid-feedback">Pincode is required.</div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Add Address</button>
+          </form>
+
+
+
+        </div>
+
+        <!-- Cart Review Section -->
+
+        <div class="cart-review col-md-4 p-4">
+          <h3 class="m-b-18 fw-bolder fs-3">Your Orders</h3>
+
+          <!-- Products Header -->
+          <div class="products-header mb-3">
+            <div class="d-flex justify-content-between">
+              <span class="fw-semibold"><strong>Product Name</strong></span>
+              <span class="fw-semibold"><strong>Total</strong></span>
+            </div>
+          </div>
+
+          <!-- Cart Items -->
+          <% cartItems.products.forEach(item=> { %>
+            <div class="cart-item d-flex justify-content-between mb-3">
+              <div>
+                <p class="mb-1 small-text fs-6">
+                  <%= item.name %>
+                </p>
+              </div>
+              <p class="small-text">$<%= (item.price * item.quantity).toFixed(2) %>
+              </p>
+            </div>
+            <% }) %>
+
+
+              <!-- Summary -->
+              <div class="summary">
+                <h6 class="fw-semibold text-center mb-3 text-decoration-underline"> Payment details</h4>
+                  <p class="d-flex justify-content-between">Cart Total: <span>
+                      <%= cartTotal %>
+                    </span></p>
+                  <p class="d-flex justify-content-between">Shipping: <span>
+                      <%= shippingCharge %>
+                    </span></p>
+                  <hr class="my-3">
+                  <h4 class="d-flex justify-content-between " id="total">Total: <span>
+                      <%= total %>
+                    </span></h4>
+              </div>
+
+              <!-- Payment Options -->
+              <div class="payment-options mt-5">
+                <h5 class="mb-3">Select Payment Method</h5>
+
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="paymentMethod" id="cashOnDelivery" value="COD">
+                  <label class="form-check-label" for="cashOnDelivery">
+                    <i class="fas fa-money-bill-wave me-2"></i> Cash on Delivery
+                  </label>
+                </div>
+
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="paymentMethod" id="razorpay" value="Razorpay">
+                  <label class="form-check-label" for="razorpay">
+                    <i class="fab fa-cc-visa me-2"></i> Razorpay
+                  </label>
+                </div>
+
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="paymentMethod" id="wallet" value="Wallet">
+                  <label class="form-check-label" for="wallet">
+                    <i class="fas fa-wallet me-2"></i> Wallet
+                  </label>
+                </div>
+              </div>
+
+              <!-- Pay Now Button -->
+              <button class="pay-now btn btn-primary w-100 mt-4">Place Order</button>
+              <p class="secure-checkout text-center mt-3">🔒 Secure Checkout - SSL Encrypted</p>
+              <p class="info-text text-center text-muted">Ensuring your financial and personal details are secure during
+                every transaction.</p>
+
+              <p class="hidden" id="totalDiscount" style="display: none;">
+                <%= totalDiscount %>
+              </p>
+        </div>
+
+      </div>
+    </div>
+    <!-- footer-->
+    <%- include('../partials/user/footer') %>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+      <script src="/css/User/vendor/jquery/jquery-3.2.1.min.js"></script>
+      <script src="/css/User/vendor/animsition/js/animsition.min.js"></script>
+      <script src="/css/User/vendor/bootstrap/js/popper.js"></script>
+      <script src="/css/User/vendor/bootstrap/js/bootstrap.min.js"></script>
+      <script src="/css/User/vendor/select2/select2.min.js"></script>
+      <script src="/css/User/vendor/daterangepicker/moment.min.js"></script>
+      <script src="/css/User/vendor/daterangepicker/daterangepicker.js"></script>
+      <script src="/css/User/vendor/slick/slick.min.js"></script>
+      <script src="/css/User/vendor/MagnificPopup/jquery.magnific-popup.min.js"></script>
+      <script src="/css/User/vendor/perfect-scrollbar/perfect-scrollbar.min.js"></script>
+      <script src="/css/User/js/main.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+   <script src="/js/user/checkout.js"></script>
+
+
+</body>
+
+</html>

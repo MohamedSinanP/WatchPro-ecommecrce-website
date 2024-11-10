@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OTP Verification</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <link rel="stylesheet" href="/css/User/otp.css">
+</head>
+
+<body>
+    <div class="container">
+        <h2>OTP Verification</h2>
+        <form method="post" action="/user/verify-otp" id="otpForm" onsubmit="return validateOTPForm()">
+            <p>Please enter the OTP sent to your email:</p>
+            <div class="otp-inputs">
+                <input type="text" maxlength="1" class="otp-input" required>
+                <input type="text" maxlength="1" class="otp-input" required>
+                <input type="text" maxlength="1" class="otp-input" required>
+                <input type="text" maxlength="1" class="otp-input" required>
+                <input type="text" maxlength="1" class="otp-input" required>
+                <input type="text" maxlength="1" class="otp-input" required>
+            </div>
+            <button type="submit">Verify OTP</button>
+            <p class="timer" id="timer">Time left: 02:00</p>
+            <p class="resend">Didn't receive the OTP? <a href="#" id="resend-link">Resend OTP</a></p>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const otpInputs = document.querySelectorAll('.otp-input');
+            otpInputs[0].focus();
+
+            otpInputs.forEach((input, index) => {
+                input.addEventListener('input', () => {
+                    if (input.value.length === 1 && index < otpInputs.length - 1) {
+                        otpInputs[index + 1].focus();
+                    }
+                });
+            });
+
+            let timeLeft = 120; // 2 minutes in seconds
+            const timerElement = document.getElementById('timer');
+            const resendLink = document.getElementById('resend-link');
+
+            const startTimer = () => {
+                const countdown = setInterval(() => {
+                    const minutes = Math.floor(timeLeft / 60);
+                    const seconds = timeLeft % 60;
+                    timerElement.textContent = `Time left: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    timeLeft--;
+
+                    if (timeLeft < 0) {
+                        clearInterval(countdown);
+                        timerElement.textContent = "OTP expired. Please resend.";
+                        resendLink.style.display = "inline";
+                    }
+                }, 1000);
+            };
+
+            startTimer();
+
+            resendLink.addEventListener('click', (event) => {
+                event.preventDefault();
+                timeLeft = 120; // Reset time
+                resendLink.style.display = "none";
+                startTimer();
+                resendOTP();
+            });
+        });
+
+        function validateOTPForm() {
+            const otpInputs = document.querySelectorAll('.otp-input');
+            const otpValue = Array.from(otpInputs)
+                .map(input => input.value)
+                .join('');
+
+            $.ajax({
+                type: "POST",
+                url: "/user/verify-otp",
+                data: { otp: otpValue },
+                success: (response) => {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: "success",
+                            title: "OTP Verified Successfully",
+                            showConfirmButton: false,
+                            timer: 1500,
+                        }).then(() => {
+                            window.location.href = response.redirectUrl;
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: "error",
+                            title: "Error",
+                            text: response.message,
+                        });
+                    }
+                },
+                error: () => {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Invalid OTP",
+                        text: "Please try again"
+                    });
+                }
+            });
+            return false; // Prevent form submission
+        }
+
+        function resendOTP() {
+            $.ajax({
+                type: "POST",
+                url: "/user/resend-otp",
+                success: (response) => {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: "success",
+                            title: "OTP Resent Successfully",
+                            showConfirmButton: false,
+                            timer: 1500,
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: "error",
+                            title: "Error",
+                            text: "An error occurred while resending OTP. Please try again."
+                        });
+                    }
+                },
+                error: () => {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Error",
+                        text: "An error occurred while connecting to the server. Please try again."
+                    });
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

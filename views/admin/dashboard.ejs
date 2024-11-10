@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Responsive Admin Dashboard</title>
+  <link rel="stylesheet" href="/css/Admin/dashboard.css">
+</head>
+
+<body>
+
+  <div class="dashboard-container">
+    <%- include('../partials/sidebar') %>
+    <main class="main-content">
+      <header class="main-header">
+        <h1>Dashboard</h1>
+        <button class="menu-toggle">☰</button>
+      </header>
+
+      <section class="content">
+        <h2>Welcome to the Admin Dashboard</h2>
+        <p>This is a simple, responsive admin dashboard layout.</p>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // Toggle sidebar for mobile view
+    const menuToggle = document.querySelector('.menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    menuToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('active');
+    });
+  </script>
+</body>
+
+</html>

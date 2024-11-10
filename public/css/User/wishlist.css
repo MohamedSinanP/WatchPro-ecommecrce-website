@@ -1,0 +1,29 @@
+.wishlist-container {
+    margin-top: 80px;
+    margin-bottom: 150px;
+}
+.wishlist-header h2 {
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+.product-image {
+    width: 50px;
+    height: auto;
+    border-radius: 5px;
+}
+.add-to-cart, .cancel-btn {
+    font-size: 0.9rem;
+    padding: 5px 10px;
+}
+.cancel-btn {
+    background-color: #f44336;
+    color: white;
+    border: none;
+}
+.cancel-btn:hover {
+    background-color: #d32f2f;
+}
+.table-responsive{
+  border-radius: 10px;
+}

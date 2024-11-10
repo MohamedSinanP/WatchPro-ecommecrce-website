@@ -1,0 +1,112 @@
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+.container {
+  background: #ffffff;
+  border-radius: 8px; /* Reduced border radius */
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  width: 350px; /* Reduced width */
+  max-width: 100%;
+  padding: 15px; /* Reduced padding */
+  text-align: center;
+}
+
+h2 {
+  margin-bottom: 0.5rem; /* Reduced margin */
+  color: #333;
+  font-size: 1.3rem; /* Smaller font size */
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+input, button {
+  padding: 8px; /* Reduced padding */
+  margin: 8px 0; /* Reduced margin */
+  border-radius: 4px; /* Reduced border radius */
+  border: 1px solid #ddd;
+  font-size: 0.9rem; /* Smaller font size */
+}
+
+input:focus {
+  border-color: #007BFF;
+  outline: none;
+}
+
+button {
+  background-color: #007BFF;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+.social-login {
+  margin-top: 0.5rem; /* Reduced margin */
+}
+
+.social-login p {
+  margin-bottom: 0.5rem;
+  color: #555;
+  font-size: 0.9rem; /* Smaller font size */
+}
+
+.social-login button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px; /* Reduced padding */
+  margin-top: 8px; /* Reduced margin */
+  width: 100%;
+  border-radius: 10px; /* Reduced border radius */
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.google-btn {
+  background-color: #db4437;
+  color: #fff;
+}
+
+.google-btn:hover {
+  background-color: #c33c2e;
+}
+
+.facebook-btn {
+  background-color: #4267B2;
+  color: #fff;
+}
+
+.facebook-btn:hover {
+  background-color: #365899;
+}
+
+.social-login img {
+  width: 18px; /* Reduced icon size */
+  height: 18px; /* Reduced icon size */
+  margin-right: 8px; /* Reduced margin */
+}
+
+a {
+  color: #007BFF;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: #0056b3;
+}
