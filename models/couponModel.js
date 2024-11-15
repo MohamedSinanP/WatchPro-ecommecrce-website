@@ -1,11 +1,11 @@
 const mongoose = require('mongoose');
 
 const couponSchema = new mongoose.Schema({
-  userId: {
+  userId: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'users',
     required: false
-  },
+  }],
   name: {
     type: String,
     required: true

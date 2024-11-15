@@ -93,9 +93,16 @@ document.addEventListener('DOMContentLoaded', function () {
             name: "WatchPro",
             description: "Order Payment",
             order_id: orderId,
-            handler: function (response) {
+            handler:  async function (response) {
               if (response.razorpay_payment_id && response.razorpay_order_id && response.razorpay_signature) {
-                window.location.href = '/user/greetings';
+                const orderId = response.razorpay_order_id;
+                const result = await axios.post('/user/paymentSuccess', { orderId })
+                if (result.data.success) {
+                  window.location.href = result.data.redirectUrl;
+                } else {
+                  console.error("Payment success but server response indicates failure.");
+                  alert("Payment verification failed on server. Please contact support.");
+                }
               } else {
                 console.error("Missing Razorpay response values.");
                 alert("Payment verification failed. Please try again.");
@@ -108,13 +115,25 @@ document.addEventListener('DOMContentLoaded', function () {
             },
             theme: {
               color: "#3399cc"
-            }
+            },
           };
 
           const rzp = new Razorpay(options);
+          rzp.on('payment.failed', function (response) {
+            console.log("Payment failed:", response.error);
+            window.location.href = '/user/orders';  
+          });
           rzp.open();
         } else {
-          alert("Order creation failed. Please try again.");
+          Toastify({
+            text: "Order creation failed. Please try again.",
+            duration: 3000,
+            close: true,
+            gravity: "top",
+            position: "right",
+            backgroundColor: "#FF0000",
+            stopOnFocus: true,
+          }).showToast();
         }
       } catch (error) {
         console.log('Error creating Razorpay order:', error);
@@ -131,7 +150,16 @@ document.addEventListener('DOMContentLoaded', function () {
         if (response.data.success) {
           window.location.href = '/user/greetings';
         } else {
-          alert("Order creation failed. Please try again.");
+          const message = response.data.message;
+          Toastify({
+            text: message,
+            duration: 3000,
+            close: true,
+            gravity: "top",
+            position: "right",
+            backgroundColor: "#FF0000",
+            stopOnFocus: true,
+          }).showToast();
         }
       } catch (error) {
         console.log('Error creating COD order:', error);

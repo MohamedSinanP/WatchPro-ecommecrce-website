@@ -194,10 +194,23 @@ const loadSingleProductPage = async (req, res) => {
   try {
     const productId = req.params.id;
 
-
     const product = await productModel.findById(productId).populate('category');
+    
+ console.log(product.category);
+
+    const relatedProducts = await productModel
+    .find({ category: product.category._id, _id: { $ne: productId } })
+    .select('name price images')
+    .limit(4);
 
 
+
+    const formattedRelatedProducts = relatedProducts.map(relatedProduct => ({
+      ...relatedProduct.toObject(),
+      imageUrl: relatedProduct.images[2] || '' 
+    }));
+
+    // Fetch active offers
     const offers = await offerModel.find({ isActive: true }).populate([
       { path: 'products' },
       { path: 'categories' }
@@ -206,17 +219,16 @@ const loadSingleProductPage = async (req, res) => {
 
     const productOffers = offers.filter(offer => {
       const matchesProduct = offer.products.some(prod => prod._id.equals(product._id));
-
       const productCategoryId = product.category._id ? product.category._id : product.category;
       const matchesCategory = offer.categories.some(cat => cat._id.equals(productCategoryId));
 
       return matchesProduct || matchesCategory;
     });
 
-
+    // Calculate offer price
     let offerPrice = product.price;
     if (productOffers.length > 0) {
-      let bestOffer = productOffers[0];
+      const bestOffer = productOffers[0];
 
       if (bestOffer.discountType === 'percentage') {
         const discountAmount = (product.price * bestOffer.discountValue) / 100;
@@ -226,13 +238,14 @@ const loadSingleProductPage = async (req, res) => {
       }
     }
 
-    // Send product details, offers, and offer price to the view
+    // Render the product page with product details, offers, and related products
     res.render('user/singleProduct', {
       product: {
         ...product.toObject(),
         offerPrice,
-        offers: productOffers
-      }
+        offers: productOffers,
+      },
+      relatedProducts: formattedRelatedProducts // Send formatted related products to the view
     });
 
   } catch (error) {
@@ -243,7 +256,6 @@ const loadSingleProductPage = async (req, res) => {
 
 const filterProduct = async (req, res) => {
   const { category, genderType, sortBy, price, order, page = 1, limit = 10 } = req.query;
-console.log(req.query,'kkkkkkkkkk');
 
   try {
     let categoryFilter = {};
@@ -266,7 +278,6 @@ console.log(req.query,'kkkkkkkkkk');
     if (Object.keys(categoryFilter).length) {
       pipeline.push({ $match: categoryFilter });
     }
-console.log('hhh');
 
     const sort = {};
     if (price === 'lowtohigh') sort.price = 1;

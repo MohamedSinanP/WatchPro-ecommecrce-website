@@ -76,17 +76,22 @@ $(document).ready(function () {
           return;
       }
 
+      if(oldPassword === newPassword){
+        Swal.fire("Please enter a new password");
+        return;
+      }
+
       // Check if the new password is at least 8 characters long
-      if (newPassword.length < 8) {
+      if (newPassword.length < 6) {
           Swal.fire("New password must be at least 8 characters long.");
           return;
       }
 
       // Check if the new password contains at least one letter and one number
-      const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
-      if (!passwordPattern.test(newPassword)) {
-          Swal.fire("New password must contain at least one letter and one number.");
-          return;
+      const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
+      if (!passwordPattern.test(password)) {
+          Swal.fire('Password must be at least 6 characters long and include a number and a special character.');
+          return false;
       }
 
       // Check if new passwords match
@@ -104,7 +109,7 @@ $(document).ready(function () {
               newPassword: newPassword
           },
           success: function (response) {
-              alert('Password changed successfully!');
+              Swal.fire('Password changed successfully!');
               $('#changePasswordModal').modal('hide');
               $('#changePasswordForm')[0].reset();
           },

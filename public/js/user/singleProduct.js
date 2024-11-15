@@ -23,10 +23,10 @@ $(document).ready(function () {
       contentType: 'application/json',
       data: JSON.stringify(productData),
       success: function (response) {
-        alert('Product added to cart successfully!');
+        toastr.success('Product added to cart successfully!');
       },
       error: function (xhr, status, error) {
-        alert('Failed to add product to the cart.');
+        toastr.success('Failed to add product to the cart.');
       }
     });
   });
@@ -56,10 +56,10 @@ $(document).ready(function () {
       contentType: 'application/json',
       data: JSON.stringify(productData),
       success: function (response) {
-        alert('Product added to wishlist successfully!');
+        toastr.success('Product added to wishlist successfully!');
       },
       error: function (xhr, status, error) {
-        alert('Failed to add product to the cart.');
+        toastr.success('Failed to add product to the cart.');
       }
     });
   });

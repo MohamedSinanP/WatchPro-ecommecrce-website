@@ -5,14 +5,15 @@ const addressModel = require('../models/addressModel');
 const cartModel = require('../models/cartModel');
 const walletModel = require('../models/walletModel');
 const Razorpay = require("razorpay");
+const crypto = require('crypto');
+const fs = require('fs');
+const easyinvoice = require('easyinvoice');
 
 const razorpay = new Razorpay({
   key_id: "rzp_test_X9NFs9mKeaCGys",
   key_secret: "wMGZZJsmEEXnXBJKPiG02YBN"
 });
 
-
-// admin order management
 
 const loadOrders = async (req, res) => {
   try {
@@ -123,11 +124,9 @@ const defaultAddress = async (req, res) => {
 };
 
 const createOrder = async (req, res) => {
-  
+
   const userId = req.session.user;
   console.log("createOrder function finished for userId:", userId);
-  // Existing code
-console.log("createOrder function finished for userId:", userId);
   try {
     let { totalPrice, paymentMethod, addressId, totalDiscount } = req.body;
 
@@ -142,7 +141,6 @@ console.log("createOrder function finished for userId:", userId);
     };
 
     const razorpayOrder = await razorpay.orders.create(options);
-
     const address = await addressModel.findOne({ _id: addressId });
     if (!address) {
       return res.status(400).send("No default address found");
@@ -179,6 +177,8 @@ console.log("createOrder function finished for userId:", userId);
       deliveryDate: deliveryDate,
       paymentMethod: paymentMethod,
       totalDiscount: totalDiscount,
+      paymentStatus: 'failed',
+      razorpayId: razorpayOrder.id
     });
 
     for (const product of products) {
@@ -190,7 +190,6 @@ console.log("createOrder function finished for userId:", userId);
     }
 
     await cartModel.findOneAndDelete({ userId: userId });
-
     res.json({
       success: true,
       message: "Order created successfully",
@@ -209,19 +208,18 @@ const addOrderDetails = async (req, res) => {
   const { totalPrice, paymentMethod, addressId, totalDiscount } = req.body;
 
   const userId = req.session.user;
-
-
+  const productTotal = totalPrice - 100;
 
   try {
-
+    if (productTotal > 1000) {
+      return res.json({ success: false, message: 'cannot get Cash on delivery above 1000 rupeees' });
+    }
     const address = await addressModel.findOne({ _id: addressId });
-
 
     const cart = await cartModel.findOne({ userId: userId }).populate('products.productId');
     if (!cart || cart.products.length === 0) {
       return res.status(400).send("Cart is empty");
     }
-
 
 
     const products = cart.products.map(item => ({
@@ -231,7 +229,7 @@ const addOrderDetails = async (req, res) => {
       price: item.productId.price
     }));
 
-    console.log("addOrderDetails products:", products); 
+    console.log("addOrderDetails products:", products);
 
 
     const newOrder = await orderModel.create({
@@ -388,14 +386,14 @@ const returnOrder = async (req, res) => {
         product.productId.stock += product.quantity;
       });
       wallet.transaction.push({
-        transactionType: 'credit',  
-        amount: order.total,        
-        date: new Date()            
+        transactionType: 'credit',
+        amount: order.total,
+        date: new Date()
       });
 
       wallet.balance = walletBalance;
       await wallet.save();
-      
+
       order.save();
     }
     res.json({ success: true });
@@ -405,6 +403,148 @@ const returnOrder = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
+const paymentSuccess = async (req, res) => {
+  try {
+    const { orderid } = req.body;
+
+    const order = await orderModel.findOne({ _id: orderid });
+    if (order) {
+      order.paymentStatus = 'success';
+      await order.save();
+      res.json({ success: true, redirectUrl: '/user/greetings' })
+    };
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+const retryPayment = async (req, res) => {
+  const { orderId, razorpayId } = req.body;
+  const userId = req.session.user;
+
+  try {
+    const order = await orderModel.findOne({ razorpayId: razorpayId });
+    const user = await userModel.findOne({ _id: userId })
+    const userName = order.address.firstName;
+    const userEmail = user.email;
+    const phoneNumber = order.address.phoneNumber;
+
+    let totalPrice = order.total;
+
+    totalPrice = Number(totalPrice);
+    const options = {
+      amount: totalPrice * 100,
+      currency: "INR",
+      receipt: `order_rcptid_${Math.floor(Math.random() * 1000000)}`,
+    };
+
+    const razorpayOrder = await razorpay.orders.create(options);
+
+    if (razorpayOrder && razorpayOrder.status) {
+      console.log('Order status:', razorpayOrder.status);
+    } else {
+      console.log('Error: razorpayOrder or razorpayOrder.status is undefined');
+    }
+
+    res.json({
+      success: true,
+      orderId: razorpayOrder.id,
+      amount: razorpayOrder.amount,
+      currency: razorpayOrder.currency,
+      name: userName,
+      email: userEmail,
+      phoneNumber: phoneNumber,
+      order: order
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: "Error creating Razorpay order" });
+  }
+}
+
+const downloadInvoice = async (req, res) => {
+  const orderId = req.params.id;
+
+  try {
+    const order = await orderModel.findById(orderId)
+      .populate('userId')
+      .populate('products.productId');
+
+    const subtotal = order.products.reduce((total, product) => {
+      return total + (product.quantity * product.price);
+    }, 0);
+
+    const totalDiscount = order.totalDiscount || 0;
+
+    const total = subtotal - totalDiscount;
+
+    const invoiceData = {
+      "documentTitle": "INVOICE",
+      "currency": "INR",
+      "taxNotation": "gst",
+      "marginTop": 25,
+      "marginRight": 25,
+      "marginLeft": 25,
+      "marginBottom": 25,
+      "logo": "https://public.easyinvoice.cloud/img/logo_en_original.png",
+      "sender": {
+        "company": "WatchPro",
+        "address": "pottikkallu 123 Hyderabad",
+        "zip": "12345",
+        "city": "Malappuram",
+        "country": "India"
+      },
+      "client": {
+        "company": order.userId.fullName,
+        "address": order.address.address,
+        "zip": "67890",
+        "city": order.address.city,
+        "country": "India"
+      },
+      "invoiceNumber": "2024.0001",
+      "invoiceDate": new Date().toISOString().split('T')[0],
+      "products": [
+        ...order.products.map(product => {
+          return {
+            "quantity": product.quantity,
+            "description": product.name,
+            "tax": 0,
+            "price": product.price
+          };
+        }),
+        {
+          "description": "Discount",
+          "price": -totalDiscount,  
+          "quantity": 0,  
+          "tax": 0        
+        }
+      ],
+      "bottomNotice": `Thank you for your purchase! Discount applied: ${totalDiscount}`,
+    };
+
+    const result = await easyinvoice.createInvoice(invoiceData);
+
+  
+    fs.writeFileSync("invoice.pdf", result.pdf, 'base64');
+
+    res.setHeader('Content-Disposition', 'attachment; filename=invoice.pdf');
+    res.setHeader('Content-Type', 'application/pdf');
+
+    // Send the PDF to the client
+    res.send(Buffer.from(result.pdf, 'base64'));
+
+  } catch (error) {
+    console.log("Error generating invoice:", error);
+    res.status(500).json({ message: "Error generating invoice" });
+  }
+};
+
+
+
+
 module.exports = {
   loadOrders,
   updateStatus,
@@ -416,5 +556,8 @@ module.exports = {
   loadGreetingsPage,
   deleteOrderItem,
   loadOrdersPage,
-  returnOrder
+  returnOrder,
+  paymentSuccess,
+  retryPayment,
+  downloadInvoice
 }

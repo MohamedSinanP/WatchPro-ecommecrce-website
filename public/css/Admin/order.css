@@ -98,6 +98,11 @@ body {
   cursor: pointer;
   display: none; /* Hidden by default */
 }
+
+.invoice-btn{
+  background-color: #333;
+  color: white;
+}
 /* Mobile Styles */
 @media (max-width: 768px) {
   .sidebar {

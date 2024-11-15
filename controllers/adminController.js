@@ -35,13 +35,168 @@ const loadDashboard = async (req, res) => {
   try {
     const admin = req.session.admin;
     if (!admin) return res.redirect('/admin/login');
-    res.render('admin/dashboard')
-  } catch (error) {
-    res.send(error);
-    console.log("error", error);
-  }
-}
+    const period = req.query.period || 'monthly';
 
+    // Monthly sales aggregation
+    const monthlySales = await orderModel.aggregate([
+      {
+        $group: {
+          _id: { month: { $month: "$createdAt" }, year: { $year: "$createdAt" } },
+          totalSales: { $sum: "$total" }
+        }
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
+      {
+        $project: {
+          _id: 0, // Hide the _id field
+          month: "$_id.month",
+          year: "$_id.year",
+          totalSales: 1
+        }
+      }
+    ]);
+    
+    // Yearly sales aggregation
+    const yearlySales = await orderModel.aggregate([
+      {
+        $group: {
+          _id: { year: { $year: "$createdAt" } },
+          totalSales: { $sum: "$total" }
+        }
+      },
+      { $sort: { "_id.year": 1 } },
+      {
+        $project: {
+          _id: 0, // Hide the _id field
+          year: "$_id.year",
+          totalSales: 1
+        }
+      }
+    ]);
+
+    console.log(monthlySales, yearlySales);
+
+    // Aggregate top-selling products, categories, and brands
+    const [topSellingProducts, topSellingCategories, topSellingBrands] = await Promise.all([
+
+      // Top-selling products based on quantity ordered
+      orderModel.aggregate([
+        { $unwind: "$products" }, // Unwind products array in orders
+        {
+          $group: {
+            _id: "$products.productId",
+            totalSales: { $sum: "$products.quantity" }
+          }
+        },
+        { $sort: { totalSales: -1 } },
+        { $limit: 10 },
+        {
+          $lookup: {
+            from: "products", // collection name for products
+            localField: "_id",
+            foreignField: "_id",
+            as: "productDetails"
+          }
+        },
+        { $unwind: "$productDetails" },
+        {
+          $project: {
+            _id: 0,
+            productId: "$_id",
+            name: "$productDetails.name",
+            price: "$productDetails.price",
+            totalSales: 1,
+            image: { $arrayElemAt: ["$productDetails.images", 0] }
+          }
+        }
+      ]),
+
+      // Top-selling categories based on orders
+      orderModel.aggregate([
+        { $unwind: "$products" },
+        {
+          $lookup: {
+            from: "products",
+            localField: "products.productId",
+            foreignField: "_id",
+            as: "productDetails"
+          }
+        },
+        { $unwind: "$productDetails" },
+        {
+          $group: {
+            _id: "$productDetails.category",
+            totalSales: { $sum: "$products.quantity" }
+          }
+        },
+        { $sort: { totalSales: -1 } },
+        { $limit: 10 },
+        {
+          $lookup: {
+            from: "categories",
+            localField: "_id",
+            foreignField: "_id",
+            as: "categoryDetails"
+          }
+        },
+        { $unwind: "$categoryDetails" },
+        {
+          $project: {
+            _id: 0,
+            categoryName: "$categoryDetails.name",
+            totalSales: 1
+          }
+        }
+      ]),
+
+      // Top-selling brands based on stock (assuming `stock` represents total available quantity)
+      orderModel.aggregate([
+        { $unwind: "$products" },
+        {
+          $lookup: {
+            from: "products",
+            localField: "products.productId",
+            foreignField: "_id",
+            as: "productDetails"
+          }
+        },
+        { $unwind: "$productDetails" },
+        {
+          $group: {
+            _id: "$productDetails.brand",
+            totalSales: { $sum: "$products.quantity" }
+          }
+        },
+        { $sort: { totalSales: -1 } },
+        { $limit: 10 }
+      ])
+    ]);
+
+    // Prepare the data for the frontend to render the charts
+    const monthlyChartData = {
+      labels: monthlySales.map(sale => `${sale.month}/${sale.year}`), // Format as Month/Year
+      data: monthlySales.map(sale => sale.totalSales)
+    };
+
+    const yearlyChartData = {
+      labels: yearlySales.map(sale => `${sale.year}`),
+      data: yearlySales.map(sale => sale.totalSales)
+    };
+
+    res.render('admin/dashboard', {
+      admin,
+      period,
+      topSellingProducts,
+      topSellingCategories,
+      topSellingBrands,
+      monthlySales,
+      yearlySales    
+    });
+  } catch (error) {
+    console.error('Error loading dashboard:', error);
+    res.send('An error occurred while loading the dashboard.');
+  }
+};
 const loadUsers = async (req, res) => {
   try {
     const users = await userModel.find({});
@@ -175,12 +330,15 @@ const downloadPDF = async (req, res) => {
     doc.moveDown();
 
     salesReport.forEach(report => {
-      doc.fontSize(12).text(`Date: ${report._id.year}-${report._id.month || ''}-${report._id.day || ''}`);
-      doc.text(`Total Sales Revenue: ₹${report.totalSalesRevenue}`);
-      doc.text(`Discount Applied: ₹${report.totalDiscount}`);
-      doc.text(`Net Sales: ₹${report.totalSalesRevenue - report.totalDiscount}`);
-      doc.text(`Number of Orders: ${report.totalOrders}`);
-      doc.text(`Total Items Sold: ${report.totalItemsSold}`);
+      const month = report._id.month ? `-${report._id.month}` : '';
+      const day = report._id.day ? `-${report._id.day}` : '';
+
+      doc.fontSize(12).text(`Date: ${report._id.year}${month}${day}`);
+      doc.text(`Total Sales Revenue: ₹${report.totalSalesRevenue || 0}`);
+      doc.text(`Discount Applied: ₹${report.totalDiscount || 0}`);
+      doc.text(`Net Sales: ₹${(report.totalSalesRevenue || 0) - (report.totalDiscount || 0)}`);
+      doc.text(`Number of Orders: ${report.totalOrders || 0}`);
+      doc.text(`Total Items Sold: ${report.totalItemsSold || 0}`);
       doc.moveDown();
     });
 

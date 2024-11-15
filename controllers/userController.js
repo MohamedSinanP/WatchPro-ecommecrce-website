@@ -17,9 +17,9 @@ const loadHomePage = async (req, res) => {
 const loadLoginPage = async (req, res) => {
 
   try {
-    res.render('user/login');
+    res.render('user/login', { message: undefined });
   } catch (error) {
-    console.error('Error loading login page:', error);
+    console.log('Error loading login page:', error);
     res.status(500).send('An error occurred while loading the login page.');
   }
 

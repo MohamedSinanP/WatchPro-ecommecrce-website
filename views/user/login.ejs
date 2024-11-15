@@ -13,8 +13,8 @@
     <div class="container">
         <h2>Login</h2>
         <form method="post" action="/user/login" id="loginForm">
-            <input type="email" placeholder="Email" name="email">
-            <input type="password" placeholder="Password" name="password">
+            <input type="email" placeholder="Email" name="email" autocomplete="email">
+            <input type="password" placeholder="Password" name="password" autocomplete="current-password">
             <button type="submit" onclick="setLoginAction('/user/login')">Login</button>
             <button type="submit" onclick="setLoginAction('/user/demo-login')">Demo Login</button>
             <p>Don't have an account? <a href="/user/signup">Sign up here</a></p>
@@ -36,6 +36,22 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="/js/user/login.js"></script>
 
-
+<script>
+    const message = "<%= message %>";
+    console.log(message);
+    
+    if (message) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: message,
+            toast: true,
+            position: 'top-end',
+            timer: 5000,
+            timerProgressBar: true,
+            showConfirmButton: false
+        });
+    }
+  </script>
 
 </html>

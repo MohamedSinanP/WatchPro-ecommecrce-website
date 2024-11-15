@@ -40,20 +40,6 @@ function formValidate(event) {
 };
 
 
-const message = "<%= typeof message !== 'undefined' ? message : '' %>";
-if (message) {
-Swal.fire({
-  icon: 'error',
-  title: 'Oops...',
-  text: message,
-  toast: true,
-  position: 'top-end',
-  timer: 5000,
-  timerProgressBar: true,
-  showConfirmButton: false
-});
-}
-
 function setLoginAction(action) {
   const form = document.getElementById('loginForm');
   form.action = action;

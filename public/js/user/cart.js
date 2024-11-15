@@ -109,7 +109,6 @@ function deleteProduct(productId) {
   axios.delete(`/user/deleteProduct/${productId}`)
     .then(response => {
       if (response.data.success) {
-        alert('Product deleted successfully');
 
         const productElement = document.getElementById(`product-${productId}`); // Assuming each product has a unique ID
         if (productElement) {

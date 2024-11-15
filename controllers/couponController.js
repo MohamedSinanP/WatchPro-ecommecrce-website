@@ -57,21 +57,18 @@ const deleteCoupon = async (req, res) => {
 // user coupon management
 
 const applyCoupon = async (req, res) => {
-
-  console.log('hh');
-
   const { code, cartTotal } = req.body;
+  
   req.session.cartTotal = cartTotal;
+  userId = req.session.user;
   try {
     const coupon = await couponModel.findOne({ code: code });
 
     const minPurchaseLimit = coupon.minPurchaseLimit;
-    console.log(minPurchaseLimit);
 
     if (!coupon) {
       return res.json({ success: false, message: 'Coupon not found' });
     }
-
 
     if (new Date() > coupon.expireDate) {
       return res.json({ success: false, message: 'Coupon has expired' });
@@ -80,23 +77,27 @@ const applyCoupon = async (req, res) => {
     if (cartTotal < minPurchaseLimit) {
       return res.json({ success: false, message: `The coupon only get for purchase greter than ${minPurchaseLimit}` })
     }
-
-
+    if(coupon.userId.includes(userId)){
+      return res.json({ success: false, message: 'Coupon can user only once' });
+    }else{
+      coupon.userId.push(userId);
+      coupon.save();
+    };
 
     if (coupon.discountType === 'percentage') {
       discount = (cartTotal * coupon.discount) / 100;
     } else if (coupon.discountType === 'amount') {
       discount = coupon.discount;
-      console.log(discount);
     }
 
 
     discount = Math.min(discount, cartTotal);
-    console.log(discount);
+
 
 
     const newTotal = cartTotal - discount;
-    console.log(newTotal);
+
+
 
     return res.json({ success: true, newTotal: newTotal, message: 'Coupon applied successfully' });
   } catch (error) {
@@ -107,7 +108,6 @@ const applyCoupon = async (req, res) => {
 }
 
 const removeCoupon = async (req, res) => {
-  const { code, cartTotal } = req.body;
   const oldCartTotal = req.session.cartTotal;
   console.log(oldCartTotal);
 

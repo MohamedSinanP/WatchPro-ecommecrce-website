@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Razorpay = require('razorpay');
 
 const orderSchema = new mongoose.Schema({
 
@@ -24,6 +25,11 @@ const orderSchema = new mongoose.Schema({
     price: {
       type: Number,
       required: true
+    },
+    status: {
+      type: String,
+      enum: ['Pending', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled', 'Returned'],
+      default: 'Pending'
     }
   }
   ],
@@ -63,7 +69,7 @@ const orderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Pending', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled','Returned'],
+    enum: ['Pending', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled', 'Returned'],
     default: 'Pending'
   },
   paymentMethod: {
@@ -71,12 +77,21 @@ const orderSchema = new mongoose.Schema({
     enum: ['COD', 'Razorpay', 'Wallet'],
     default: 'COD'
   },
+  paymentStatus: {
+    type: String,
+    enum: ['pending', 'success', 'failed'],
+    default: 'pending'
+  },
   deliveryDate: {
     type: Date
   },
   totalDiscount: {
     type: Number,
     required: true
+  },
+  razorpayId: {
+    type: String,
+    required: false
   }
 }, { timestamps: true });
 

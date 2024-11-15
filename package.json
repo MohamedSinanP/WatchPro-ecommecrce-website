@@ -3,6 +3,7 @@
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.3",
     "dotenv": "^16.4.5",
+    "easyinvoice": "^3.0.47",
     "ejs": "^3.1.10",
     "ejs-lint": "^2.0.0",
     "exceljs": "^4.4.0",

@@ -24,46 +24,49 @@ router.get('/home', userController.loadHomePage);
 
 router.get('/products', prodcutController.loadProductPage);
 router.get('/singleProduct/:id', prodcutController.loadSingleProductPage);
-router.get('/products/filter',prodcutController.filterProduct);
-router.get('/searchProduct',prodcutController.searchProduct);
+router.get('/products/filter', prodcutController.filterProduct);
+router.get('/searchProduct', prodcutController.searchProduct);
 
 // routes user account management 
 
-router.get('/profile', userController.loadProfilePage);
+router.get('/profile', userAuth.checkSession, userController.loadProfilePage);
 router.post('/updateUser/:userId', userController.updateUser);
-router.post('/changePassword',userController.changePassword);
-router.get('/address',userController.loadAddressPage);
-router.post('/addAddress',userController.addAddress);
-router.put('/updateAddress/:id',userController.updateAddress);
-router.delete('/deleteAddress/:id',userController.deleteAddress);
+router.post('/changePassword', userController.changePassword);
+router.get('/address', userController.loadAddressPage);
+router.post('/addAddress', userController.addAddress);
+router.put('/updateAddress/:id', userController.updateAddress);
+router.delete('/deleteAddress/:id', userController.deleteAddress);
 // router.post('/addDefaultAddress',userController.addDefaultAddress);
 
 // routes for cart and wishlist 
 
-router.get('/cart',userAuth.checkSession,cartController.loadCartPage);
-router.post('/cart',cartController.addToCart);
-router.put('/updateQuantity',cartController.updateQuantity);
-router.delete('/deleteProduct/:id',cartController.deleteCartProduct);
-router.get('/wishlist',wishlistController.loadWishlistPage)
-router.post('/wishlist',wishlistController.addToWishlist);
-router.delete('/deleteWishlistProduct/:id',wishlistController.deleteWishlistProduct);
-router.post('/applyCoupon',couponController.applyCoupon);
-router.post('/removeCoupon',couponController.removeCoupon);
+router.get('/cart', userAuth.checkSession, cartController.loadCartPage);
+router.post('/cart', userAuth.checkSession, cartController.addToCart);
+router.put('/updateQuantity', cartController.updateQuantity);
+router.delete('/deleteProduct/:id', cartController.deleteCartProduct);
+router.get('/wishlist', userAuth.checkSession, wishlistController.loadWishlistPage)
+router.post('/wishlist', userAuth.checkSession, wishlistController.addToWishlist);
+router.delete('/deleteWishlistProduct/:id', wishlistController.deleteWishlistProduct);
+router.post('/applyCoupon', couponController.applyCoupon);
+router.post('/removeCoupon', couponController.removeCoupon);
 
 // routes for wallet
 
-router.get('/wallet',walletController.loadWalletPage);
+router.get('/wallet', walletController.loadWalletPage);
 
 
 // routes for checkout and place order
 
-router.get('/orders',orderController.loadOrdersPage);
-router.get('/checkout',orderController.loadCheckoutPage);
-router.post('/defaultAddress/:id',orderController.defaultAddress);
-router.post('/placeOrder',orderController.addOrderDetails);
-router.post('/createOrder',orderController.createOrder);
-router.delete('/deleteOrderItem/:id',orderController.deleteOrderItem);
-router.get('/greetings',orderController.loadGreetingsPage);
-router.post('/returnOrder/:id',orderController.returnOrder);
+router.get('/orders', orderController.loadOrdersPage);
+router.get('/checkout', orderController.loadCheckoutPage);
+router.post('/defaultAddress/:id', orderController.defaultAddress);
+router.post('/placeOrder', orderController.addOrderDetails);
+router.post('/createOrder', orderController.createOrder);
+router.delete('/deleteOrderItem/:id', orderController.deleteOrderItem);
+router.get('/greetings', orderController.loadGreetingsPage);
+router.post('/returnOrder/:id', orderController.returnOrder);
+router.post('/paymentSuccess',orderController.paymentSuccess);
+router.post('/retryPayment',orderController.retryPayment);
+router.get('/invoice/:id',orderController.downloadInvoice);
 
 module.exports = router;

@@ -8,12 +8,12 @@ const checkSession = async (req, res, next) => {
 
     if (!user) {
 
-      return res.status(401).send('User does not exist');
+      return res.redirect('/user/login');
     }
 
     if (user.isBlocked) {
       req.session.toastMessage = 'Your account is blocked.';
-      return res.redirect('/login'); 
+      return res.redirect('/user/login'); 
     }
 
   
