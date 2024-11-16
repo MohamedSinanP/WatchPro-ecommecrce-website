@@ -1,3 +1,7 @@
+function loadPage(pageNumber) {
+    window.location.href = `/user/address?page=${pageNumber}`;
+}
+
 document.getElementById('addAddressForm').addEventListener('submit', function (event) {
     event.preventDefault();
 
@@ -99,7 +103,7 @@ document.getElementById('addAddressForm').addEventListener('submit', function (e
 });
 
 
-function editAddress(id, firstName, lastName,  address, phoneNumber, city, state, pincode) {
+function editAddress(id, firstName, lastName, address, phoneNumber, city, state, pincode) {
     // Populate the Edit Address Modal fields with existing data
     document.getElementById('editAddressId').value = id;
     document.getElementById('editFirstName').value = firstName;

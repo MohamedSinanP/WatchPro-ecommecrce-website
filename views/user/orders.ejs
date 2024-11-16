@@ -7,8 +7,6 @@
     <title>Address Management</title>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/css/User/accountSidebar.css">
-    <link rel="stylesheet" href="/css/User/order.css"> <!-- Link your custom styles -->
     <link rel="icon" type="image/png" href="/css/User/images/icons/favicon.png" />
     <!--===============================================================================================-->
     <link rel="stylesheet" type="text/css" href="/css/User/vendor/bootstrap/css/bootstrap.min.css">
@@ -37,6 +35,8 @@
     <!--===============================================================================================-->
     <link rel="stylesheet" type="text/css" href="/css/User/css/util.css">
     <link rel="stylesheet" type="text/css" href="/css/User/css/main.css">
+    <link rel="stylesheet" href="/css/User/order.css"> 
+    <link rel="stylesheet" href="/css/User/accountSidebar.css">
 
 </head>
 
@@ -48,17 +48,16 @@
         <div class="user-account-container">
             <!-- Sidebar -->
             <aside class="sidebar-1">
-                <h2>Account</h2>
                 <nav>
                     <ul>
                         <li><a href="/user/profile">User Profile</a></li>
                         <li><a href="/user/address">Address</a></li>
                         <li><a href="/user/orders">Orders</a></li>
-                        <li><a href="/user/wallet">Wallet</a></li> <!-- Added Wallet link -->
+                        <li><a href="/user/wallet">Wallet</a></li>
                         <li><a href="logout.html">Logout</a></li>
                     </ul>
                 </nav>
-            </aside>
+            </aside>    
 
 
             <div class="content">
@@ -114,7 +113,7 @@
                                                         <% } else if (order.paymentMethod==='Razorpay' &&order.paymentStatus==='failed') {%>
                                                             <button class="btn btn-danger retry-payment"
                                                             onclick="retryPayment('<%= order._id %>','<%= order.razorpayId %>')">
-                                                            Retry Paymen
+                                                            Retry Payment
                                                         </button>
                                                         <% } %>
 
@@ -155,6 +154,24 @@
                 </div>
             </div>
         </div>
+        <div class="pagination-controls d-flex justify-content-center my-3">
+            <% if (totalPages > 1) { %>
+              <% if (currentPage > 1) { %>
+                <button onclick="loadPage('<%= currentPage - 1 %>')" class="btn btn-primary mx-1 my-1">&laquo;</button>
+              <% } %>
+              <% for (let i = 1; i <= totalPages; i++) { %>
+                <button onclick="loadPage('<%= i %>')" class="btn <%= i === currentPage ? 'btn-secondary' : 'btn-light' %> mx-1">
+                  <%= i %>
+                </button>
+              <% } %>
+              <% if (currentPage < totalPages) { %>
+                <button onclick="loadPage('<%= currentPage + 1 %>')" class="btn btn-primary mx-1 my-1">&raquo;</button>
+              <% } %>
+            <% } %>
+          </div>
+                  <!-- footer-->
+        <%- include('../partials/user/footer') %>
+        
         <script src="/css/User/vendor/jquery/jquery-3.2.1.min.js"></script>
         <script src="/css/User/vendor/animsition/js/animsition.min.js"></script>
         <script src="/css/User/vendor/bootstrap/js/popper.js"></script>

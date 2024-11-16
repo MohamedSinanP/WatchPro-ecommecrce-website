@@ -1,3 +1,7 @@
+function loadPage(pageNumber) {
+  window.location.href = `/user/orders?page=${pageNumber}`;
+}
+
 async function cancelOrderProduct(orderId, productId, total) {
   console.log(orderId + '   ' + productId);
 

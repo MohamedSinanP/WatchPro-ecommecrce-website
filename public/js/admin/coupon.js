@@ -1,3 +1,6 @@
+function loadPage(pageNumber) {
+  window.location.href = `/admin/coupons?page=${pageNumber}`;
+}
 // Sidebar Toggle for Mobile
 const menuToggle = document.querySelector('.menu-toggle');
 const sidebar = document.querySelector('.sidebar');

@@ -54,6 +54,10 @@ router.post('/removeCoupon', couponController.removeCoupon);
 
 router.get('/wallet', walletController.loadWalletPage);
 
+// routes for company pages
+
+router.get('/contact',userController.loadContactPage);
+router.get('/about',userController.loadAboutPage);
 
 // routes for checkout and place order
 
@@ -62,6 +66,7 @@ router.get('/checkout', orderController.loadCheckoutPage);
 router.post('/defaultAddress/:id', orderController.defaultAddress);
 router.post('/placeOrder', orderController.addOrderDetails);
 router.post('/createOrder', orderController.createOrder);
+router.post('/walletOrder',orderController.walletOrder);
 router.delete('/deleteOrderItem/:id', orderController.deleteOrderItem);
 router.get('/greetings', orderController.loadGreetingsPage);
 router.post('/returnOrder/:id', orderController.returnOrder);

@@ -55,7 +55,7 @@ const loadDashboard = async (req, res) => {
         }
       }
     ]);
-    
+
     // Yearly sales aggregation
     const yearlySales = await orderModel.aggregate([
       {
@@ -190,7 +190,7 @@ const loadDashboard = async (req, res) => {
       topSellingCategories,
       topSellingBrands,
       monthlySales,
-      yearlySales    
+      yearlySales
     });
   } catch (error) {
     console.error('Error loading dashboard:', error);
@@ -199,8 +199,18 @@ const loadDashboard = async (req, res) => {
 };
 const loadUsers = async (req, res) => {
   try {
-    const users = await userModel.find({});
-    res.render('admin/users', { users });
+    const page = Number.isNaN(parseInt(req.query.page)) ? 1 : parseInt(req.query.page);
+    const limit = 6;
+    const skip = (page - 1) * limit;
+
+    totalUsers = await userModel.countDocuments();
+    const users = await userModel.find({})
+      .skip(skip)
+      .limit(limit);
+
+    const totalPages = Math.ceil(totalUsers / limit);
+    currentPage = page;
+    res.render('admin/users', { users, totalPages, currentPage, limit });
   } catch (error) {
     res.send(error);
     console.log('error', error)
@@ -230,11 +240,25 @@ const blockUser = async (req, res) => {
 }
 
 const loadInventory = async (req, res) => {
+  try {
+    const page = Number.isNaN(parseInt(req.query.page)) ? 1 : parseInt(req.query.page);
+    const limit = 6;
+    const skip = (page - 1) * limit;
 
-  const products = await productModel.find({});
+    const totalProducts = await productModel.countDocuments();
+    console.log(totalProducts)
+    const products = await productModel.find({})
+      .skip(skip)
+      .limit(limit);
 
-  res.render('admin/inventory', { products });
+    const totalPages = Math.ceil(totalProducts / limit);
+    currentPage = page;
 
+    res.render('admin/inventory', { products, currentPage, limit, totalPages });
+  } catch (error) {
+    res.send(error);
+    console.log('error', error)
+  }
 };
 
 const updateInventory = async (req, res) => {

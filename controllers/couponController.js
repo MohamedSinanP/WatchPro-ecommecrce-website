@@ -2,9 +2,21 @@ const couponModel = require('../models/couponModel');
 
 
 const loadCoupons = async (req, res) => {
-  const coupons = await couponModel.find({});
-  res.render('admin/coupons', { coupons });
+  try {
+    const page = Number.isNaN(parseInt(req.query.page)) ? 1 : parseInt(req.query.page);
+    const limit = 6;
+    const skip = (page - 1) * limit;
 
+    const totalCoupons = await couponModel.countDocuments();
+    const coupons = await couponModel.find({});
+
+    const totalPages = Math.ceil(totalCoupons/limit);
+    const currentPage = page;
+    res.render('admin/coupons', { coupons ,currentPage,limit,totalPages});
+  } catch (error) {
+    console.error('Error loading coupon', error)
+    res.status(500).json({ success: false, message: 'Failed to load coupons' });
+  }
 }
 
 const addCoupon = async (req, res) => {
@@ -58,7 +70,7 @@ const deleteCoupon = async (req, res) => {
 
 const applyCoupon = async (req, res) => {
   const { code, cartTotal } = req.body;
-  
+
   req.session.cartTotal = cartTotal;
   userId = req.session.user;
   try {
@@ -77,9 +89,9 @@ const applyCoupon = async (req, res) => {
     if (cartTotal < minPurchaseLimit) {
       return res.json({ success: false, message: `The coupon only get for purchase greter than ${minPurchaseLimit}` })
     }
-    if(coupon.userId.includes(userId)){
+    if (coupon.userId.includes(userId)) {
       return res.json({ success: false, message: 'Coupon can user only once' });
-    }else{
+    } else {
       coupon.userId.push(userId);
       coupon.save();
     };

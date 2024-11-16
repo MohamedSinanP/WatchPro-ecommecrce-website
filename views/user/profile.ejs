@@ -5,13 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Account</title>
-    <link rel="stylesheet" href="/css/User/userProfile.css">
-    <link rel="stylesheet" href="/css/User/accountSidebar.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="/css/User/images/icons/favicon.png" />
     <link rel="stylesheet" type="text/css" href="/css/User/vendor/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="/css/User/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" type="text/css" href="/css/User/fonts/iconic/css/material-design-iconic-font.min.css">
-    <link rel="stylesheet" type="text/css" href="/css/User/fonts/linearicons-v1.0.0/icon-font.min.css">
     <link rel="stylesheet" type="text/css" href="/css/User/vendor/animate/animate.css">
     <link rel="stylesheet" type="text/css" href="/css/User/vendor/css-hamburgers/hamburgers.min.css">
     <link rel="stylesheet" type="text/css" href="/css/User/vendor/animsition/css/animsition.min.css">
@@ -22,6 +20,10 @@
     <link rel="stylesheet" type="text/css" href="/css/User/vendor/perfect-scrollbar/perfect-scrollbar.css">
     <link rel="stylesheet" type="text/css" href="/css/User/css/util.css">
     <link rel="stylesheet" type="text/css" href="/css/User/css/main.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/User/userProfile.css">
+    <link rel="stylesheet" href="/css/User/accountSidebar.css">
 </head>
 
 <body>
@@ -31,7 +33,6 @@
 
         <div class="user-account-container">
             <aside class="sidebar-1">
-                <h2>Account</h2>
                 <nav>
                     <ul>
                         <li><a href="/user/profile">User Profile</a></li>
@@ -43,22 +44,18 @@
                 </nav>
             </aside>
             <main class="content">
-                <h1>Welcome to Your Account</h1>
-
-                <div class="profile-info">
-                    <P>ReferralCode:<%= user.referralCode %>
-                    </P>
+                <div class="profile-info text-center">
+                    <!-- Profile Icon -->
+                    <i class="fas fa-user-circle" style="font-size: 80px; color: #3f4144;"></i>
+                    <p>ReferralCode: <%= user.referralCode %></p>
                     <strong>Full Name: <span id="displayFullName">
                             <%= user.fullName %>
-                        </span></strong><br>
+                        </span></strong>
                     <strong>Email: <span id="displayEmail">
                             <%= user.email %>
-                        </span></strong><br>
-                    <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#editProfileModal">Edit
-                        Profile</a>
-                    <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#changePasswordModal">Change
-                        Password</a>
-
+                        </span></strong>
+                    <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#editProfileModal">Edit Profile</a>
+                    <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#changePasswordModal">Change Password</a>
                 </div>
 
             </main>
@@ -126,7 +123,8 @@
             </div>
         </div>
 
-
+		<!-- Footer -->
+		<%- include('../partials/user/footer') %>
 
         <!-- Scripts -->
         <script src="/css/User/vendor/jquery/jquery-3.2.1.min.js"></script>

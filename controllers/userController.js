@@ -1,4 +1,6 @@
 const userModel = require('../models/userModel');
+const productModel = require('../models/productModel');
+const offerModel = require('../models/offerModel');
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
 const addressModel = require('../models/addressModel');
@@ -8,8 +10,54 @@ const walletModel = require('../models/walletModel');
 const loadHomePage = async (req, res) => {
   try {
     const user = await userModel.findById(req.session.user);
-    res.render('user/home', { user });
+    const products = await productModel.find({}).limit(8);
+    const offers = await offerModel.find({ isActive: true }).populate([
+      { path: 'products' },
+      { path: 'categories' }
+    ]);
+
+    const modifiedProducts = products.map(product => {
+
+      const productOffers = offers.filter(offer => {
+        const matchesProduct = offer.products.some(prod => {
+
+          return prod._id.equals(product._id);
+        });
+
+        const productCategoryId = product.category._id ? product.category._id : product.category;
+        const matchesCategory = offer.categories.some(cat => {
+          return cat._id.equals(productCategoryId);
+        });
+
+
+        return matchesProduct || matchesCategory;
+      });
+
+
+      let offerPrice = product.price;
+
+      if (productOffers.length > 0) {
+
+        let bestOffer = productOffers[0];
+
+        if (bestOffer.discountType === 'percentage') {
+          const discountAmount = (product.price * bestOffer.discountValue) / 100;
+          offerPrice = (product.price - discountAmount).toFixed(2);
+        } else if (bestOffer.discountType === 'amount') {
+          offerPrice = (product.price - bestOffer.discountValue).toFixed(2);
+        }
+      }
+
+      return {
+        ...product.toObject(),
+        imageUrl: product.images[2],
+        offers: productOffers,
+        offerPrice,
+      };
+    });
+    res.render('user/home', { user ,products:modifiedProducts});
   } catch (error) {
+    console.log(error);
     res.status(500).send('Failed to load home page Try again');
   }
 };
@@ -347,12 +395,30 @@ const changePassword = async (req, res) => {
 const loadAddressPage = async (req, res) => {
   try {
     const userId = req.session.user;
-    const addresses = await addressModel.find({ userId: userId });
-    res.render('user/address', { addresses });
+    const page = Number.isNaN(parseInt(req.query.page)) ? 1 : parseInt(req.query.page);
+    const limit = 6;
+    const skip = (page - 1) * limit;
+
+    const totalAddress = await addressModel.countDocuments({ userId: userId });
+    const addresses = await addressModel
+      .find({ userId: userId })
+      .skip(skip)
+      .limit(limit);
+
+    const totalPages = Math.ceil(totalAddress / limit);
+    const currentPage = page;
+
+    res.render('user/address', {
+      addresses,
+      currentPage,
+      totalPages,
+      limit
+    });
   } catch (error) {
-    res.status(500).send('Failed to load address page Try again');
+    console.error('Error loading address page:', error);
+    res.status(500).send('Failed to load address page. Try again.');
   }
-}
+};
 
 const addAddress = async (req, res) => {
 
@@ -471,7 +537,22 @@ const deleteAddress = async (req, res) => {
 
 };
 
+const loadAboutPage = async(req,res) => {
+try {
+  res.render('user/about');
+} catch (error) {
+  res.status(500).send('Internal server error');
+}
+}
 
+const loadContactPage = async(req,res) => {
+try {
+  res.render('user/contact');
+} catch (error) {
+  res.status(500).send('Internal server error');
+}
+
+}
 module.exports = {
   loadHomePage,
   loadLoginPage,
@@ -490,4 +571,6 @@ module.exports = {
   addDefaultAddress,
   updateAddress,
   deleteAddress,
+  loadAboutPage,
+  loadContactPage
 }

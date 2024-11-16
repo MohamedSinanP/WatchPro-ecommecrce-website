@@ -9,38 +9,6 @@
      max-width: 1200px;
      margin: 40px auto;
    }
-
-   .sidebar-1 {
-     width: 200px;
-     background-color: #343a40;
-     padding: 20px;
-     border-radius: 8px;
-     color: #fff;
-   }
-
-   .sidebar-1 h2 {
-     font-size: 1.2rem;
-     margin-bottom: 1rem;
-   }
-
-   .sidebar-1 ul {
-     list-style-type: none;
-     padding: 0;
-   }
-
-   .sidebar-1 a {
-     color: #adb5bd;
-     display: block;
-     padding: 8px 0;
-     text-decoration: none;
-     font-size: 0.95rem;
-     transition: color 0.2s;
-   }
-
-   .sidebar-1 a:hover {
-     color: #fff;
-   }
-
    .content {
      flex: 1;
      background-color: #fff;
@@ -105,3 +73,26 @@
    .transaction-list li:last-child {
      border-bottom: none;
    }
+
+   @media (max-width: 768px) {
+    .user-account-container {
+      flex-direction: column;
+    }
+  
+    .sidebar-1 {
+      width: 100%;
+      margin-bottom: 20px;
+    }
+  
+    .content {
+      margin-left: 0;
+    }
+  
+    .address-card {
+      flex: 1 1 100%; /* Full width for cards on small screens */
+      max-width: 100%; /* Full width when only one card */
+    }
+  }
+  
+  
+  

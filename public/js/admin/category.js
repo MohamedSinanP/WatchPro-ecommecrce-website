@@ -1,3 +1,6 @@
+function loadPage(pageNumber) {
+  window.location.href = `/admin/categories?page=${pageNumber}`;
+}
 // Toggle sidebar for mobile view
 const menuToggle = document.querySelector('.menu-toggle');
 const sidebar = document.querySelector('.sidebar');

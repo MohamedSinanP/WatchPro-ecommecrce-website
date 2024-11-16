@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Wallet</title>
-    <link rel="stylesheet" href="/css/User/wallet.css">
-    <link rel="stylesheet" href="/css/User/accountSidebar.css">
     <link rel="icon" type="image/png" href="/css/User/images/icons/favicon.png"/>
     <link rel="stylesheet" type="text/css" href="/css/User/vendor/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="/css/User/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
@@ -21,6 +19,8 @@
     <link rel="stylesheet" type="text/css" href="/css/User/vendor/perfect-scrollbar/perfect-scrollbar.css">
     <link rel="stylesheet" type="text/css" href="/css/User/css/util.css">
     <link rel="stylesheet" type="text/css" href="/css/User/css/main.css">
+    <link rel="stylesheet" href="/css/User/wallet.css">
+    <link rel="stylesheet" href="/css/User/accountSidebar.css">
 </head>
 <body>
 
@@ -29,13 +29,12 @@
 
     <div class="user-account-container">
         <aside class="sidebar-1">
-            <h2>Account</h2>
             <nav>
                 <ul>
                     <li><a href="/user/profile">User Profile</a></li>
                     <li><a href="/user/address">Address</a></li>
                     <li><a href="/user/orders">Orders</a></li>
-                    <li><a href="/user/wallet">Wallet</a></li> <!-- Added Wallet link -->
+                    <li><a href="/user/wallet">Wallet</a></li>
                     <li><a href="logout.html">Logout</a></li>
                 </ul>
             </nav>
@@ -76,7 +75,8 @@
         </main>
     </div>
 
-
+      <!-- footer-->
+      <%- include('../partials/user/footer') %>
 
 <!-- Scripts -->
 <script src="/css/User/vendor/jquery/jquery-3.2.1.min.js"></script>

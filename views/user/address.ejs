@@ -1,12 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/css/User/address.css"> 
-    <link rel="stylesheet" href="/css/User/accountSidebar.css">
     <title>Address Management</title>
     <link rel="icon" type="image/png" href="/css/User/images/icons/favicon.png" />
     <link rel="stylesheet" type="text/css" href="/css/User/vendor/bootstrap/css/bootstrap.min.css">
@@ -24,6 +21,8 @@
     <link rel="stylesheet" type="text/css" href="/css/User/css/util.css">
     <link rel="stylesheet" type="text/css" href="/css/User/css/main.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="/css/User/address.css"> 
+    <link rel="stylesheet" href="/css/User/accountSidebar.css">
 </head>
 
 <body>
@@ -34,13 +33,12 @@
         <div class="user-account-container">
             <!-- Sidebar -->
             <aside class="sidebar-1">
-                <h2>Account</h2>
                 <nav>
                     <ul>
                         <li><a href="/user/profile">User Profile</a></li>
                         <li><a href="/user/address">Address</a></li>
                         <li><a href="/user/orders">Orders</a></li>
-                        <li><a href="/user/wallet">Wallet</a></li> <!-- Added Wallet link -->
+                        <li><a href="/user/wallet">Wallet</a></li>
                         <li><a href="logout.html">Logout</a></li>
                     </ul>
                 </nav>
@@ -49,33 +47,19 @@
             <!-- Address Management Content -->
             <div class="content">
                 <h1 class="m-b-5">Your Addresses</h1>
-                <button class="btn" data-toggle="modal" data-target="#addAddressModal" class="m-b-5">Add
+                <button class="m-b-5 btn" data-toggle="modal" data-target="#addAddressModal" >Add
                     Address</button>
 
                 <div class="address-card-container"> <!-- Add this wrapper -->
                     <% addresses.forEach((address)=> { %>
                         <div class="address-card mb-3 p-3 border rounded">
-                            <p><strong>First Name:</strong>
                                 <%= address.firstName %>
-                            </p>
-                            <p><strong>Last Name:</strong>
                                 <%= address.lastName %>
-                            </p>
-                            <p><strong>Address:</strong>
                                 <%= address.address %>
-                            </p>
-                            <p><strong>Phone Number:</strong>
                                 <%= address.phoneNumber %>
-                            </p>
-                            <p><strong>City:</strong>
                                 <%= address.city %>
-                            </p>
-                            <p><strong>State:</strong>
                                 <%= address.state %>
-                            </p>
-                            <p><strong>Pincode:</strong>
                                 <%= address.pincode %>
-                            </p>
                             <div class="actions">
                                 <button class="btn btn-sm btn-secondary"
                                     onclick="editAddress('<%= address._id %>', '<%= address.firstName %>', '<%= address.lastName %>', '<%= address.address %>', '<%= address.phoneNumber %>', '<%= address.city %>', '<%= address.state %>', '<%= address.pincode %>')">Edit</button>
@@ -247,6 +231,24 @@
                 </div>
             </div>
         </div>
+        <div class="pagination-controls d-flex justify-content-center my-3">
+            <% if (totalPages > 1) { %>
+              <% if (currentPage > 1) { %>
+                <button onclick="loadPage('<%= currentPage - 1 %>')" class="btn btn-primary mx-1 my-1">&laquo;</button>
+              <% } %>
+              <% for (let i = 1; i <= totalPages; i++) { %>
+                <button onclick="loadPage('<%= i %>')" class="btn <%= i === currentPage ? 'btn-secondary' : 'btn-light' %> mx-1">
+                  <%= i %>
+                </button>
+              <% } %>
+              <% if (currentPage < totalPages) { %>
+                <button onclick="loadPage('<%= currentPage + 1 %>')" class="btn btn-primary mx-1 my-1">&raquo;</button>
+              <% } %>
+            <% } %>
+          </div>
+        <!-- footer-->
+        <%- include('../partials/user/footer') %>
+
         <script src="/css/User/vendor/jquery/jquery-3.2.1.min.js"></script>
         <script src="/css/User/vendor/animsition/js/animsition.min.js"></script>
         <script src="/css/User/vendor/bootstrap/js/popper.js"></script>
@@ -264,6 +266,7 @@
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script src="/js/user/address.js"></script>
+        
 
 </body>
 

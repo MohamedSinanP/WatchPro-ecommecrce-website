@@ -1,3 +1,7 @@
+function loadPage(pageNumber) {
+  window.location.href = `/admin/users?page=${pageNumber}`;
+}
+
 const menuToggle = document.querySelector('.menu-toggle');
 const sidebar = document.querySelector('.sidebar');
 menuToggle.addEventListener('click', () => {

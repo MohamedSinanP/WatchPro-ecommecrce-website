@@ -1,15 +1,19 @@
 /* Sidebar Styles */
 .sidebar-1 {
-  width: 250px;
+  width: 200px;
   height: 260px;
-  background-color: #007bff;
-  color: white;
+  background-color: #ffffff;
+  color: rgb(0, 0, 0);
   padding: 20px;
   border-radius: 5px;
+  border: 1px solid rgb(0, 0, 0);
+  font-family: Arial, sans-serif;
+  transition: all 0.3s ease-in-out; /* Smooth transitions */
 }
 
 .sidebar-1 h2 {
   margin-top: 0;
+  font-family: Arial, sans-serif;
 }
 
 .sidebar-1 nav ul {
@@ -18,15 +22,49 @@
 }
 
 .sidebar-1 nav ul li {
-  margin: 15px 0;
+  margin: 20px 0;
+  text-align: center;
 }
 
 .sidebar-1 nav ul li a {
-  color: white;
+  color: rgb(0, 0, 0);
   text-decoration: none;
   font-weight: bold;
 }
 
 .sidebar-1 nav ul li a:hover {
   text-decoration: underline;
+}
+
+/* Responsive Sidebar */
+@media (max-width: 768px) {
+  .sidebar-1 {
+    width: 100%; /* Sidebar takes full width */
+    height: auto; /* Adjust height to fit content */
+    padding: 15px; /* Reduce padding for smaller devices */
+    border-radius: 0; /* Remove border-radius for full-width */
+    border: none; /* Optional: remove border */
+  }
+
+  .sidebar-1 nav ul li {
+    margin: 10px 0; /* Reduce margin between items */
+  }
+
+  .sidebar-1 nav ul li a {
+    font-size: 14px; /* Adjust font size */
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar-1 {
+    padding: 10px; /* Further reduce padding */
+  }
+
+  .sidebar-1 nav ul li {
+    margin: 8px 0; /* Reduce margin for very small devices */
+  }
+
+  .sidebar-1 nav ul li a {
+    font-size: 12px; /* Smaller font for very small devices */
+  }
 }

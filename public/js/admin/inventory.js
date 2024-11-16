@@ -1,3 +1,6 @@
+function loadPage(pageNumber) {
+  window.location.href = `/admin/inventory?page=${pageNumber}`;
+}
 // Menu Toggle Logic
 const menuToggle = document.querySelector('.menu-toggle');
 const sidebar = document.querySelector('.sidebar');

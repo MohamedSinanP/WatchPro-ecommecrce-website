@@ -165,6 +165,33 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('Error creating COD order:', error);
         alert('An error occurred. Please try again.');
       }
+    }else if(paymentMethod.value === "Wallet"){
+      try {
+        const response = await axios.post('/user/walletOrder',{
+          totalPrice: totalPrice,
+          paymentMethod: "Wallet",
+          addressId: addressId,
+          totalDiscount: totalDiscount
+        });
+        if (response.data.success) {
+          console.log('hhhhhhhhh');
+          
+          window.location.href = '/user/greetings';
+        } else {
+          const message = response.data.message;
+          Toastify({
+            text: message,
+            duration: 3000,
+            close: true,
+            gravity: "top",
+            position: "right",
+            backgroundColor: "#FF0000",
+            stopOnFocus: true,
+          }).showToast();
+        }
+      } catch (error) {
+        
+      }
     }
   }
 

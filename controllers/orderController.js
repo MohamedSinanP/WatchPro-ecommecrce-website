@@ -268,6 +268,82 @@ const addOrderDetails = async (req, res) => {
 
 }
 
+const walletOrder = async (req, res) => {
+  const { totalPrice, paymentMethod, addressId, totalDiscount } = req.body;
+  console.log(paymentMethod);
+
+  const userId = req.session.user;
+
+  try {
+    const address = await addressModel.findOne({ _id: addressId });
+    const userWallet = await walletModel.findOne({ userId: userId });
+    const userBalance = userWallet.balance;
+    if (userBalance < totalPrice) {
+      return res.json({ success: false, message: "Cannot pay with Wallet your wallet doesn't have enough money" });
+    }
+    const walletBalance = userBalance - totalPrice;
+    const cart = await cartModel.findOne({ userId: userId }).populate('products.productId');
+    if (!cart || cart.products.length === 0) {
+      return res.status(400).send("Cart is empty");
+    }
+
+
+    const products = cart.products.map(item => ({
+      productId: item.productId._id,
+      quantity: item.quantity,
+      name: item.productId.name,
+      price: item.productId.price
+    }));
+
+    console.log("addOrderDetails products:", products);
+
+
+    const newOrder = await orderModel.create({
+      userId,
+      products,
+      address: {
+        firstName: address.firstName,
+        lastName: address.lastName,
+        address: address.address,
+        phoneNumber: address.phoneNumber,
+        state: address.state,
+        city: address.city,
+        pincode: address.pincode
+      },
+      total: totalPrice,
+      status: 'Pending',
+      paymentMethod: paymentMethod,
+      totalDiscount: totalDiscount
+    });
+    for (const product of products) {
+      const { productId, quantity } = product;
+
+      await productModel.findOneAndUpdate(
+        { _id: productId },
+        { $inc: { stock: -quantity } },
+        { new: true }
+      );
+    }
+
+    userWallet.transaction.push({
+      transactionType: 'debit',
+      amount: newOrder.total,
+      date: new Date()
+    });
+
+    userWallet.balance = walletBalance;
+    await userWallet.save();
+    const deleteUserCart = await cartModel.findOneAndDelete({ userId: userId });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.log("Error placing order:", error);
+    res.status(500).send("Internal Server Error");
+  }
+
+
+}
+
 const loadGreetingsPage = async (req, res) => {
 
   res.render('user/orderGreetings');
@@ -360,13 +436,22 @@ const deleteOrderItem = async (req, res) => {
 };
 
 const loadOrdersPage = async (req, res) => {
-  userId = req.session.user;
   try {
-    const orders = await orderModel.find({ userId: userId }).populate('products.productId');
+    userId = req.session.user;
+    const page = Number.isNaN(parseInt(req.query.page)) ? 1 : parseInt(req.query.page);
+    const limit = 6;
+    const skip = (page - 1) * limit;
 
+    const totalOrders = await orderModel.countDocuments({userId:userId});
+    const orders = await orderModel
+      .find({ userId: userId }).populate('products.productId')
+      .skip(skip)
+      .limit(limit);
 
+    const totalPages = Math.ceil(totalOrders / limit);
+    const currentPage = page;
 
-    res.render('user/orders', { orders });
+    res.render('user/orders', { orders, currentPage, totalPages, limit });
   } catch (error) {
     console.error('Error loading orders page:', error);
     res.status(500).send('Cannot load order details page. Try again');
@@ -517,9 +602,9 @@ const downloadInvoice = async (req, res) => {
         }),
         {
           "description": "Discount",
-          "price": -totalDiscount,  
-          "quantity": 0,  
-          "tax": 0        
+          "price": -totalDiscount,
+          "quantity": 0,
+          "tax": 0
         }
       ],
       "bottomNotice": `Thank you for your purchase! Discount applied: ${totalDiscount}`,
@@ -527,7 +612,7 @@ const downloadInvoice = async (req, res) => {
 
     const result = await easyinvoice.createInvoice(invoiceData);
 
-  
+
     fs.writeFileSync("invoice.pdf", result.pdf, 'base64');
 
     res.setHeader('Content-Disposition', 'attachment; filename=invoice.pdf');
@@ -553,6 +638,7 @@ module.exports = {
   defaultAddress,
   createOrder,
   addOrderDetails,
+  walletOrder,
   loadGreetingsPage,
   deleteOrderItem,
   loadOrdersPage,

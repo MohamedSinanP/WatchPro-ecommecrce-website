@@ -10,9 +10,18 @@ const offerModel = require('../models/offerModel');
 
 const loadProducts = async (req, res) => {
   try {
+    const page = Number.isNaN(parseInt(req.query.page)) ? 1 : parseInt(req.query.page);
+    const limit = 6;
+    const skip = (page - 1) * limit;
     const categories = await categoryModel.find();
-    const products = await productModel.find().populate('category');
-    res.render('admin/products', { products, categories });
+    const totalProducts = await productModel.countDocuments();
+    const products = await productModel.find().populate('category')
+      .skip(skip)
+      .limit(limit);
+
+    const totalPages = Math.ceil(totalProducts / limit);
+    currentPage = page;
+    res.render('admin/products', { products, categories, currentPage, limit, totalPages });
   } catch (error) {
     console.log(error);
     res.status(500).send('internal server error')
@@ -195,19 +204,19 @@ const loadSingleProductPage = async (req, res) => {
     const productId = req.params.id;
 
     const product = await productModel.findById(productId).populate('category');
-    
- console.log(product.category);
+
+    console.log(product.category);
 
     const relatedProducts = await productModel
-    .find({ category: product.category._id, _id: { $ne: productId } })
-    .select('name price images')
-    .limit(4);
+      .find({ category: product.category._id, _id: { $ne: productId } })
+      .select('name price images')
+      .limit(4);
 
 
 
     const formattedRelatedProducts = relatedProducts.map(relatedProduct => ({
       ...relatedProduct.toObject(),
-      imageUrl: relatedProduct.images[2] || '' 
+      imageUrl: relatedProduct.images[2] || ''
     }));
 
     // Fetch active offers
@@ -262,10 +271,10 @@ const filterProduct = async (req, res) => {
 
     // Check if both category name and genderType are provided
     if (category || genderType) {
-      
+
       const categoryDoc = await categoryModel.findOne({ name: category, genderType: genderType });
       console.log(categoryDoc);
-      
+
       if (categoryDoc) {
         categoryFilter = { category: categoryDoc._id };
       } else {

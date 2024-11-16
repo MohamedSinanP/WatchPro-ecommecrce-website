@@ -1,5 +1,6 @@
-// form validation for both add and edit product
-
+function loadPage(pageNumber) {
+    window.location.href = `/admin/products?page=${pageNumber}`;
+  }
 document.getElementById('productForm').addEventListener('submit', function (event) {
     event.preventDefault(); // Prevent form from submitting
 

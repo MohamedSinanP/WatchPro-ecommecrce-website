@@ -6,10 +6,20 @@ const offerModel = require('../models/offerModel');
 const loadOffers = async (req, res) => {
 
   try {
+    const page = Number.isNaN(parseInt(req.query.page)) ? 1 : parseInt(req.query.page);
+    const limit = 6;
+    const skip = (page - 1) * limit;
+
+    const totalOffers = await offerModel.countDocuments();
     const products = await productModel.find();
     const categories = await categoryModel.find();
-    const offers = await offerModel.find().populate('products').populate('categories');
-    res.render('admin/offers', { offers, products, categories });
+    const offers = await offerModel.find().populate('products').populate('categories')
+      .skip(skip)
+      .limit(limit);
+
+    const totalPages = Math.ceil(totalOffers / limit);
+    const currentPage = page
+    res.render('admin/offers', { offers, products, categories, currentPage, limit, totalPages });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Internel server error' });

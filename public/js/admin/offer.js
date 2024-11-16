@@ -1,11 +1,12 @@
+function loadPage(pageNumber) {
+  window.location.href = `/admin/offers?page=${pageNumber}`;
+}
+
 const menuToggle = document.querySelector('.menu-toggle');
 const sidebar = document.querySelector('.sidebar');
 menuToggle.addEventListener('click', () => {
   sidebar.classList.toggle('active');
 });
-
-
-
 
 function openAddOfferModal() {
   const addOfferModal = new bootstrap.Modal(document.getElementById('addOfferModal'));
