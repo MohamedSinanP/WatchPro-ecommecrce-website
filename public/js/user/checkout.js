@@ -84,8 +84,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         if (response.data.success) {
-          const { orderId, amount, currency } = response.data;
-
+          const { orderId, amount, currency, Id } = response.data;
+          const orderid = Id;
           const options = {
             key: "rzp_test_X9NFs9mKeaCGys",
             amount: amount,
@@ -93,10 +93,10 @@ document.addEventListener('DOMContentLoaded', function () {
             name: "WatchPro",
             description: "Order Payment",
             order_id: orderId,
-            handler:  async function (response) {
+            handler: async function (response) {
               if (response.razorpay_payment_id && response.razorpay_order_id && response.razorpay_signature) {
                 const orderId = response.razorpay_order_id;
-                const result = await axios.post('/user/paymentSuccess', { orderId })
+                const result = await axios.post('/user/paymentSuccess', { orderid })
                 if (result.data.success) {
                   window.location.href = result.data.redirectUrl;
                 } else {
@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function () {
           const rzp = new Razorpay(options);
           rzp.on('payment.failed', function (response) {
             console.log("Payment failed:", response.error);
-            window.location.href = '/user/orders';  
+            window.location.href = '/user/orders';
           });
           rzp.open();
         } else {
@@ -165,9 +165,9 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('Error creating COD order:', error);
         alert('An error occurred. Please try again.');
       }
-    }else if(paymentMethod.value === "Wallet"){
+    } else if (paymentMethod.value === "Wallet") {
       try {
-        const response = await axios.post('/user/walletOrder',{
+        const response = await axios.post('/user/walletOrder', {
           totalPrice: totalPrice,
           paymentMethod: "Wallet",
           addressId: addressId,
@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         if (response.data.success) {
           console.log('hhhhhhhhh');
-          
+
           window.location.href = '/user/greetings';
         } else {
           const message = response.data.message;
@@ -190,7 +190,7 @@ document.addEventListener('DOMContentLoaded', function () {
           }).showToast();
         }
       } catch (error) {
-        
+
       }
     }
   }

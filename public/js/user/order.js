@@ -19,14 +19,26 @@ async function cancelOrderProduct(orderId, productId, total) {
 
 async function returnProduct(orderId) {
   try {
-    const response = await axios.post(`/user/returnOrder/${orderId}`);
-    if (response.data.success) {
-      location.reload();
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Do you really want to return this product?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, return it!',
+      cancelButtonText: 'No, keep it',
+    });
+    if (result.isConfirmed) {
+      const response = await axios.post(`/user/returnOrder/${orderId}`);
+      if (response.data.success) {
+        location.reload();
+      }
     }
   } catch (error) {
     console.error('Error cancelling product:', error);
   }
-}
+};
 
 async function retryPayment(orderId, razorpayId) {
 
@@ -111,15 +123,15 @@ async function downloadInvoice(orderId) {
     if (response.status === 200) {
 
       const blob = new Blob([response.data], { type: 'application/pdf' });
-      
+
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `invoice_${orderId}.pdf`;  
-      
+      link.download = `invoice_${orderId}.pdf`;
+
       document.body.appendChild(link);
       link.click();
-      
+
       window.URL.revokeObjectURL(url);
       document.body.removeChild(link);
 

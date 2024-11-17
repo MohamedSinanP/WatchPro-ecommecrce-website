@@ -50,16 +50,22 @@ $(document).ready(function () {
     };
 
 
+   
     $.ajax({
       url: '/user/wishlist',
       method: 'POST',
       contentType: 'application/json',
       data: JSON.stringify(productData),
       success: function (response) {
-        toastr.success('Product added to wishlist successfully!');
+        if (response.success) {
+          toastr.success(response.message);
+        } else {
+          toastr.warning(response.message); 
+        }
       },
-      error: function (xhr, status, error) {
-        toastr.success('Failed to add product to the cart.');
+      error: function (xhr) {
+        const response = JSON.parse(xhr.responseText);
+        toastr.error(response.message || 'An unknown error occurred.');
       }
     });
   });

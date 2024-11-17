@@ -57,7 +57,21 @@ function loadPage(pageNumber) {
     async function updateOrderStatus(orderId, newStatus) {
       try {
         const response = await axios.put(`/admin/orders/updateStatus/${orderId}`, { status: newStatus });
-        if (response.status === 200) location.reload();
+        if (response.data.success) location.reload();
+        else {
+          const message = response.data.message
+          console.log(message);
+          Toastify({
+            text:message,
+            duration: 3000,
+            gravity: "top", 
+            position: "right", 
+            backgroundColor: "#FF5733", 
+          }).showToast();
+          setTimeout(() => {
+            location.reload();
+          }, 1000); 
+        }
       } catch (error) {
         console.error('Error updating order status:', error);
       }

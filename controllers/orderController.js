@@ -44,21 +44,21 @@ const loadOrders = async (req, res) => {
 };
 
 const updateStatus = async (req, res) => {
-  const orderId = req.params.id;
-  const { status } = req.body;
-
   try {
+    const statusOrder = ['Pending', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled', 'Returned'];
+    const orderId = req.params.id;
+    const { status } = req.body;
+    const order = await orderModel.findById(orderId);
+    const currentStatus = order.status;
+    if (statusOrder.indexOf(status) < statusOrder.indexOf(currentStatus)) {
+      return res.json({success:false, message: 'Invalid status update. Cannot revert to a previous status.' })
+    }
     const updatedOrder = await orderModel.findByIdAndUpdate(
       orderId,
       { status: status },
       { new: true }
     );
-
-    if (!updatedOrder) {
-      return res.status(404).send('Order not found');
-    }
-
-    res.status(200).json(updatedOrder);
+    res.json({success:true,updatedOrder});
   } catch (error) {
     console.error(error);
     res.status(500).send('Server error');
@@ -90,16 +90,21 @@ const cancelOrder = async (req, res) => {
 
 
 const loadCheckoutPage = async (req, res) => {
-  const cartTotal = parseFloat(req.query.cartTotal);
-  const totalDiscount = req.query.totalDiscount;
-  const userId = req.session.user;
-  const shippingCharge = 100;
-  const cartItems = await cartModel.findOne({ userId: userId }).populate('products.productId');
-  const addresses = await addressModel.find({ userId: userId });
-  const user = await userModel.findOne({ _id: userId });
-  const total = (shippingCharge + cartTotal).toFixed(2);
+  try {
+    const cartTotal = parseFloat(req.query.cartTotal);
+    const totalDiscount = req.query.totalDiscount;
+    const userId = req.session.user;
+    const shippingCharge = 100;
+    const cartItems = await cartModel.findOne({ userId: userId }).populate('products.productId');
+    const addresses = await addressModel.find({ userId: userId });
+    const user = await userModel.findOne({ _id: userId });
+    const total = (shippingCharge + cartTotal).toFixed(2);
 
-  res.render('user/checkout', { cartItems, addresses, cartTotal, user, shippingCharge, total, totalDiscount });
+    res.render('user/checkout', { cartItems, addresses, cartTotal, user, shippingCharge, total, totalDiscount });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'internal server error' });
+  }
 }
 
 const defaultAddress = async (req, res) => {
@@ -119,14 +124,13 @@ const defaultAddress = async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     console.error(error);
-    res.json({ success: false, message: 'Failed to set default address.' });
+    res.status(500).json({ success: false, message: 'Failed to set default address.' });
   }
 };
 
 const createOrder = async (req, res) => {
 
   const userId = req.session.user;
-  console.log("createOrder function finished for userId:", userId);
   try {
     let { totalPrice, paymentMethod, addressId, totalDiscount } = req.body;
 
@@ -139,8 +143,10 @@ const createOrder = async (req, res) => {
       currency: "INR",
       receipt: `order_rcptid_${Math.floor(Math.random() * 1000000)}`,
     };
-
     const razorpayOrder = await razorpay.orders.create(options);
+    if (!razorpayOrder || !razorpayOrder.id) {
+      throw new Error("Failed to create Razorpay order");
+    }
     const address = await addressModel.findOne({ _id: addressId });
     if (!address) {
       return res.status(400).send("No default address found");
@@ -157,8 +163,6 @@ const createOrder = async (req, res) => {
       name: item.productId.name,
       price: item.productId.price,
     }));
-
-    console.log("createOrder products:", products); // In createOrder
 
     const newOrder = await orderModel.create({
       userId,
@@ -184,7 +188,7 @@ const createOrder = async (req, res) => {
     for (const product of products) {
       const { productId, quantity } = product;
       await productModel.updateOne(
-        { _id: productId, stock: { $gte: quantity } }, // Check if stock is sufficient
+        { _id: productId, stock: { $gte: quantity } },
         { $inc: { stock: -quantity } }
       );
     }
@@ -197,6 +201,7 @@ const createOrder = async (req, res) => {
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency,
       deliveryDate: newOrder.deliveryDate,
+      Id: newOrder._id
     });
   } catch (error) {
     console.log("Error creating order:", error);
@@ -442,7 +447,7 @@ const loadOrdersPage = async (req, res) => {
     const limit = 6;
     const skip = (page - 1) * limit;
 
-    const totalOrders = await orderModel.countDocuments({userId:userId});
+    const totalOrders = await orderModel.countDocuments({ userId: userId });
     const orders = await orderModel
       .find({ userId: userId }).populate('products.productId')
       .skip(skip)
@@ -490,9 +495,9 @@ const returnOrder = async (req, res) => {
 }
 
 const paymentSuccess = async (req, res) => {
+  console.log('hhhhhhhhhh');
   try {
     const { orderid } = req.body;
-
     const order = await orderModel.findOne({ _id: orderid });
     if (order) {
       order.paymentStatus = 'success';

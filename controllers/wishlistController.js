@@ -50,43 +50,32 @@ const loadWishlistPage = async (req, res) => {
 }
 
 const addToWishlist = async (req, res) => {
-  console.log('dfhkd');
-
   const userId = req.session.user;
   const { productId, name, price, quantity } = req.body;
   try {
-
     let wishlist = await wishlistModel.findOne({ userId });
 
     if (wishlist) {
       let itemIndex = wishlist.products.findIndex(p => p.productId == productId);
 
       if (itemIndex > -1) {
-        console.log('blah blah blah');
-
+        return res.status(200).json({ success: false, message: 'The product is already added to wishlist' });
       } else {
         wishlist.products.push({ productId, quantity, name, price });
       }
       wishlist = await wishlist.save();
-      return res.status(201).send(wishlist);
+      return res.status(201).json({ success: true, message: 'Product added successfully to wishlist', wishlist });
     } else {
-      console.log('kkkkk');
-
       const newWishlist = await wishlistModel.create({
         userId,
         products: [{ productId, quantity, name, price }]
       });
-      return res.status(201).send(newWishlist);
+      return res.status(201).json({ success: true, message: 'Wishlist created and product added', wishlist: newWishlist });
     }
-
-
-
   } catch (error) {
-    console.log(error);
-    res.status(500).json('internel server error');
-
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
-
 }
 
 const deleteWishlistProduct = async (req, res) => {

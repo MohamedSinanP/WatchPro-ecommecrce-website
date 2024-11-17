@@ -13,7 +13,7 @@ document.querySelectorAll('.filter-link').forEach(link => {
 
     function fetchProducts(page = 1) {
       axios.get(`/user/products/filter`, {
-        params: { page, limit, sortBy, price, category,genderType: genderType, order }
+        params: { page, limit, sortBy, price, category, genderType: genderType, order }
       })
         .then(response => {
           const { products, totalPages, currentPage } = response.data;
@@ -49,7 +49,7 @@ document.querySelectorAll('.filter-link').forEach(link => {
     </div>
             `).join('');
 
-        
+
           document.getElementById('page-info').innerText = `Page ${currentPage} of ${totalPages}`;
           document.getElementById('prev-page').disabled = currentPage === 1;
           document.getElementById('next-page').disabled = currentPage === totalPages;
@@ -57,7 +57,7 @@ document.querySelectorAll('.filter-link').forEach(link => {
         .catch(error => console.error('Error fetching products:', error));
     }
 
-    
+
     document.getElementById('prev-page').addEventListener('click', () => {
       if (currentPage > 1) {
         currentPage--;
@@ -70,7 +70,7 @@ document.querySelectorAll('.filter-link').forEach(link => {
       fetchProducts(currentPage);
     });
 
-  
+
     fetchProducts(currentPage);
   });
 });
@@ -78,31 +78,31 @@ document.querySelectorAll('.filter-link').forEach(link => {
 
 
 document.addEventListener('DOMContentLoaded', () => {
-const searchButton = document.getElementById('search-button');
-const searchInput = document.getElementById('search-input');
-const searchResultsContainer = document.getElementById('search-results');
+  const searchButton = document.getElementById('search-button');
+  const searchInput = document.getElementById('search-input');
+  const searchResultsContainer = document.getElementById('search-results');
 
-function handleSearch() {
-const query = searchInput.value.trim();
-console.log(query);
+  function handleSearch() {
+    const query = searchInput.value.trim();
+    console.log(query);
 
-if (query) {
-axios.get('/user/searchProduct', {
-params: { query: query }
-})
-.then(response => {
-const { products } = response.data;
-console.log(products);
+    if (query) {
+      axios.get('/user/searchProduct', {
+        params: { query: query }
+      })
+        .then(response => {
+          const { products } = response.data;
+          console.log(products);
 
 
-// Check if products is an array
-if (!Array.isArray(products)) {
-  console.error('Expected products to be an array:', products);
-  return;
-}
+          // Check if products is an array
+          if (!Array.isArray(products)) {
+            console.error('Expected products to be an array:', products);
+            return;
+          }
 
-// Clear the product list before displaying new results
-document.querySelector('#product-list').innerHTML = products.map(product => `
+          // Clear the product list before displaying new results
+          document.querySelector('#product-list').innerHTML = products.map(product => `
   <div class="col-sm-6 col-md-4 col-lg-3 p-b-35 isotope-item ${product.category}">
     <div class="block2">
       <div class="block2-pic hov-img0">
@@ -131,19 +131,58 @@ document.querySelector('#product-list').innerHTML = products.map(product => `
     </div>
   </div>
 `).join('');
-})
-.catch(error => {
-console.error('Error fetching search results:', error);
-if (searchResultsContainer) {
-  searchResultsContainer.innerHTML = '<p>Error fetching results</p>';
-} else {
-  console.error("Search results container not found.");
-}
-});
-} else {
-alert('Please enter a search term');
-}
-}
+        })
+        .catch(error => {
+          console.error('Error fetching search results:', error);
+          if (searchResultsContainer) {
+            searchResultsContainer.innerHTML = '<p>Error fetching results</p>';
+          } else {
+            console.error("Search results container not found.");
+          }
+        });
+    } else {
+      alert('Please enter a search term');
+    }
+  }
 
-searchButton.addEventListener('click', handleSearch);
+  searchButton.addEventListener('click', handleSearch);
+});
+
+$(document).ready(function () {
+  $('.js-addWishlist-detail').on('click', function (e) {
+    e.preventDefault(); // Prevent the default action
+
+    // Get product details from the data attributes dynamically
+    let productId = $(this).data('product-id');
+    let productName = $(this).data('product-name');
+    let productPrice = $(this).data('product-price');
+    let productQuantity = $(this).data('product-quantity');
+
+
+    let productData = {
+      productId: productId,
+      name: productName,
+      price: productPrice,
+      quantity: productQuantity
+    };
+
+
+    $.ajax({
+      url: '/user/wishlist',
+      method: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify(productData),
+      success: function (response) {
+        if (response.success) {
+          toastr.success(response.message);
+        } else {
+          toastr.warning(response.message); 
+        }
+      },
+      error: function (xhr) {
+        const response = JSON.parse(xhr.responseText);
+        toastr.error(response.message || 'An unknown error occurred.');
+      }
+    });
+  });
 });

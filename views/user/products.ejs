@@ -35,6 +35,7 @@
 	<link rel="stylesheet" type="text/css" href="/css/User/css/util.css">
 	<link rel="stylesheet" type="text/css" href="/css/User/css/main.css">
 	<!--===============================================================================================-->
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
 </head>
 
 <body class="animsition">
@@ -232,12 +233,14 @@
 									</div>
 
 									<div class="block2-txt-child2 flex-r p-t-3">
-										<a href="#" class="btn-addwish-b2 dis-block pos-relative js-addwish-b2">
+										<div class="btn-addwish-b2 dis-block pos-relative js-addwish-b2 js-addWishlist-detail"
+											data-product-id="<%= product._id %>" data-product-name="<%= product.name %>"
+											data-product-price="<%= product.price %>" data-product-quantity="1">
 											<img class="icon-heart1 dis-block trans-04" src="/css/User/images/icons/icon-heart-01.png"
 												alt="ICON">
 											<img class="icon-heart2 dis-block trans-04 ab-t-l" src="/css/User/images/icons/icon-heart-02.png"
 												alt="ICON">
-										</a>
+										</div>
 									</div>
 								</div>
 							</div>
@@ -271,15 +274,15 @@
 				</span>
 			</div>
 
-
-			<!--===============================================================================================-->
 			<script src="/css/User/vendor/jquery/jquery-3.2.1.min.js"></script>
-			<!--===============================================================================================-->
+
+			<!-- Toastr JS -->
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+			<!-- Other scripts -->
 			<script src="/css/User/vendor/animsition/js/animsition.min.js"></script>
-			<!--===============================================================================================-->
 			<script src="/css/User/vendor/bootstrap/js/popper.js"></script>
 			<script src="/css/User/vendor/bootstrap/js/bootstrap.min.js"></script>
-			<!--===============================================================================================-->
 			<script src="/css/User/vendor/select2/select2.min.js"></script>
 			<script>
 				$(".js-select2").each(function () {
@@ -287,20 +290,16 @@
 						minimumResultsForSearch: 20,
 						dropdownParent: $(this).next('.dropDownSelect2')
 					});
-				})
+				});
 			</script>
-			<!--===============================================================================================-->
 			<script src="/css/User/vendor/daterangepicker/moment.min.js"></script>
 			<script src="/css/User/vendor/daterangepicker/daterangepicker.js"></script>
-			<!--===============================================================================================-->
 			<script src="/css/User/vendor/slick/slick.min.js"></script>
 			<script src="/css/User/js/slick-custom.js"></script>
-			<!--===============================================================================================-->
 			<script src="/css/User/vendor/parallax100/parallax100.js"></script>
 			<script>
 				$('.parallax100').parallax100();
 			</script>
-			<!--===============================================================================================-->
 			<script src="/css/User/vendor/MagnificPopup/jquery.magnific-popup.min.js"></script>
 			<script>
 				$('.gallery-lb').each(function () { // the containers for all your galleries
@@ -314,47 +313,8 @@
 					});
 				});
 			</script>
-			<!--===============================================================================================-->
 			<script src="/css/User/vendor/isotope/isotope.pkgd.min.js"></script>
-			<!--===============================================================================================-->
 			<script src="/css/User/vendor/sweetalert/sweetalert.min.js"></script>
-			<script>
-				$('.js-addwish-b2, .js-addwish-detail').on('click', function (e) {
-					e.preventDefault();
-				});
-
-				$('.js-addwish-b2').each(function () {
-					var nameProduct = $(this).parent().parent().find('.js-name-b2').html();
-					$(this).on('click', function () {
-						swal(nameProduct, "is added to wishlist !", "success");
-
-						$(this).addClass('js-addedwish-b2');
-						$(this).off('click');
-					});
-				});
-
-				$('.js-addwish-detail').each(function () {
-					var nameProduct = $(this).parent().parent().parent().find('.js-name-detail').html();
-
-					$(this).on('click', function () {
-						swal(nameProduct, "is added to wishlist !", "success");
-
-						$(this).addClass('js-addedwish-detail');
-						$(this).off('click');
-					});
-				});
-
-				/*---------------------------------------------*/
-
-				$('.js-addcart-detail').each(function () {
-					var nameProduct = $(this).parent().parent().parent().parent().find('.js-name-detail').html();
-					$(this).on('click', function () {
-						swal(nameProduct, "is added to cart !", "success");
-					});
-				});
-
-			</script>
-			<!--===============================================================================================-->
 			<script src="/css/User/vendor/perfect-scrollbar/perfect-scrollbar.min.js"></script>
 			<script>
 				$('.js-pscroll').each(function () {
