@@ -11,10 +11,8 @@ menuToggle.addEventListener('click', () => {
 
 async function toggleListing(userId, isCurrentlyBlocked) {
 try {
-// Determine the new status to be updated (flip the current status)
 const newStatus = isCurrentlyBlocked === 'true' ? false : true;
 
-// Make a POST request using fetch with the updated status
 const response = await fetch('/admin/blockUser', {
   method: 'PUT',
   headers: {
@@ -31,8 +29,7 @@ const data = await response.json();
 
 
 if (data.success) {
-  alert(`successfully!`);
-  location.reload(); // Reload the page to reflect changes
+  location.reload();
 } else {
   alert('Failed to update the category status. Please try again.');
 }

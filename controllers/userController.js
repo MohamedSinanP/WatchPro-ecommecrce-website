@@ -421,7 +421,6 @@ const loadAddressPage = async (req, res) => {
 };
 
 const addAddress = async (req, res) => {
-
   try {
     const userId = req.session.user;
     const { firstName, lastName, email, address, phoneNumber, city, state, pincode } = req.body;
@@ -437,17 +436,15 @@ const addAddress = async (req, res) => {
       pincode
     });
     await newAddress.save();
-    res.status(201).json('product added successfully');
+    res.status(201).json('address added successfully');
   } catch (error) {
     console.log(error)
     res.status(500).send('Failed to add new address Try again');
-  }
-
-
-
-};
+  }};
 
 const addDefaultAddress = async (req, res) => {
+  console.log('hhhh');
+  
   const { firstName, lastName, email, address, phoneNumber, city, state, pincode } = req.body;
   const userId = req.session.user;
   try {
@@ -464,13 +461,6 @@ const addDefaultAddress = async (req, res) => {
     });
 
     await newAddress.save();
-    const addressId = newAddress._id;
-    console.log(addressId);
-
-    await addressModel.updateMany({ userId: userId }, { default: false });
-
-    await addressModel.findByIdAndUpdate(addressId, { default: true });
-
     res.redirect('/user/checkout');
 
   } catch (error) {

@@ -2,12 +2,12 @@ function loadPage(pageNumber) {
   window.location.href = `/user/orders?page=${pageNumber}`;
 }
 
-async function cancelOrderProduct(orderId, productId, total) {
-  console.log(orderId + '   ' + productId);
+async function cancelOrderProduct(orderId, total) {
+console.log(total);
 
   try {
     const response = await axios.delete(`/user/deleteOrderItem/${orderId}`, {
-      data: { productId, total }
+      data: { total }
     });
     if (response.data.success) {
       location.reload()
@@ -116,10 +116,8 @@ async function retryPayment(orderId, razorpayId) {
 
 async function downloadInvoice(orderId) {
   try {
-    // Make a GET request and specify the response type as 'blob' for binary data
     const response = await axios.get(`/user/invoice/${orderId}`, { responseType: 'blob' });
 
-    // Check if the response was successful
     if (response.status === 200) {
 
       const blob = new Blob([response.data], { type: 'application/pdf' });

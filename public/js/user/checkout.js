@@ -1,34 +1,76 @@
 document.addEventListener('DOMContentLoaded', function () {
-  const form = document.getElementById('addAddressForm');
+  document.getElementById('addAddressForm').addEventListener('submit', function (event) {
+    event.preventDefault();
+  
+    const fields = ['firstName', 'lastName', 'address', 'phoneNumber', 'city', 'state', 'pincode'];
 
-  // Validate fields function
-  const validateField = (input) => {
-    if (input.value.trim() === "") {
-      input.classList.add('is-invalid');
-      input.classList.remove('is-valid');
-    } else {
-      input.classList.add('is-valid');
-      input.classList.remove('is-invalid');
-    }
-  };
-
-  // Form submit event
-  form.addEventListener('submit', (e) => {
-    let isFormValid = true;
-
-    form.querySelectorAll('.form-control').forEach(input => {
-      validateField(input);
-      if (input.classList.contains('is-invalid')) {
-        isFormValid = false;
-      }
+    fields.forEach(field => {
+      document.getElementById(field).classList.remove('is-invalid', 'is-valid');
     });
+  
+    let isValid = true;
 
-    if (!isFormValid) {
-      e.preventDefault();
+    const firstName = document.getElementById('firstName');
+    if (firstName.value.trim() === '') {
+      firstName.classList.add('is-invalid');
+      isValid = false;
+    } else {
+      firstName.classList.add('is-valid');
+    }
+
+    const lastName = document.getElementById('lastName');
+    if (lastName.value.trim() === '') {
+      lastName.classList.add('is-invalid');
+      isValid = false;
+    } else {
+      lastName.classList.add('is-valid');
+    }
+  
+    const address = document.getElementById('address');
+    if (address.value.trim() === '') {
+      address.classList.add('is-invalid');
+      isValid = false;
+    } else {
+      address.classList.add('is-valid');
+    }
+
+    const phoneNumber = document.getElementById('phoneNumber');
+    if (phoneNumber.value.trim() === '') {
+      phoneNumber.classList.add('is-invalid');
+      isValid = false;
+    } else {
+      phoneNumber.classList.add('is-valid');
+    }
+ 
+    const city = document.getElementById('city');
+    if (city.value.trim() === '') {
+      city.classList.add('is-invalid');
+      isValid = false;
+    } else {
+      city.classList.add('is-valid');
+    }
+
+    const state = document.getElementById('state');
+    if (state.value === '') {
+      state.classList.add('is-invalid');
+      isValid = false;
+    } else {
+      state.classList.add('is-valid');
+    }
+
+    const pincode = document.getElementById('pincode');
+    if (pincode.value === '' || Number(pincode.value) <= 0) {
+      pincode.classList.add('is-invalid');
+      isValid = false;
+    } else {
+      pincode.classList.add('is-valid');
+    }
+
+    if (isValid) {
+      this.submit();
     }
   });
 
-  // Address selection functionality
   function selectAddress(addressId) {
     document.querySelectorAll('.address-card').forEach(card => {
       card.classList.remove('selected');
@@ -38,7 +80,6 @@ document.addEventListener('DOMContentLoaded', function () {
       selectedCard.classList.add('selected');
     }
 
-    // Send POST request to set the default address
     axios.post(`/user/defaultAddress/${addressId}`)
       .then(response => {
         if (!response.data.success) {
@@ -48,7 +89,6 @@ document.addEventListener('DOMContentLoaded', function () {
       .catch(error => console.error('Error:', error));
   }
 
-  // Address card click event listener
   document.querySelectorAll('.address-card').forEach(card => {
     card.addEventListener('click', function () {
       const addressId = this.dataset.addressId;
@@ -56,7 +96,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // Payment handling function
   async function handlePayment() {
     const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
     const addressId = document.querySelector('.address-card.selected')?.dataset.addressId;
@@ -174,7 +213,6 @@ document.addEventListener('DOMContentLoaded', function () {
           totalDiscount: totalDiscount
         });
         if (response.data.success) {
-          console.log('hhhhhhhhh');
 
           window.location.href = '/user/greetings';
         } else {
@@ -195,6 +233,67 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  async function returnProduct(orderId) {
+    try {
+      const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: 'Do you really want to return this product?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, return it!',
+        cancelButtonText: 'No, keep it',
+      });
+      if (result.isConfirmed) {
+        const response = await axios.post(`/user/returnOrder/${orderId}`);
+        if (response.data.success) {
+          location.reload();
+        }
+      }
+    } catch (error) {
+      console.error('Error cancelling product:', error);
+    }
+  };
   document.querySelector('.pay-now').addEventListener('click', handlePayment);
+
+  // const Form = document.getElementById("addAddressForm");
+  // form.addEventListener("submit", async (event) => {
+  //   event.preventDefault(); 
+
+  //   const formData = new FormData(Form);
+  //   const data = Object.fromEntries(formData.entries());
+
+  //   try {
+  //     const response = await axios.post("/user/defaultAddress", data);
+
+  //     if (response.status === 200) {
+  //       Toastify({
+  //         text: "Address added successfully!",
+  //         duration: 3000,
+  //         gravity: "top",
+  //         position: "right",
+  //         style: {
+  //           background: "green",
+  //         },
+  //       }).showToast();
+  //       location.reload();
+  //     } else {
+  //       throw new Error("Failed to add address.");
+  //     }
+  //   } catch (error) {
+  //     console.error(error);
+
+  //     Toastify({
+  //       text: "Error adding address. Please try again.",
+  //       duration: 3000,
+  //       gravity: "top",
+  //       position: "right",
+  //       style: {
+  //         background: "red",
+  //       },
+  //     }).showToast();
+  //   }
+  // });
 });
 

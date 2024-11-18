@@ -324,7 +324,6 @@ const filterProduct = async (req, res) => {
   }
 };
 
-
 const searchProduct = async (req, res) => {
 
   const query = req.query.query;

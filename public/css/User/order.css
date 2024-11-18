@@ -5,15 +5,16 @@ body {
   color: #343a40;
   margin: 0;
   padding: 0;
-  font-weight: 600; 
-  line-height: 1.6; 
+  font-weight: 600;
+  line-height: 1.6;
 }
 
 .user-account-container {
   display: flex;
-  margin: 20px ;
+  margin: 20px;
 
 }
+
 /* Content Styles */
 .content {
   flex: 1;
@@ -44,15 +45,14 @@ body {
   background-color: #ffffff;
   border: 1px solid #000000;
   margin-bottom: 0 !important;
-  border-radius: 8px;
+  border-bottom-left-radius: 8px !important;
+  border-bottom-right-radius: 8px !important;
   padding: 15px;
   transition: box-shadow 0.3s ease;
-  width: 100%; /* Ensure each card takes full width */
+  width: 100%;
+  /* Ensure each card takes full width */
 }
 
-.order-card:hover {
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-}
 
 .order-card p {
   margin-top: 5px;
@@ -60,10 +60,11 @@ body {
 
 .actions {
   display: flex;
-  justify-content: center; 
-  gap: 10px; 
-  flex-wrap: wrap; 
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
+
 .actions .btn-danger {
   background-color: #dc3545;
   color: white;
@@ -72,12 +73,13 @@ body {
   border-radius: 5px;
   cursor: pointer;
 }
+
 .actions .btn-primary {
   background-color: #000000;
   color: white;
 }
 
-.invoice-btn{
+.invoice-btn {
   background-color: #000000;
   color: white;
   border: none;
@@ -90,22 +92,29 @@ body {
 /* Address Card Container */
 .address-card-container {
   display: flex;
-  flex-direction: column; /* Stack cards vertically */
+  flex-direction: column;
+  /* Stack cards vertically */
 }
 
 .product-image-container {
-  width: 100px; /* Set desired width */
-  height: 100px; /* Set desired height */
-  overflow: hidden; /* Hide any overflow */
+  width: 100px;
+  /* Set desired width */
+  height: 100px;
+  /* Set desired height */
+  overflow: hidden;
+  /* Hide any overflow */
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .product-image-container img {
-  width: 100%; /* Make the image take full width */
-  height: auto; /* Keep the aspect ratio */
-  object-fit: cover; /* Ensures the image covers the container */
+  width: 100%;
+  /* Make the image take full width */
+  height: auto;
+  /* Keep the aspect ratio */
+  object-fit: cover;
+  /* Ensures the image covers the container */
 }
 
 
@@ -125,6 +134,12 @@ body {
   color: #fff;
   cursor: pointer;
 }
+
+.status-div {
+  border: 1px solid #e9ecef;
+  border-radius: 2px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .user-account-container {
@@ -141,7 +156,9 @@ body {
   }
 
   .address-card {
-    flex: 1 1 100%; /* Full width for cards on small screens */
-    max-width: 100%; /* Full width when only one card */
+    flex: 1 1 100%;
+    /* Full width for cards on small screens */
+    max-width: 100%;
+    /* Full width when only one card */
   }
 }

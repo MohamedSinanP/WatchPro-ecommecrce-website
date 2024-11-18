@@ -1,21 +1,17 @@
 function loadPage(pageNumber) {
   window.location.href = `/admin/inventory?page=${pageNumber}`;
 }
-// Menu Toggle Logic
 const menuToggle = document.querySelector('.menu-toggle');
 const sidebar = document.querySelector('.sidebar');
 menuToggle.addEventListener('click', () => {
   sidebar.classList.toggle('active');
 });
 
-// Modal and Validation Logic
 function openModal(price, stock, id) {
-  // Set form values
   document.getElementById("productPrice").value = price;
   document.getElementById("productStock").value = stock;
-  document.getElementById("productId").value = id; // Set product ID in hidden input
+  document.getElementById("productId").value = id; 
 
-  // Display the modal
   document.getElementById("editModal").style.display = "block";
 }
 
@@ -48,7 +44,6 @@ function validateStock() {
 }
 
 function saveChanges(event) {
-  // Prevent the default form submission
   event.preventDefault();
 
   const productId = document.getElementById('productId').value;
@@ -56,23 +51,22 @@ function saveChanges(event) {
   const stock = document.getElementById('productStock').value;
   console.log(productId, price)
 
-  // Validate input values
   if (validatePrice() && validateStock()) {
-    // Create an object to hold the data
+    
     const data = {
       productId,
       price,
       stock,
     };
 
-    // Make the Axios POST request
+
     axios.post(`/admin/updateInventory/${productId}`, data)
       .then((response) => {
-        console.log('Product updated successfully:', response.data); // Access the updated product data
-        closeModal(); // Close the modal
+        console.log('Product updated successfully:', response.data); 
+        closeModal(); 
         setTimeout(() => {
-          window.location.reload(); // Refresh the page
-        }, 300); // Adjust timing if necessary
+          window.location.reload();
+        }, 300); 
       })
       .catch((error) => {
         console.error('There was an error updating the product:', error);

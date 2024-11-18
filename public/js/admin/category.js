@@ -1,7 +1,6 @@
 function loadPage(pageNumber) {
   window.location.href = `/admin/categories?page=${pageNumber}`;
 }
-// Toggle sidebar for mobile view
 const menuToggle = document.querySelector('.menu-toggle');
 const sidebar = document.querySelector('.sidebar');
 
@@ -39,7 +38,6 @@ try {
     categoryForm.reset();
     console.log('Form reset and modal hiding');
 
-    // Hide the modal by finding the existing instance
     const addCategoryModalElement = document.getElementById('addCategoryModal');
     const addCategoryModal = bootstrap.Modal.getInstance(addCategoryModalElement);
     addCategoryModal.hide();
@@ -53,14 +51,11 @@ try {
 }
 });
 
-// Handle the edit form submission (assuming a PUT request)
 window.openEditModal = function(id, name, genderType, brand) {
         document.getElementById('editCategoryId').value = id;
         document.getElementById('editCategoryName').value = name;
        
-       
 
-        // Show the edit modal
         const editCategoryModalElement = document.getElementById('editCategoryModal');
         const editCategoryModal = new bootstrap.Modal(editCategoryModalElement);
         editCategoryModal.show();
@@ -88,11 +83,10 @@ try {
 
   if (response.ok) {
     console.log('Category updated successfully');
-    // Hide the modal and refresh the page or update the UI here
     const editCategoryModalElement = document.getElementById('editCategoryModal');
     const editCategoryModal = bootstrap.Modal.getInstance(editCategoryModalElement);
     editCategoryModal.hide();
-    location.reload(); // Refresh the page or update the UI dynamically
+    location.reload(); 
   } else {
     console.log('Failed to update category:', response.status);
     alert('Failed to update category');
@@ -105,10 +99,7 @@ try {
 });
 async function toggleListing(categoryId, isCurrentlyListed) {
 try {
-// Determine the new status to be updated (flip the current status)
 const newStatus = isCurrentlyListed === 'true' ? false : true;
-
-// Make a POST request using fetch with the updated status
 const response = await fetch('/admin/categoryListing', {
   method: 'PUT',
   headers: {
@@ -120,18 +111,13 @@ const response = await fetch('/admin/categoryListing', {
   }),
 });
 
-// Parse the JSON response
 const data = await response.json();
 
-// Handle the response based on success or failure
 if (data.success) {
-  alert(`Category ${newStatus ? 'listed' : 'unlisted'} successfully!`);
-  location.reload(); // Reload the page to reflect changes
+  location.reload();
 } else {
-  alert('Failed to update the category status. Please try again.');
 }
 } catch (error) {
 console.error('Error:', error);
-alert('An error occurred while updating the category status.');
 }
 }

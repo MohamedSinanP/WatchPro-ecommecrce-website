@@ -28,13 +28,11 @@ document.addEventListener('DOMContentLoaded', () => {
 function updateQuantity(cartId, productId, change) {
   const input = document.querySelector(`input[name='num-product${productId}']`);
 
-  // Convert the current quantity to an integer and set to 1 if invalid
   let quantity = parseInt(input.value, 10);
   if (isNaN(quantity)) {
     quantity = 1;
   }
 
-  // Apply the change and ensure it’s within the min and max limits
   quantity += change;
   if (quantity < 1) {
     quantity = 1;
@@ -67,7 +65,7 @@ function sendQuantityUpdate(cartId, productId, quantity) {
         const product = response.data.product;
         const subtotal = response.data.subtotal;
         const totalDiscount = response.data.totalDiscount;
-console.log(product.quantity);
+        console.log(product.quantity);
 
         const totalPriceElement = document.querySelector(`#total-price-${productId}`);
 
@@ -84,23 +82,24 @@ console.log(product.quantity);
         const subtotalElement = document.querySelector('#subtotal');
         subtotalElement.textContent = `₹ ${subtotal}`;
 
-const cartTotal = document.querySelector('#cartTotal');
-        cartTotal.textContent = `₹ ${subtotal}`;				
-const discount = document.querySelector('#totalDiscount');
-        discount.textContent = `₹ - ${totalDiscount}`;				
+        const cartTotal = document.querySelector('#cartTotal');
+        cartTotal.textContent = `₹ ${subtotal}`;
+        const discount = document.querySelector('#totalDiscount');
+        discount.textContent = `₹ - ${totalDiscount}`;
       }
     })
     .catch(error => {
       console.error('Error:', error);
-      if (error.response.status === 400) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: error.response.data.message,
-          confirmButtonText: 'OK'
+      if (error.response && error.response.status === 400) {
+        toastr.error(error.response.data.message, 'Error', {
+          closeButton: true,
+          progressBar: true,
+          timeOut: 2000, 
+          onHidden: function () {
+            location.reload();
+          }
         });
       }
-
     });
 }
 function deleteProduct(productId) {
@@ -110,13 +109,13 @@ function deleteProduct(productId) {
     .then(response => {
       if (response.data.success) {
 
-        const productElement = document.getElementById(`product-${productId}`); // Assuming each product has a unique ID
+        const productElement = document.getElementById(`product-${productId}`); 
         if (productElement) {
           productElement.remove();
         }
 
-        // Force page reload to reflect changes
-        location.href = location.href; // Bypasses the cache
+
+        location.href = location.href; 
       }
     })
     .catch(error => {
@@ -144,14 +143,12 @@ document.querySelector('.apply-coupon-btn').addEventListener('click', async () =
       const newTotal = response.data.newTotal;
       document.getElementById('cartTotal').textContent = `₹ ${newTotal}`;
 
-      // Show success message
       Swal.fire({
         icon: 'success',
         title: 'Coupon Applied!',
         text: 'Your coupon was applied successfully.',
       });
 
-      // Disable the Apply Coupon button and add the disabled styles
       const applyButton = document.querySelector('.apply-coupon-btn');
       applyButton.style.pointerEvents = 'none';
       applyButton.classList.add('disabled');
@@ -183,7 +180,6 @@ document.querySelector('.remove-coupon-btn').addEventListener('click', async () 
       const oldCartTotal = response.data.oldCartTotal;
       document.getElementById('cartTotal').textContent = `₹ ${oldCartTotal}`;
 
-      // Re-enable the Apply Coupon button and remove the disabled styles
       const applyButton = document.querySelector('.apply-coupon-btn');
       applyButton.style.pointerEvents = 'auto';
       applyButton.classList.remove('disabled');

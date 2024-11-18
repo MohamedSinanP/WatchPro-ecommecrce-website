@@ -4,7 +4,7 @@ const couponModel = require('../models/couponModel');
 const offerModel = require('../models/offerModel');
 
 
-const MAX_QUANTITY = 8;
+const MAX_QUANTITY = 4;
 
 const loadCartPage = async (req, res) => {
   const userId = req.session.user;
@@ -95,6 +95,12 @@ const addToCart = async (req, res) => {
   const { productId, name, price, quantity } = req.body;
 
   try {
+    const product = await productModel.findById(productId);
+    const productStock = product.stock;
+
+    if (productStock < 1) {
+      return res.json({ success: false, message: 'prodcut is out of stock' });
+    }
     let cart = await cartModel.findOne({ userId });
 
     if (cart) {
@@ -128,10 +134,15 @@ const addToCart = async (req, res) => {
 }
 
 const updateQuantity = async (req, res) => {
-  console.log(req.body);
   const { cartId, id, quantity } = req.body;
-  console.log(id);
-
+  const product = await productModel.findById(id);
+  const stock = product.stock;
+  if (quantity > stock) {
+    return res.status(400).json({
+      success: false,
+      message: `only ${stock} stocks left.`
+    });
+  }
   if (quantity > MAX_QUANTITY) {
     return res.status(400).json({
       success: false,
@@ -167,13 +178,13 @@ const updateQuantity = async (req, res) => {
     ]);
 
     let subtotal = 0;
-    let totalDiscount = 0;  // Variable to track total discount for all products
+    let totalDiscount = 0;  
 
     const updatedProducts = await Promise.all(
       cart.products.map(async (product) => {
         const productDetails = await productModel.findById(product.productId).lean();
         let offerPrice = productDetails.price;
-        let productDiscount = 0;  // Variable to track discount for each product
+        let productDiscount = 0;  
 
         const productOffers = activeOffers.filter(offer => {
           const matchesProduct = offer.products.some(prod => prod._id.equals(product.productId));
@@ -191,18 +202,18 @@ const updateQuantity = async (req, res) => {
             productDiscount = discountAmount * product.quantity;  // Calculate discount for this product
           } else if (bestOffer.discountType === 'amount') {
             offerPrice = productDetails.price - bestOffer.discountValue;
-            productDiscount = bestOffer.discountValue * product.quantity;  // Calculate discount for this product
+            productDiscount = bestOffer.discountValue * product.quantity;  
           }
         }
 
         subtotal += offerPrice * product.quantity;
-        totalDiscount += productDiscount;  // Add the product's discount to the total discount
+        totalDiscount += productDiscount;  
 
         return {
           ...product,
           offerPrice: offerPrice.toFixed(2),
           quantity: product.quantity,
-          productDiscount: productDiscount.toFixed(2)  // Optionally include the product-specific discount
+          productDiscount: productDiscount.toFixed(2) 
         };
       })
     );
@@ -213,7 +224,7 @@ const updateQuantity = async (req, res) => {
       product: updatedProducts[productIndex],
       updatedProducts,
       subtotal: subtotal.toFixed(2),
-      totalDiscount: totalDiscount.toFixed(2)  // Return total discount along with other data
+      totalDiscount: totalDiscount.toFixed(2)  
     });
 
   } catch (error) {

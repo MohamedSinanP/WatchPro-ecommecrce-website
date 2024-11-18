@@ -1,14 +1,12 @@
 function loadPage(pageNumber) {
   window.location.href = `/admin/coupons?page=${pageNumber}`;
 }
-// Sidebar Toggle for Mobile
 const menuToggle = document.querySelector('.menu-toggle');
 const sidebar = document.querySelector('.sidebar');
 menuToggle.addEventListener('click', () => {
   sidebar.classList.toggle('active');
 });
 
-// Function to toggle discount fields based on selected type
 function toggleDiscountFields() {
   const discountType = document.getElementById("discountType").value;
   const percentageField = document.getElementById("percentageDiscountField");
@@ -25,7 +23,6 @@ function toggleDiscountFields() {
   }
 }
 
-// Function to add a new coupon
 async function addCoupon() {
   const couponName = document.getElementById("couponName").value;
   const couponCode = document.getElementById("couponCode").value;

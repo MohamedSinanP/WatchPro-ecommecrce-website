@@ -51,14 +51,14 @@ const updateStatus = async (req, res) => {
     const order = await orderModel.findById(orderId);
     const currentStatus = order.status;
     if (statusOrder.indexOf(status) < statusOrder.indexOf(currentStatus)) {
-      return res.json({success:false, message: 'Invalid status update. Cannot revert to a previous status.' })
+      return res.json({ success: false, message: 'Invalid status update. Cannot revert to a previous status.' })
     }
     const updatedOrder = await orderModel.findByIdAndUpdate(
       orderId,
       { status: status },
       { new: true }
     );
-    res.json({success:true,updatedOrder});
+    res.json({ success: true, updatedOrder });
   } catch (error) {
     console.error(error);
     res.status(500).send('Server error');
@@ -67,7 +67,6 @@ const updateStatus = async (req, res) => {
 
 const cancelOrder = async (req, res) => {
   const { id } = req.params;
-
   try {
     const order = await orderModel.findByIdAndDelete({ _id: id });
     if (!order) {
@@ -106,27 +105,6 @@ const loadCheckoutPage = async (req, res) => {
     res.status(500).json({ message: 'internal server error' });
   }
 }
-
-const defaultAddress = async (req, res) => {
-  const userId = req.session.user;
-  const addressId = req.params.id;
-
-  try {
-
-    const allAddressesBefore = await addressModel.find({ userId: userId });
-
-    await addressModel.updateMany({ userId: userId }, { default: false });
-
-    await addressModel.findByIdAndUpdate(addressId, { default: true });
-
-    const allAddressesAfter = await addressModel.find({ userId: userId });
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Failed to set default address.' });
-  }
-};
 
 const createOrder = async (req, res) => {
 
@@ -356,32 +334,26 @@ const loadGreetingsPage = async (req, res) => {
 
 const deleteOrderItem = async (req, res) => {
   const orderId = req.params.id;
-  const { productId, total } = req.body;
+  const { total } = req.body;
   const userId = req.session.user;
+  console.log(total);
 
   try {
-    const product = await productModel.findOne({ _id: productId });
     const order = await orderModel.findOne({ _id: orderId });
-    if (!product || !order) {
+    if (!order) {
       return res.status(404).json({ success: false, message: 'Product or Order not found' });
     }
+    for (const product of order.products) {
+      const productId = product.productId;
+      const productQuantity = product.quantity;
 
-    const productPrice = product.price;
-    const Product = order.products.find(p => p.productId.toString() === productId.toString());
-    if (!Product) {
-      return res.status(404).json({ success: false, message: 'Product not found in order' });
+      await productModel.findByIdAndUpdate(
+        productId,
+        { $inc: { stock: productQuantity } },
+        { new: true }
+      );
     }
-    const productQuantity = Product.quantity;
 
-    // Update stock
-    const newStock = await productModel.findByIdAndUpdate(
-      productId,
-      { $inc: { stock: productQuantity } },
-      { new: true }
-    );
-    console.log('Stock updated:', newStock);
-
-    // Update order
     const updatedOrder = await orderModel.findByIdAndUpdate(
       orderId,
       { status: 'Cancelled' },
@@ -390,52 +362,45 @@ const deleteOrderItem = async (req, res) => {
     if (!updatedOrder) {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
-    console.log('Order marked as deleted:', updatedOrder);
 
-    // Create or update wallet
-    let wallet = await walletModel.findOne({ userId });
-    const amountNumber = parseFloat(total);
+    if (updatedOrder.paymentMethod === 'Razorpay' || updatedOrder.paymentMethod === 'Wallet') {
+      let wallet = await walletModel.findOne({ userId });
+      const amountNumber = parseFloat(total);
+      if (isNaN(amountNumber)) {
+        return res.status(400).json({ success: false, message: 'Invalid total amount' });
+      }
+      const transactionType = 'credit';
 
-    if (isNaN(amountNumber)) {
-      return res.status(400).json({ success: false, message: 'Invalid total amount' });
+      if (wallet) {
+        console.log('wallet found');
+
+        wallet.transaction.push({
+          transactionType,
+          amount: amountNumber.toString(),
+          date: new Date(),
+        });
+
+        wallet.balance += transactionType === 'credit' ? amountNumber : -amountNumber;
+
+        await wallet.save();
+      } else {
+        wallet = new walletModel({
+          userId,
+          transaction: [
+            {
+              transactionType,
+              amount: amountNumber,
+              date: new Date(),
+            },
+          ],
+          balance: transactionType === 'credit' ? amountNumber : -amountNumber,
+        });
+        await wallet.save();
+      }
     }
-    console.log('Parsed Amount:', amountNumber);
-
-    const transactionType = 'credit';
-
-    if (wallet) {
-      wallet.transaction.push({
-        transactionType,
-        amount: amountNumber.toString(),
-        date: new Date(),
-      });
-
-      // Update balance
-      wallet.balance += transactionType === 'credit' ? amountNumber : -amountNumber;
-
-      // Save wallet
-      await wallet.save();
-      console.log('Wallet updated:', wallet);
-    } else {
-      wallet = new walletModel({
-        userId,
-        transaction: [
-          {
-            transactionType,
-            amount: amountNumber,
-            date: new Date(),
-          },
-        ],
-        balance: transactionType === 'credit' ? amountNumber : -amountNumber,
-      });
-
-      await wallet.save();
-      console.log('New wallet created:', wallet);
-    }
-
     res.json({ success: true });
   } catch (error) {
-    console.error('Error cancelling product:', error);
+    console.log('Error cancelling product:', error);
     res.status(500).json({ success: false, message: 'Failed to cancel product' });
   }
 };
@@ -459,7 +424,7 @@ const loadOrdersPage = async (req, res) => {
     res.render('user/orders', { orders, currentPage, totalPages, limit });
   } catch (error) {
     console.error('Error loading orders page:', error);
-    res.status(500).send('Cannot load order details page. Try again');
+    res.status(500).send('Cannot load order page. Try again');
   }
 };
 
@@ -472,9 +437,13 @@ const returnOrder = async (req, res) => {
     walletBalance += order.total;
     if (order.status === 'Delivered') {
       order.status = 'Returned';
-      order.products.forEach(product => {
-        product.productId.stock += product.quantity;
-      });
+      for (const product of order.products) {
+        const productToUpdate = product.productId;
+        productToUpdate.stock += product.quantity;
+        console.log(productToUpdate.stock);
+
+        await productToUpdate.save();
+      };
       wallet.transaction.push({
         transactionType: 'credit',
         amount: order.total,
@@ -640,7 +609,6 @@ module.exports = {
   updateStatus,
   cancelOrder,
   loadCheckoutPage,
-  defaultAddress,
   createOrder,
   addOrderDetails,
   walletOrder,

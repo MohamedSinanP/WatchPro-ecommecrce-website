@@ -14,8 +14,6 @@ $(document).ready(function () {
             price: productPrice,
             quantity: productQuantity
         };
-  
-        // Use Axios for AJAX request instead of jQuery's $.ajax
         axios.post('/user/cart', productData)
             .then(response => {
                 toastr.success('Product added to cart successfully!');
@@ -29,16 +27,15 @@ $(document).ready(function () {
   function deleteProduct(productId) {
     console.log(productId);
   
-    // Use Axios to delete the product from the wishlist
     axios.delete(`/user/deleteWishlistProduct/${productId}`)
         .then(response => {
             if (response.data.success) {
-                const productElement = document.getElementById(`product-${productId}`); // Assuming each product has a unique ID
+                const productElement = document.getElementById(`product-${productId}`); 
                 if (productElement) {
-                    productElement.remove(); // Remove the product element from the DOM
+                    productElement.remove(); 
                 }
   
-                // Reload the page to update the wishlist view
+
                 location.href = location.href; 
             }
         })

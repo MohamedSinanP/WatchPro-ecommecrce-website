@@ -2,7 +2,6 @@ function loadPage(pageNumber) {
       window.location.href = `/admin/orders?page=${pageNumber}`;
     }
     function viewOrderDetails(orderId) {
-      // Retrieve the order data from a data attribute
       const order = JSON.parse(document.getElementById(`order-data-${orderId}`).textContent);
 
       let productsHtml = '';

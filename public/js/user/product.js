@@ -94,14 +94,11 @@ document.addEventListener('DOMContentLoaded', () => {
           const { products } = response.data;
           console.log(products);
 
-
-          // Check if products is an array
           if (!Array.isArray(products)) {
             console.error('Expected products to be an array:', products);
             return;
           }
 
-          // Clear the product list before displaying new results
           document.querySelector('#product-list').innerHTML = products.map(product => `
   <div class="col-sm-6 col-md-4 col-lg-3 p-b-35 isotope-item ${product.category}">
     <div class="block2">
@@ -150,9 +147,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 $(document).ready(function () {
   $('.js-addWishlist-detail').on('click', function (e) {
-    e.preventDefault(); // Prevent the default action
+    e.preventDefault(); 
 
-    // Get product details from the data attributes dynamically
     let productId = $(this).data('product-id');
     let productName = $(this).data('product-name');
     let productPrice = $(this).data('product-price');

@@ -41,7 +41,6 @@ function editOffer(offerId) {
 function deleteOffer(offerId) {
   if (confirm('Are you sure you want to delete this offer?')) {
     alert("Offer deleted successfully!");
-    // Perform the delete operation and reload the page
   }
 }
 function toggleApplicableFields() {

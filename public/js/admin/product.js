@@ -1,75 +1,62 @@
 function loadPage(pageNumber) {
     window.location.href = `/admin/products?page=${pageNumber}`;
-  }
+}
 document.getElementById('productForm').addEventListener('submit', function (event) {
-    event.preventDefault(); // Prevent form from submitting
-
-    // Clear previous validation errors
+    event.preventDefault();
     let fields = ['productName', 'productBrand', 'productCategory', 'productDescription', 'productPrice', 'productStock', 'productImages'];
     fields.forEach(field => {
         document.getElementById(field).classList.remove('is-invalid');
     });
 
-    // Validate each field
     let isValid = true;
-
-    // Product Name Validation
     let productName = document.getElementById('productName');
     if (productName.value.trim() === '') {
         productName.classList.add('is-invalid');
         isValid = false;
     }
 
-    // Brand Validation
     let productBrand = document.getElementById('productBrand');
     if (productBrand.value.trim() === '') {
         productBrand.classList.add('is-invalid');
         isValid = false;
     }
 
-    // Category Validation
     let productCategory = document.getElementById('productCategory');
     if (productCategory.value === '') {
         productCategory.classList.add('is-invalid');
         isValid = false;
     }
 
-    // Description Validation
     let productDescription = document.getElementById('productDescription');
     if (productDescription.value.trim() === '') {
         productDescription.classList.add('is-invalid');
         isValid = false;
     }
 
-    // Price Validation
     let productPrice = document.getElementById('productPrice');
-    if (productPrice.value <= 0) {
+    if (productPrice.value === '' || productPrice.value <= 0) {
         productPrice.classList.add('is-invalid');
         isValid = false;
     }
 
-    // Stock Validation
     let productStock = document.getElementById('productStock');
-    if (productStock.value < 0) {
+    let stockValue = productStock.value.trim(); 
+    console.log(stockValue);
+    
+    if (stockValue === '' || Number(stockValue) < 0) {
         productStock.classList.add('is-invalid');
         isValid = false;
     }
-
-    // Images Validation
     let productImages = document.getElementById('productImages');
     if (productImages.files.length === 0) {
         productImages.classList.add('is-invalid');
         isValid = false;
     }
 
-    // If form is valid, proceed with form submission
+
     if (isValid) {
-        // Optionally, you could submit the form data here with AJAX if needed.
-        console.log("Form is valid and ready for submission!");
-        // this.submit(); // Uncomment to submit the form if needed
     }
 });
-// validation end
 
 async function toggleListing(productId, isCurrentlyListed) {
     try {

@@ -1,8 +1,7 @@
 $(document).ready(function () {
   $('.js-addcart-detail').on('click', function (e) {
-    e.preventDefault(); // Prevent the default action
+    e.preventDefault(); 
 
-    // Get product details from the data attributes dynamically
     let productId = $(this).data('product-id');
     let productName = $(this).data('product-name');
     let productPrice = $(this).data('product-price');
@@ -23,7 +22,11 @@ $(document).ready(function () {
       contentType: 'application/json',
       data: JSON.stringify(productData),
       success: function (response) {
-        toastr.success('Product added to cart successfully!');
+        if (response.success === false && response.message) {
+          toastr.error(response.message);
+        } else {
+          toastr.success('Product added to cart successfully!');
+        }
       },
       error: function (xhr, status, error) {
         toastr.success('Failed to add product to the cart.');
@@ -33,9 +36,8 @@ $(document).ready(function () {
 });
 $(document).ready(function () {
   $('.js-addWishlist-detail').on('click', function (e) {
-    e.preventDefault(); // Prevent the default action
+    e.preventDefault(); 
 
-    // Get product details from the data attributes dynamically
     let productId = $(this).data('product-id');
     let productName = $(this).data('product-name');
     let productPrice = $(this).data('product-price');

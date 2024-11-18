@@ -74,10 +74,8 @@ document.getElementById('addAddressForm').addEventListener('submit', function (e
             url: '/user/addAddress',
             data: formData,
             success: function (response) {
-                // Hide the modal
                 $('#addAddressModal').modal('hide');
                 $('.modal-backdrop').remove();
-                // Reset form fields
                 document.getElementById('addAddressForm').reset();
 
 
@@ -104,7 +102,6 @@ document.getElementById('addAddressForm').addEventListener('submit', function (e
 
 
 function editAddress(id, firstName, lastName, address, phoneNumber, city, state, pincode) {
-    // Populate the Edit Address Modal fields with existing data
     document.getElementById('editAddressId').value = id;
     document.getElementById('editFirstName').value = firstName;
     document.getElementById('editLastName').value = lastName;
@@ -181,7 +178,6 @@ $(document).on('click', '.delete-address', function () {
                 success: function (response) {
                     if (response.success) {
                         Swal.fire('Deleted!', 'Your address has been deleted.', 'success');
-                        // Optionally, remove the address from the UI
                         setTimeout(() => {
                             window.location.reload();
                         }, 100);

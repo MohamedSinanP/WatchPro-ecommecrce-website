@@ -35,7 +35,7 @@
     <!--===============================================================================================-->
     <link rel="stylesheet" type="text/css" href="/css/User/css/util.css">
     <link rel="stylesheet" type="text/css" href="/css/User/css/main.css">
-    <link rel="stylesheet" href="/css/User/order.css"> 
+    <link rel="stylesheet" href="/css/User/order.css">
     <link rel="stylesheet" href="/css/User/accountSidebar.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
@@ -58,13 +58,16 @@
                         <li><a href="logout.html">Logout</a></li>
                     </ul>
                 </nav>
-            </aside>    
-
-
+            </aside>
             <div class="content">
                 <div class="address-card-container">
                     <% if (orders.length> 0) { %>
                         <% orders.forEach(order=> { %>
+                            <div class="status-div">
+                                <p><strong>order status:</strong>
+                                    <%= order.status %>
+                                </p>
+                            </div>
                             <div class="order-card mb-3 p-3 border rounded d-flex">
                                 <div class="order-images mr-3">
                                     <% order.products.forEach(product=> { %>
@@ -85,45 +88,40 @@
                                             <p><strong>Quantity:</strong>
                                                 <%= product.quantity %>
                                             </p>
-
-                                            <p><strong>Status:</strong>
-                                                <%= order.isCancelled ? "Cancelled" : order.status %>
-                                            </p>
-
-                                            <div class="actions">
-                                                <!-- "View more" button always visible -->
+                                            
+                                        </div>
+                                        <% }) %>
+                                        <div class="actions">
                                                 <button class="btn btn-primary view-more" data-toggle="modal"
                                                     data-target="#productDetailsModal"
                                                     data-order='<%= JSON.stringify(order) %>'
                                                     onclick="showProductDetails(this)">
                                                     View more
                                                 </button>
-
                                                 <% if (order.status==='Delivered' ) { %>
-                                                    <!-- Show "Return Product" if delivered -->
                                                     <button class="btn btn-primary"
                                                         onclick="returnProduct('<%= order._id %>')">
                                                         Return Product
                                                     </button>
                                                     <% } else if (order.status !=='Cancelled' && order.status
-                                                        !=='Returned' && order.paymentStatus === 'pending' ) { %>
+                                                        !=='Returned') { %>
                                                         <button class="btn btn-danger cancel-order"
-                                                            onclick="cancelOrderProduct('<%= order._id %>', '<%= product.productId._id %>', '<%= order.total %>')">
+                                                            onclick="cancelOrderProduct('<%= order._id %>', '<%= order.total %>')">
                                                             Cancel Product
                                                         </button>
-                                                        <% } else if (order.paymentMethod==='Razorpay' &&order.paymentStatus==='failed') {%>
+                                                        <% } else if (order.paymentMethod==='Razorpay'
+                                                            &&order.paymentStatus==='failed' ) {%>
                                                             <button class="btn btn-danger retry-payment"
-                                                            onclick="retryPayment('<%= order._id %>','<%= order.razorpayId %>')">
-                                                            Retry Payment
-                                                        </button>
-                                                        <% } %>
+                                                                onclick="retryPayment('<%= order._id %>','<%= order.razorpayId %>')">
+                                                                Retry Payment
+                                                            </button>
+                                                            <% } %>
 
                                             </div>
-                                        </div>
-                                        <% }) %>
                                 </div>
                             </div>
-                            <button class="invoice-btn" onclick="downloadInvoice('<%= order._id %>')">invoice download</button>
+                            <button class="invoice-btn" onclick="downloadInvoice('<%= order._id %>')">invoice
+                                download</button>
                             <% }) %>
                                 <% } else { %>
                                     <p>No orders found.</p>
@@ -156,37 +154,40 @@
             </div>
         </div>
         <div class="pagination-controls d-flex justify-content-center my-3">
-            <% if (totalPages > 1) { %>
-              <% if (currentPage > 1) { %>
-                <button onclick="loadPage('<%= currentPage - 1 %>')" class="btn btn-primary mx-1 my-1">&laquo;</button>
-              <% } %>
-              <% for (let i = 1; i <= totalPages; i++) { %>
-                <button onclick="loadPage('<%= i %>')" class="btn <%= i === currentPage ? 'btn-secondary' : 'btn-light' %> mx-1">
-                  <%= i %>
-                </button>
-              <% } %>
-              <% if (currentPage < totalPages) { %>
-                <button onclick="loadPage('<%= currentPage + 1 %>')" class="btn btn-primary mx-1 my-1">&raquo;</button>
-              <% } %>
-            <% } %>
-          </div>
-                  <!-- footer-->
+            <% if (totalPages> 1) { %>
+                <% if (currentPage> 1) { %>
+                    <button onclick="loadPage('<%= currentPage - 1 %>')"
+                        class="btn btn-primary mx-1 my-1">&laquo;</button>
+                    <% } %>
+                        <% for (let i=1; i <=totalPages; i++) { %>
+                            <button onclick="loadPage('<%= i %>')"
+                                class="btn <%= i === currentPage ? 'btn-secondary' : 'btn-light' %> mx-1">
+                                <%= i %>
+                            </button>
+                            <% } %>
+                                <% if (currentPage < totalPages) { %>
+                                    <button onclick="loadPage('<%= currentPage + 1 %>')"
+                                        class="btn btn-primary mx-1 my-1">&raquo;</button>
+                                    <% } %>
+                                        <% } %>
+        </div>
+        <!-- footer-->
         <%- include('../partials/user/footer') %>
-        
-        <script src="/css/User/vendor/jquery/jquery-3.2.1.min.js"></script>
-        <script src="/css/User/vendor/animsition/js/animsition.min.js"></script>
-        <script src="/css/User/vendor/bootstrap/js/popper.js"></script>
-        <script src="/css/User/vendor/bootstrap/js/bootstrap.min.js"></script>
-        <script src="/css/User/vendor/select2/select2.min.js"></script>
-        <script src="/css/User/vendor/daterangepicker/moment.min.js"></script>
-        <script src="/css/User/vendor/daterangepicker/daterangepicker.js"></script>
-        <script src="/css/User/vendor/slick/slick.min.js"></script>
-        <script src="/css/User/vendor/MagnificPopup/jquery.magnific-popup.min.js"></script>
-        <script src="/css/User/vendor/perfect-scrollbar/perfect-scrollbar.min.js"></script>
-        <script src="/css/User/js/main.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-        <script src="/js/user/order.js"></script>
+
+            <script src="/css/User/vendor/jquery/jquery-3.2.1.min.js"></script>
+            <script src="/css/User/vendor/animsition/js/animsition.min.js"></script>
+            <script src="/css/User/vendor/bootstrap/js/popper.js"></script>
+            <script src="/css/User/vendor/bootstrap/js/bootstrap.min.js"></script>
+            <script src="/css/User/vendor/select2/select2.min.js"></script>
+            <script src="/css/User/vendor/daterangepicker/moment.min.js"></script>
+            <script src="/css/User/vendor/daterangepicker/daterangepicker.js"></script>
+            <script src="/css/User/vendor/slick/slick.min.js"></script>
+            <script src="/css/User/vendor/MagnificPopup/jquery.magnific-popup.min.js"></script>
+            <script src="/css/User/vendor/perfect-scrollbar/perfect-scrollbar.min.js"></script>
+            <script src="/css/User/js/main.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+            <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+            <script src="/js/user/order.js"></script>
 </body>
 
 </html>
