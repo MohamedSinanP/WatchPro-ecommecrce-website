@@ -20,6 +20,7 @@ router.post('/resend-otp', userController.resendOtp);
 router.post('/login', userController.login);
 router.post('/demo-login', userController.demoLogin);
 router.get('/home', userController.loadHomePage);
+router.post('/logout',userAuth.checkSession,userController.logout);
 
 // routes for product listing
 

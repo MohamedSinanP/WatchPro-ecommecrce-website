@@ -575,13 +575,13 @@ const downloadInvoice = async (req, res) => {
           };
         }),
         {
-          "description": "Discount",
+          "description": "Discount Applied (Total Off: ₹" + totalDiscount + ")",
           "price": -totalDiscount,
-          "quantity": 0,
+          "quantity": 1,
           "tax": 0
         }
       ],
-      "bottomNotice": `Thank you for your purchase! Discount applied: ${totalDiscount}`,
+      "bottomNotice": `Thank you for your purchase! Total Discount Applied: ₹${totalDiscount}`,
     };
 
     const result = await easyinvoice.createInvoice(invoiceData);

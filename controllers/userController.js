@@ -543,6 +543,22 @@ try {
 }
 
 }
+
+const logout = async(req,res) => {
+  try {
+    const user = req.session.user;
+    if(user){
+      req.session.isAuthenticated = false;
+      req.session.user = null;
+    }
+    res.redirect('/user/home');
+  } catch (error) {
+    console.log(error);
+    res.status(500).send('Internal server error');
+  }
+}
+
+
 module.exports = {
   loadHomePage,
   loadLoginPage,
@@ -562,5 +578,6 @@ module.exports = {
   updateAddress,
   deleteAddress,
   loadAboutPage,
-  loadContactPage
+  loadContactPage,
+  logout
 }

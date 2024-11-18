@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Wallet</title>
-    <link rel="icon" type="image/png" href="/css/User/images/icons/favicon.png"/>
+    <link rel="icon" type="image/png" href="/css/User/images/icons/favicon.png" />
     <link rel="stylesheet" type="text/css" href="/css/User/vendor/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="/css/User/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" type="text/css" href="/css/User/fonts/iconic/css/material-design-iconic-font.min.css">
@@ -22,80 +23,95 @@
     <link rel="stylesheet" href="/css/User/wallet.css">
     <link rel="stylesheet" href="/css/User/accountSidebar.css">
 </head>
+
 <body>
 
-<!-- header -->
+    <!-- header -->
     <%- include('../partials/user/header') %>
 
-    <div class="user-account-container">
-        <aside class="sidebar-1">
-            <nav>
-                <ul>
-                    <li><a href="/user/profile">User Profile</a></li>
-                    <li><a href="/user/address">Address</a></li>
-                    <li><a href="/user/orders">Orders</a></li>
-                    <li><a href="/user/wallet">Wallet</a></li>
-                    <li><a href="logout.html">Logout</a></li>
-                </ul>
-            </nav>
-        </aside>
-        <main class="content">
-            <h1>Your Wallet</h1>
-            <div class="wallet-info">
-                <strong>Current Balance: $<%= wallet.balance %></strong><br>
-            </div>
-        
-            <div class="transaction-history">
-                <h3>Transaction History</h3>
-                <table id="transactionTable" class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Type</th>
-                            <th>Amount ($)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% if (wallet.transaction.length > 0) { %>
-                            <% wallet.transaction.forEach(transaction => { %>
-                                <tr>
-                                    <td><%= new Date(transaction.date).toLocaleDateString() %></td>
-                                    <td><%= transaction.transactionType %></td>
-                                    <td><%= transaction.amount %></td>
-                                </tr>
-                            <% }) %>
-                        <% } else { %>
+        <div class="user-account-container">
+            <aside class="sidebar-1">
+                <nav>
+                    <ul>
+                        <li><a href="/user/profile">User Profile</a></li>
+                        <li><a href="/user/address">Address</a></li>
+                        <li><a href="/user/orders">Orders</a></li>
+                        <li><a href="/user/wallet">Wallet</a></li>
+                        <li>
+                            <form id="logoutForm" action="/user/logout" method="POST" style="display: inline;">
+                                <button type="submit"
+                                    style="border: none; background: none; color: inherit; cursor: pointer;  font-size: inherit;">
+                                    Logout
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </nav>
+            </aside>
+            <main class="content">
+                <h1>Your Wallet</h1>
+                <div class="wallet-info">
+                    <strong>Current Balance: $<%= wallet.balance.toFixed(2) %></strong><br>
+                </div>
+
+                <div class="transaction-history">
+                    <h3>Transaction History</h3>
+                    <table id="transactionTable" class="table table-striped">
+                        <thead>
                             <tr>
-                                <td colspan="3">No transactions available</td>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Amount ($)</th>
                             </tr>
-                        <% } %>
-                    </tbody>
-                </table>
-            </div>
-        </main>
-    </div>
+                        </thead>
+                        <tbody>
+                            <% if (wallet.transaction.length> 0) { %>
+                                <% wallet.transaction.forEach(transaction=> { %>
+                                    <tr>
+                                        <td>
+                                            <%= new Date(transaction.date).toLocaleDateString() %>
+                                        </td>
+                                        <td>
+                                            <%= transaction.transactionType %>
+                                        </td>
+                                        <td>
+                                            <%= transaction.amount %>
+                                        </td>
+                                    </tr>
+                                    <% }) %>
+                                        <% } else { %>
+                                            <tr>
+                                                <td colspan="3">No transactions available</td>
+                                            </tr>
+                                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+        </div>
 
-      <!-- footer-->
-      <%- include('../partials/user/footer') %>
+        <!-- footer-->
+        <%- include('../partials/user/footer') %>
 
-<!-- Scripts -->
-<script src="/css/User/vendor/jquery/jquery-3.2.1.min.js"></script>
-<script src="/css/User/vendor/animsition/js/animsition.min.js"></script>
-<script src="/css/User/vendor/bootstrap/js/popper.js"></script>
-<script src="/css/User/vendor/bootstrap/js/bootstrap.min.js"></script>
-<script src="/css/User/vendor/select2/select2.min.js"></script>
-<script src="/css/User/vendor/daterangepicker/moment.min.js"></script>
-<script src="/css/User/vendor/daterangepicker/daterangepicker.js"></script>
-<script src="/css/User/vendor/slick/slick.min.js"></script>
-<script src="/css/User/vendor/MagnificPopup/jquery.magnific-popup.min.js"></script>
-<script src="/css/User/vendor/perfect-scrollbar/perfect-scrollbar.min.js"></script>
-<script src="/css/User/js/main.js"></script>
+            <!-- Scripts -->
+            <script src="/css/User/vendor/jquery/jquery-3.2.1.min.js"></script>
+            <script src="/css/User/vendor/animsition/js/animsition.min.js"></script>
+            <script src="/css/User/vendor/bootstrap/js/popper.js"></script>
+            <script src="/css/User/vendor/bootstrap/js/bootstrap.min.js"></script>
+            <script src="/css/User/vendor/select2/select2.min.js"></script>
+            <script src="/css/User/vendor/daterangepicker/moment.min.js"></script>
+            <script src="/css/User/vendor/daterangepicker/daterangepicker.js"></script>
+            <script src="/css/User/vendor/slick/slick.min.js"></script>
+            <script src="/css/User/vendor/MagnificPopup/jquery.magnific-popup.min.js"></script>
+            <script src="/css/User/vendor/perfect-scrollbar/perfect-scrollbar.min.js"></script>
+            <script src="/css/User/js/main.js"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<script>
-  
-</script>
+            <script>
+
+            </script>
 
 </body>
+
 </html>

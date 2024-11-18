@@ -3,24 +3,69 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Order Confirmation</title>
+  <title>Order Greetings</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="icon" type="image/png" href="/css/User/images/icons/favicon.png" />
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/bootstrap/css/bootstrap.min.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/fonts/iconic/css/material-design-iconic-font.min.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/fonts/linearicons-v1.0.0/icon-font.min.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/animate/animate.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/css-hamburgers/hamburgers.min.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/animsition/css/animsition.min.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/select2/select2.min.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/daterangepicker/daterangepicker.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/slick/slick.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/MagnificPopup/magnific-popup.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/perfect-scrollbar/perfect-scrollbar.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/css/util.css">
+  <link rel="stylesheet" type="text/css" href="/css/User/css/main.css">
   <link rel="stylesheet" href="/css/User/greetings.css">
 </head>
 <body>
-
-<div class="confirmation-container">
-  <div class="confirmation-card">
-    <div class="icon">
-      <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="currentColor" class="bi bi-check-circle" viewBox="0 0 16 16">
-        <path d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm3.97-8.03a.75.75 0 0 1 0 1.06l-4 4a.75.75 0 0 1-1.06 0l-2-2a.75.75 0 0 1 1.06-1.06L7.5 10.44l3.44-3.47a.75.75 0 0 1 1.06 0z"/>
-      </svg>
+<!-- header -->
+<%- include('../partials/user/header') %>
+<div class="greetings-confirmation">
+  <div class="confirmation-container">
+    <div class="confirmation-card">
+      <div class="icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="currentColor" class="bi bi-check-circle" viewBox="0 0 16 16">
+          <path d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm3.97-8.03a.75.75 0 0 1 0 1.06l-4 4a.75.75 0 0 1-1.06 0l-2-2a.75.75 0 0 1 1.06-1.06L7.5 10.44l3.44-3.47a.75.75 0 0 1 1.06 0z"/>
+        </svg>
+      </div>
+      <h1>Thank You for Your Order!</h1>
+      <p>Your order has been placed successfully</p>
+      <button onclick="window.location.href='/user/products'">Continue Shopping</button>
+      <button onclick="window.location.href='/user/orders'">View Orders</button>
     </div>
-    <h1>Thank You for Your Order!</h1>
-    <p>Your order has been placed successfully. We will send you a confirmation email shortly.</p>
-    
-    <button onclick="window.location.href='/user/products'">Continue Shopping</button>
   </div>
 </div>
+<!-- footer-->
+<%- include('../partials/user/footer') %>
 
+<script src="/css/User/vendor/jquery/jquery-3.2.1.min.js"></script>
+<script src="/css/User/vendor/animsition/js/animsition.min.js"></script>
+<script src="/css/User/vendor/bootstrap/js/popper.js"></script>
+<script src="/css/User/vendor/bootstrap/js/bootstrap.min.js"></script>
+<script src="/css/User/vendor/select2/select2.min.js"></script>
+<script src="/css/User/vendor/daterangepicker/moment.min.js"></script>
+<script src="/css/User/vendor/daterangepicker/daterangepicker.js"></script>
+<script src="/css/User/vendor/slick/slick.min.js"></script>
+<script src="/css/User/vendor/MagnificPopup/jquery.magnific-popup.min.js"></script>
+<script src="/css/User/vendor/perfect-scrollbar/perfect-scrollbar.min.js"></script>
+<script src="/css/User/js/main.js"></script>
 </body>
 </html>
