@@ -8,10 +8,12 @@ const Razorpay = require("razorpay");
 const crypto = require('crypto');
 const fs = require('fs');
 const easyinvoice = require('easyinvoice');
+require('dotenv').config();
+
 
 const razorpay = new Razorpay({
-  key_id: "rzp_test_X9NFs9mKeaCGys",
-  key_secret: "wMGZZJsmEEXnXBJKPiG02YBN"
+  key_id: process.env.RAZORPAY_ID,
+  key_secret: process.env.RAZORPAY_SECRET
 });
 
 
