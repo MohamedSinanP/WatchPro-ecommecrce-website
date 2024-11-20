@@ -411,7 +411,7 @@ const downloadExcel = async (req, res) => {
 };
 
 const getSalesReportData = async (timeframe) => {
-  const matchStage = {}; // Adjust your match conditions based on timeframe if needed
+  const matchStage = {}; 
   let groupStage = {
     _id: {
       year: { $year: '$createdAt' },
@@ -419,12 +419,11 @@ const getSalesReportData = async (timeframe) => {
       day: { $dayOfMonth: '$createdAt' }
     },
     totalSalesRevenue: { $sum: '$total' },
-    totalDiscount: { $sum: '$discount' }, // Adjust field as per your schema
+    totalDiscount: { $sum: '$discount' }, 
     totalOrders: { $sum: 1 },
     totalItemsSold: { $sum: '$products.quantity' }
   };
 
-  // Adjust grouping based on timeframe
   if (timeframe === 'monthly') {
     groupStage._id = { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } };
   } else if (timeframe === 'weekly') {

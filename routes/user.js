@@ -9,7 +9,6 @@ const wishlistController = require('../controllers/wishlistController');
 const walletController = require('../controllers/walletControler');
 const userAuth = require('../middlewares/userAuth');
 
-
 // routes for user signup , login and load home page
 
 router.get('/signup', userController.loadSignupPage);

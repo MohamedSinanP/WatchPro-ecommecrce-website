@@ -1,9 +1,10 @@
 const mongoose = require('mongoose');
-
+require('dotenv').config();
 
 const connectDB = async () => {
   try{
-    const conn = await mongoose.connect('mongodb://localhost:27017/eCommerce',{});  
+    const mongoURL = process.env.MONGO_URL;
+    const conn = await mongoose.connect(mongoURL,{});  
 
     console.log(`Mongodb connected at : ${conn.connection.host}`)
   }catch(error){

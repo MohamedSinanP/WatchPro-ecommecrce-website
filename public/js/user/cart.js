@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentIndex = 0;
 
   function showItem(index) {
-    const offset = -index * 100; // Assuming each item is 100% width
+    const offset = -index * 100;
     carousel.style.transform = `translateX(${offset}%)`;
   }
 
@@ -21,7 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
     showItem(currentIndex);
   });
 
-  // Automatically show the first item
   showItem(currentIndex);
 });
 

@@ -102,14 +102,9 @@ const applyCoupon = async (req, res) => {
       discount = coupon.discount;
     }
 
-
     discount = Math.min(discount, cartTotal);
 
-
-
     const newTotal = cartTotal - discount;
-
-
 
     return res.json({ success: true, newTotal: newTotal, message: 'Coupon applied successfully' });
   } catch (error) {
