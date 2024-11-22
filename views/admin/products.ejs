@@ -79,7 +79,14 @@
                                                     </td>
                                                     <td>
                                                         <button class="btn btn-sm btn-primary"
-                                                            onclick="openEditModal('<%= product._id %>', '<%= product.name %>', '<%= product.brand %>', '<%= product.category._id %>', '<%= product.description %>', '<%= product.price %>', '<%= product.stock %>', '<%= JSON.stringify(product.images) %>')">
+                                                            data-id="<%= product._id %>" data-name="<%= product.name %>"
+                                                            data-brand="<%= product.brand %>"
+                                                            data-category="<%= product.category._id %>"
+                                                            data-description="<%= JSON.stringify(product.description) %>"
+                                                            data-price="<%= product.price %>"
+                                                            data-stock="<%= product.stock %>"
+                                                            data-images="<%= JSON.stringify(product.images) %>"
+                                                            onclick="handleEditClick(this)">
                                                             Edit
                                                         </button>
                                                         <button
@@ -171,7 +178,7 @@
                         <div class="mb-3">
                             <label for="productStock" class="form-label">Stock</label>
                             <input type="number" class="form-control" id="productStock" name="stock">
-                            <div class="invalid-feedback">Please enter a  valid stock.</div>
+                            <div class="invalid-feedback">Please enter a valid stock.</div>
                         </div>
                         <div class="mb-3">
                             <label for="productImages" class="form-label">Images</label>
@@ -191,8 +198,7 @@
     </div>
 
     <!-- Edit Product Modal -->
-    <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel"
-        aria-hidden="true">
+    <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
@@ -214,11 +220,11 @@
                             <label for="productCategory" class="form-label">Category</label>
                             <select class="form-select" id="editProductCategory" name="category" required>
                                 <option value="">Select a category</option>
-                                <% categories.forEach(category=> { %>
+                                <% categories.forEach(category => { %>
                                     <option value="<%= category._id %>">
                                         <%= category.name %> - <%= category.genderType %>
                                     </option>
-                                    <% }); %>
+                                <% }); %>
                             </select>
                         </div>
                         <div class="mb-3">
@@ -235,14 +241,13 @@
                         </div>
                         <div class="mb-3">
                             <label for="editProductImages" class="form-label">Images</label>
-                            <input type="file" class="form-control" id="editProductImages" name="editProductImages"
-                                multiple accept="image/*">
+                            <input type="file" class="form-control" id="editProductImages" name="editProductImages" multiple accept="image/*">
                             <div class="preview mt-3" id="editImagePreview"></div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <button type="submit" class="btn btn-primary" id="saveChangesButton">Save Changes</button>
                     </div>
                 </form>
             </div>

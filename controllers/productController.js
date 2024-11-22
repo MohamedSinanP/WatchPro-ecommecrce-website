@@ -3,9 +3,25 @@ const productModel = require('../models/productModel');
 const sharp = require('sharp');
 const path = require('path');
 const offerModel = require('../models/offerModel');
-
+const { S3Client, GetObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+require('dotenv').config();
 
 // admin product management
+
+const bucketName = process.env.BUCKET_NAME;
+const bucketRegion = process.env.BUCKET_REGION;
+const secretAccessKey = process.env.SECRET_ACCESS_KEY;
+const accessKey = process.env.ACCESS_KEY;
+
+const s3Client = new S3Client({
+  region: bucketRegion,
+  credentials: {
+    accessKeyId: accessKey,
+    secretAccessKey: secretAccessKey,
+  },
+});
+
 
 
 const loadProducts = async (req, res) => {
@@ -18,6 +34,22 @@ const loadProducts = async (req, res) => {
     const products = await productModel.find().populate('category')
       .skip(skip)
       .limit(limit);
+
+      // for (let product of products) {
+      //   const imageUrls = await Promise.all(
+      //     product.images.map(async (image) => {
+      //       const getObjectParams = {
+      //         Bucket: bucketName,
+      //         Key: image, 
+      //       };
+  
+      //       const command = new GetObjectCommand(getObjectParams);
+      //       const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); 
+      //       return signedUrl;
+      //     })
+      //   );
+      //   product.imageUrls = imageUrls; 
+      // }
 
     const totalPages = Math.ceil(totalProducts / limit);
     currentPage = page;
@@ -36,19 +68,25 @@ const addProduct = async (req, res) => {
     const images = req.files;
     console.log(req.body);
 
-    const imagePaths = await Promise.all(
+    const imageUrls = await Promise.all(
       images.map(async (file, index) => {
-
-        const outputFileName = `resized-${Date.now()}-${index}.jpg`;
-        const outputFilePath = path.join('uploads', outputFileName);
-
-        await sharp(file.path)
+        const resizedImageBuffer = await sharp(file.path)
           .resize(500, 500, { fit: 'cover' })
           .jpeg({ quality: 80 })
-          .toFile(outputFilePath);
+          .toBuffer();
 
+        const s3Key = `products/${Date.now()}-${index}-${file.originalname}`;
 
-        return `/${outputFilePath.replace(/\\/g, '/')}`;
+        const params = {
+          Bucket: bucketName,
+          Key: s3Key,
+          Body: resizedImageBuffer,
+          ContentType: file.mimetype,
+        };
+
+        const command = new PutObjectCommand(params);
+        await s3Client.send(command);
+         return `https://${bucketName}.s3.${bucketRegion}.amazonaws.com/${s3Key}`;
       })
     );
 
@@ -60,7 +98,7 @@ const addProduct = async (req, res) => {
       description,
       category,
       stock,
-      images: imagePaths
+      images: imageUrls
     });
 
     await newProduct.save();
@@ -73,9 +111,6 @@ const addProduct = async (req, res) => {
 };
 
 const editProduct = async (req, res) => {
-  console.log('ffff');
-
-
   try {
     const productId = req.params.id;
     console.log(productId);
@@ -88,11 +123,33 @@ const editProduct = async (req, res) => {
       category,
       description,
       price,
-      stock,
+      stock
     } = req.body;
 
+const images = req.files;
+console.log(images);
 
+const imageUrls = await Promise.all(
+  images.map(async (file, index) => {
+    const resizedImageBuffer = await sharp(file.path)
+      .resize(500, 500, { fit: 'cover' })
+      .jpeg({ quality: 80 })
+      .toBuffer();
 
+    const s3Key = `products/${Date.now()}-${index}-${file.originalname}`;
+
+    const params = {
+      Bucket: bucketName,
+      Key: s3Key,
+      Body: resizedImageBuffer,
+      ContentType: file.mimety
+    };
+
+    const command = new PutObjectCommand(params);
+    await s3Client.send(command);
+     return `https://${bucketName}.s3.${bucketRegion}.amazonaws.com/${s3Key}`;
+  })
+);
 
     const updatedProduct = await productModel.findByIdAndUpdate(
       productId,
@@ -102,7 +159,8 @@ const editProduct = async (req, res) => {
         category,
         description,
         price,
-        stock
+        stock,
+        images:imageUrls
       },
       { new: true }
     );

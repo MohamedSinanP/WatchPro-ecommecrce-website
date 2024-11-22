@@ -40,9 +40,9 @@ document.getElementById('productForm').addEventListener('submit', function (even
     }
 
     let productStock = document.getElementById('productStock');
-    let stockValue = productStock.value.trim(); 
+    let stockValue = productStock.value.trim();
     console.log(stockValue);
-    
+
     if (stockValue === '' || Number(stockValue) < 0) {
         productStock.classList.add('is-invalid');
         isValid = false;
@@ -231,7 +231,29 @@ async function uploadProduct(formData) {
     });
 }
 
+
+// Handle Edit Button Click
+function handleEditClick(button) {
+    const id = button.dataset.id;
+    const name = button.dataset.name;
+    const brand = button.dataset.brand;
+    const category = button.dataset.category;
+    const description = JSON.parse(button.dataset.description);
+    const price = button.dataset.price;
+    const stock = button.dataset.stock;
+    const images = JSON.parse(button.dataset.images);
+    openEditModal(id, name, brand, category, description, price, stock, images);
+}
+
+// Open Edit Modal and Populate Data
+let croppers = [];
+let imageUpdates = [];
+
+// Open Edit Modal and Populate Data
 async function openEditModal(id, name, brand, categoryid, description, price, stock, images) {
+    console.log('Opening Edit Modal');
+
+    // Populate form fields
     $('#editProductId').val(id);
     $('#editProductName').val(name);
     $('#editProductBrand').val(brand);
@@ -239,78 +261,173 @@ async function openEditModal(id, name, brand, categoryid, description, price, st
     $('#editProductPrice').val(price);
     $('#editProductStock').val(stock);
     $('#editProductCategory').val(categoryid);
-    $('#editImagePreview').html(''); // Clear previous image previews
-    croppers = []; // Reset croppers
 
-    // Parse and display images in the edit modal
+    // Clear previous image previews and reset croppers
+    $('#editImagePreview').html('');
+    croppers = [];
+    imageUpdates = [];  // Reset image updates on modal open
+
+    // Load existing images into the preview
     const imageArray = Array.isArray(images) ? images : JSON.parse(images || "[]");
-    imageArray.forEach((imageSrc) => {
-        const imgContainer = document.createElement('div');
-        imgContainer.style.position = 'relative';
 
-        const img = document.createElement('img');
-        img.src = imageSrc;
-        img.className = 'img-fluid';
-        img.style.width = '100%';
-        img.style.maxHeight = '500px';
-        imgContainer.appendChild(img);
-        $('#editImagePreview').append(imgContainer);
+    imageArray.forEach((imageSrc, index) => {
+        if (imageSrc) {
+            const imgContainer = document.createElement('div');
+            imgContainer.style.position = 'relative';
 
-        const cropper = new Cropper(img, {
-            aspectRatio: 1,
-            viewMode: 1,
-            autoCropArea: 1,
-            scalable: true,
-            zoomable: true,
-            cropBoxResizable: true,
-            cropBoxMovable: true,
-        });
-        croppers.push(cropper);
+            const img = document.createElement('img');
+            img.src = imageSrc;
+            img.className = 'img-fluid';
+            img.style.width = '100%';
+            img.style.maxHeight = '500px';
+            imgContainer.appendChild(img);
+
+            // Change Image Button
+            const changeButton = document.createElement('button');
+            changeButton.textContent = 'Change Image';
+            changeButton.className = 'btn btn-secondary btn-sm mt-2';
+            changeButton.style.position = 'absolute';
+            changeButton.style.bottom = '10px';
+            changeButton.style.right = '10px';
+
+            // Handle image change
+            changeButton.onclick = (e) => {
+                e.stopPropagation();
+                handleImageChange(index, img);
+            };
+            imgContainer.appendChild(changeButton);
+
+            // Add to preview container
+            $('#editImagePreview').append(imgContainer);
+
+            // Initialize Cropper
+            const cropper = new Cropper(img, {
+                aspectRatio: NaN,
+                viewMode: 2,
+                autoCropArea: 1,
+                background: false,
+                scalable: true,
+                zoomable: true,
+                cropBoxResizable: true,
+                cropBoxMovable: true,
+            });
+            croppers.push(cropper);
+        }
     });
 
+    // Show the modal
     $('#editProductModal').modal('show');
 }
 
-// Function to open the edit modal
-$(document).ready(function () {
-    $('#editProductForm').on('submit', function (event) {
-        event.preventDefault(); // Prevent default form submission
+// Handle Image Change
+function handleImageChange(index, imgElement) {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
 
+    fileInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                // Replace the old image with the new one
+                imgElement.src = event.target.result;
+
+                // Destroy the previous cropper instance
+                if (croppers[index]) {
+                    croppers[index].destroy();
+                }
+
+                // Initialize cropper for the new image
+                const cropper = new Cropper(imgElement, {
+                    aspectRatio: NaN,
+                    viewMode: 2,
+                    autoCropArea: 1,
+                    background: false,
+                    scalable: true,
+                    zoomable: true,
+                    cropBoxResizable: true,
+                    cropBoxMovable: true,
+                });
+                croppers[index] = cropper;
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+    fileInput.click();
+}
+// Prepare Cropped Image Data for Submission
+async function prepareImageData(formData) {
+    for (let i = 0; i < croppers.length; i++) {
+        const cropperCanvas = croppers[i].getCroppedCanvas();
+
+        // Add a white background to the canvas
+        const canvas = document.createElement('canvas');
+        canvas.width = cropperCanvas.width;
+        canvas.height = cropperCanvas.height;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(cropperCanvas, 0, 0);
+
+        // Convert to Blob and append to FormData
+        await new Promise((resolve) => {
+            canvas.toBlob(
+                (blob) => {
+                    formData.append('productImages', blob, `image-${i}.jpg`);
+                    resolve();
+                },
+                'image/jpeg',
+                0.95 // High-quality JPEG compression
+            );
+        });
+    }
+
+    // Add image updates (if any) from imageChanges
+    imageUpdates.forEach((imageData, index) => {
+        if (imageData) {
+            formData.append('updatedImages', imageData, `updated-image-${index}.jpg`);
+        }
+    });
+}
+
+// Handle Edit Form Submission (API triggers only when form is submitted)
+// Handle Edit Form Submission (only when "Save Changes" is clicked)
+$(document).ready(function () {
+    // Prevent form submission when clicking on other buttons
+    $('#editProductForm').on('submit', function (event) {
+        event.preventDefault(); // Prevent form from submitting immediately
+    });
+
+    // Add explicit handler for "Save Changes" button click
+    $('#saveChangesButton').on('click', async function () {
+        // Prepare form data
         const formData = new FormData();
-        formData.append('name', $('#editProductName').val()); // Corrected from 'editProdcutName' to 'editProductName'
-        formData.append('brand', $('#editProductBrand').val()); // Corrected from 'editProdcutBrand' to 'editProductBrand'
+        formData.append('name', $('#editProductName').val());
+        formData.append('brand', $('#editProductBrand').val());
         formData.append('category', $('#editProductCategory').val());
         formData.append('description', $('#editProductDescription').val());
         formData.append('price', $('#editProductPrice').val());
         formData.append('stock', $('#editProductStock').val());
-        for (let [key, value] of formData.entries()) {
-            console.log(`${key}: ${value}`);
-        }
-        // Create FormData from the form
-        updateProduct(formData); // Call the updateProduct function
+
+        // Add cropped images (this runs only after images are handled)
+        await prepareImageData(formData);
+
+        // Trigger API request after ensuring everything is ready
+        const productId = $('#editProductId').val();
+        $.ajax({
+            url: `/admin/editProduct/${productId}`,
+            type: 'PUT',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                $('#editProductModal').modal('hide');
+                location.reload()
+            },
+            error: function (error) {
+                console.error('Error updating product:', error);
+            }
+        });
     });
 });
-
-
-// Update product function
-async function updateProduct(formData) {
-    const productId = $('#editProductId').val(); // Get the product ID
-
-    $.ajax({
-        url: `/admin/editProduct/${productId}`,
-        type: 'PUT',
-        data: formData,
-        processData: false,
-        contentType: false,
-        success: function (response) {
-            alert('Product updated successfully!');
-            $('#editProductModal').modal('hide');
-            location.reload();
-        },
-        error: function (xhr, status, error) {
-            console.error("Error in updateProduct:", error);
-            alert('Error updating product: ' + xhr.responseText);
-        }
-    });
-}
-

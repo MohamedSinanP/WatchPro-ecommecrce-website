@@ -116,7 +116,7 @@
                                                             Cancel Product
                                                         </button>
                                                         <% } else if (order.paymentMethod==='Razorpay'
-                                                            &&order.paymentStatus==='failed' ) {%>
+                                                            &&order.paymentStatus==='failed') {%>
                                                             <button class="btn btn-danger retry-payment"
                                                                 onclick="retryPayment('<%= order._id %>','<%= order.razorpayId %>')">
                                                                 Retry Payment
