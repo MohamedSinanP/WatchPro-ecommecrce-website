@@ -12,12 +12,12 @@
 <body>
     <div class="container">
         <h2>Login</h2>
-        <form method="post" action="/user/login" id="loginForm">
+        <form method="post" action="/login" id="loginForm">
             <input type="email" placeholder="Email" name="email" autocomplete="email">
             <input type="password" placeholder="Password" name="password" autocomplete="current-password">
-            <button type="submit" onclick="setLoginAction('/user/login')">Login</button>
-            <button type="submit" onclick="setLoginAction('/user/demo-login')">Demo Login</button>
-            <p>Don't have an account? <a href="/user/signup">Sign up here</a></p>
+            <button type="submit" onclick="setLoginAction('/login')">Login</button>
+            <button type="submit" onclick="setLoginAction('/demo-login')">Demo Login</button>
+            <p>Don't have an account? <a href="/signup">Sign up here</a></p>
         </form>
         <div class="social-login">
             <p>Or login with:</p>
@@ -25,10 +25,6 @@
                 <a href="/auth/google" >
                     <img src="/images/search.png" alt="Google"> Sign up with Google
                 </a>
-            </button>
-           
-            <button class="facebook-btn">
-                <img src="/images/facebook.png" alt="Facebook"> Login with Facebook
             </button>
         </div>
     </div>

@@ -38,7 +38,7 @@ function setLoginAction(action) {
   const form = document.getElementById('loginForm');
   form.action = action;
 
-  if (action === '/user/demo-login') {
+  if (action === '/demo-login') {
       document.querySelector('input[name="email"]').value = "demo@example.com";
       document.querySelector('input[name="password"]').value = "demopassword123";
   }

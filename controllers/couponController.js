@@ -90,7 +90,7 @@ const applyCoupon = async (req, res) => {
       return res.json({ success: false, message: `The coupon only get for purchase greter than ${minPurchaseLimit}` })
     }
     if (coupon.userId.includes(userId)) {
-      return res.json({ success: false, message: 'Coupon can user only once' });
+      return res.json({ success: false, message: 'Coupon can use only once' });
     } else {
       coupon.userId.push(userId);
       coupon.save();
@@ -98,6 +98,12 @@ const applyCoupon = async (req, res) => {
 
     if (coupon.discountType === 'percentage') {
       discount = (cartTotal * coupon.discount) / 100;
+      console.log(discount);
+      if(discount >= coupon.maxDiscount){
+        discount = coupon.maxDiscount;
+        console.log(discount);
+        
+      }
     } else if (coupon.discountType === 'amount') {
       discount = coupon.discount;
     }

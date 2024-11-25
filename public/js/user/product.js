@@ -1,3 +1,8 @@
+function loadPage(pageNumber) {
+  window.location.href = `/products?page=${pageNumber}`;
+}
+
+
 document.querySelectorAll('.filter-link').forEach(link => {
   link.addEventListener('click', (e) => {
     e.preventDefault();
@@ -12,7 +17,7 @@ document.querySelectorAll('.filter-link').forEach(link => {
     const limit = 10;
 
     function fetchProducts(page = 1) {
-      axios.get(`/user/products/filter`, {
+      axios.get(`/products/filter`, {
         params: { page, limit, sortBy, price, category, genderType: genderType, order }
       })
         .then(response => {
@@ -24,14 +29,14 @@ document.querySelectorAll('.filter-link').forEach(link => {
         <div class="block2">
             <div class="block2-pic hov-img0">
                 <img src="${product.imageUrl}" alt="IMG-PRODUCT">
-                <a href="/user/singleProduct/${product._id}"
+                <a href="/singleProduct/${product._id}"
                    class="block2-btn flex-c-m stext-103 cl2 size-102 bg0 bor2 hov-btn1 p-lr-15 trans-04">
                     Quick View
                 </a>
             </div>
             <div class="block2-txt flex-w flex-t p-t-14">
                 <div class="block2-txt-child1 flex-col-l">
-                    <a href="/user/singleProduct/${product._id}" class="stext-104 cl4 hov-cl1 trans-04 js-name-b2 p-b-6">
+                    <a href="/singleProduct/${product._id}" class="stext-104 cl4 hov-cl1 trans-04 js-name-b2 p-b-6">
                         ${product.name}
                     </a>
                     <span class="stext-105 cl3">
@@ -87,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log(query);
 
     if (query) {
-      axios.get('/user/searchProduct', {
+      axios.get('/searchProduct', {
         params: { query: query }
       })
         .then(response => {
@@ -104,14 +109,14 @@ document.addEventListener('DOMContentLoaded', () => {
     <div class="block2">
       <div class="block2-pic hov-img0">
         <img src="${product.imageUrl}" alt="IMG-PRODUCT">
-        <a href="/user/singleProduct/${product._id}"
+        <a href="/singleProduct/${product._id}"
            class="block2-btn flex-c-m stext-103 cl2 size-102 bg0 bor2 hov-btn1 p-lr-15 trans-04">
           Quick View
         </a>
       </div>
       <div class="block2-txt flex-w flex-t p-t-14">
         <div class="block2-txt-child1 flex-col-l">
-          <a href="/user/singleProduct/${product._id}" class="stext-104 cl4 hov-cl1 trans-04 js-name-b2 p-b-6">
+          <a href="/singleProduct/${product._id}" class="stext-104 cl4 hov-cl1 trans-04 js-name-b2 p-b-6">
             ${product.name}
           </a>
           <span class="stext-105 cl3">
@@ -164,20 +169,30 @@ $(document).ready(function () {
 
 
     $.ajax({
-      url: '/user/wishlist',
+      url: '/wishlist',
       method: 'POST',
       contentType: 'application/json',
       data: JSON.stringify(productData),
       success: function (response) {
-        if (response.success) {
+        if (response.redirect) {
+          window.location.href = response.redirect;
+        } else if (response.success) {
           toastr.success(response.message);
         } else {
           toastr.warning(response.message); 
         }
       },
       error: function (xhr) {
-        const response = JSON.parse(xhr.responseText);
-        toastr.error(response.message || 'An unknown error occurred.');
+        if (xhr.status === 401) {
+          const response = JSON.parse(xhr.responseText);
+          if (response.redirect) {
+            window.location.href = response.redirect; 
+          } else {
+            toastr.error(response.message || 'An unknown error occurred.');
+          }
+        } else {
+          toastr.error('An error occurred while processing your request.');
+        }
       }
     });
   });

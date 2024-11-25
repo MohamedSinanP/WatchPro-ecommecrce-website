@@ -215,7 +215,7 @@ const verifyOtp = async (req, res) => {
 
       req.session.user = saveUserData._id;
 
-      res.json({ success: true, redirectUrl: "/user/home" })
+      res.json({ success: true, redirectUrl: "/home" })
     } else {
       res.status(400).json({ success: false, message: "Invalid OTP , Please try again" })
     }
@@ -275,7 +275,7 @@ const login = async (req, res) => {
     req.session.isAuthenticated = true;
     req.session.user = findUser._id;
 
-    return res.redirect('/user/home');
+    return res.redirect('/home');
   } catch (error) {
     console.error(error);
     return res.render('user/login', { message: 'An error occurred, please try again' });
@@ -290,7 +290,7 @@ const demoLogin = async (req, res) => {
     if (email === "demo@example.com" && password === "demopassword123") {
       req.session.user = { email, role: 'demo' };
 
-      res.redirect('/user/home');
+      res.redirect('/home');
     } else {
       res.status(401).send('Invalid demo login credentials.');
     }
@@ -361,7 +361,7 @@ const updateUser = async (req, res) => {
 
 const changePassword = async (req, res) => {
   try {
-    const userId = req.session.user.id;
+    const userId = req.session.user;
     const { oldPassword, newPassword } = req.body;
 
 
@@ -387,7 +387,7 @@ const changePassword = async (req, res) => {
     );
     res.status(200).json({ message: 'Password changed successfully' });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     res.status(500).json({ message: 'Failed to change password, please try again' });
   }
 };
@@ -443,7 +443,7 @@ const addAddress = async (req, res) => {
   }};
 
 const addDefaultAddress = async (req, res) => {
-  console.log('hhhh');
+  console.log('hhhh',req.body);
   
   const { firstName, lastName, email, address, phoneNumber, city, state, pincode } = req.body;
   const userId = req.session.user;
@@ -461,7 +461,10 @@ const addDefaultAddress = async (req, res) => {
     });
 
     await newAddress.save();
-    res.redirect('/user/checkout');
+    res.status(200).json({
+      message: 'Address added successfully',
+      newAddress, 
+    });
 
   } catch (error) {
     console.log(error);
@@ -551,7 +554,7 @@ const logout = async(req,res) => {
       req.session.isAuthenticated = false;
       req.session.user = null;
     }
-    res.redirect('/user/home');
+    res.redirect('/home');
   } catch (error) {
     console.log(error);
     res.status(500).send('Internal server error');

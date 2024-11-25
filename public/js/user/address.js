@@ -1,5 +1,5 @@
 function loadPage(pageNumber) {
-    window.location.href = `/user/address?page=${pageNumber}`;
+    window.location.href = `/address?page=${pageNumber}`;
 }
 
 document.getElementById('addAddressForm').addEventListener('submit', function (event) {
@@ -71,7 +71,7 @@ document.getElementById('addAddressForm').addEventListener('submit', function (e
 
         $.ajax({
             type: 'POST',
-            url: '/user/addAddress',
+            url: '/addAddress',
             data: formData,
             success: function (response) {
                 $('#addAddressModal').modal('hide');
@@ -79,11 +79,7 @@ document.getElementById('addAddressForm').addEventListener('submit', function (e
                 document.getElementById('addAddressForm').reset();
 
 
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Success!',
-                    text: 'Your address has been added successfully!',
-                });
+            location.reload()
             },
             error: function (error) {
                 console.error('Error:', error);
@@ -130,7 +126,7 @@ $('#editAddressForm').on('submit', function (event) {
 
 
     $.ajax({
-        url: `/user/updateAddress/` + addressId,
+        url: `/updateAddress/` + addressId,
         type: 'PUT',
         contentType: 'application/json',
         data: JSON.stringify(updatedAddress),
@@ -173,7 +169,7 @@ $(document).on('click', '.delete-address', function () {
         if (result.isConfirmed) {
 
             $.ajax({
-                url: `/user/deleteAddress/` + addressId,
+                url: `/deleteAddress/` + addressId,
                 type: 'DELETE',
                 success: function (response) {
                     if (response.success) {

@@ -31,6 +31,15 @@ const login = async (req, res) => {
   }
 };
 
+const logout = async(req,res) => {
+  try {
+    req.session.admin = false;
+    res.redirect('/admin/login');
+  } catch (error) {
+    res.status(500).send('Internal server error');
+  }
+}
+
 const loadDashboard = async (req, res) => {
   try {
     const admin = req.session.admin;
@@ -442,6 +451,7 @@ const getSalesReportData = async (timeframe) => {
 module.exports = {
   loadLogin,
   login,
+  logout,
   loadDashboard,
   loadUsers,
   blockUser,

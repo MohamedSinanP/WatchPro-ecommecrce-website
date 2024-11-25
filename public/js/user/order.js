@@ -1,12 +1,12 @@
 function loadPage(pageNumber) {
-  window.location.href = `/user/orders?page=${pageNumber}`;
+  window.location.href = `/orders?page=${pageNumber}`;
 }
 
 async function cancelOrderProduct(orderId, total) {
 console.log(total);
 
   try {
-    const response = await axios.delete(`/user/deleteOrderItem/${orderId}`, {
+    const response = await axios.delete(`/deleteOrderItem/${orderId}`, {
       data: { total }
     });
     if (response.data.success) {
@@ -30,7 +30,7 @@ async function returnProduct(orderId) {
       cancelButtonText: 'No, keep it',
     });
     if (result.isConfirmed) {
-      const response = await axios.post(`/user/returnOrder/${orderId}`);
+      const response = await axios.post(`/returnOrder/${orderId}`);
       if (response.data.success) {
         location.reload();
       }
@@ -43,7 +43,7 @@ async function returnProduct(orderId) {
 async function retryPayment(orderId, razorpayId) {
 
   try {
-    const response = await axios.post('/user/retryPayment', {
+    const response = await axios.post('/retryPayment', {
       orderId,
       razorpayId
     })
@@ -67,7 +67,7 @@ async function retryPayment(orderId, razorpayId) {
             console.log('hhhhhhhh');
 
             const orderId = response.razorpay_order_id;
-            const result = await axios.post('/user/paymentSuccess', { orderid })
+            const result = await axios.post('/paymentSuccess', { orderid })
             if (result.data.success) {
               window.location.href = result.data.redirectUrl;
             } else {
@@ -92,7 +92,7 @@ async function retryPayment(orderId, razorpayId) {
       const rzp = new Razorpay(options);
       rzp.on('payment.failed', function (response) {
         console.log("Payment failed:", response.error);
-        window.location.href = '/user/orders';
+        window.location.href = '/orders';
       });
 
       rzp.open();
@@ -116,20 +116,16 @@ async function retryPayment(orderId, razorpayId) {
 
 async function downloadInvoice(orderId) {
   try {
-    const response = await axios.get(`/user/invoice/${orderId}`, { responseType: 'blob' });
-
+    const response = await axios.get(`/invoice/${orderId}`, { responseType: 'blob' });
+console.log(response)
     if (response.status === 200) {
-
       const blob = new Blob([response.data], { type: 'application/pdf' });
 
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = url;
       link.download = `invoice_${orderId}.pdf`;
-
       document.body.appendChild(link);
       link.click();
-
       window.URL.revokeObjectURL(url);
       document.body.removeChild(link);
 

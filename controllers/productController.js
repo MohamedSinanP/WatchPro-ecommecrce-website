@@ -1,5 +1,6 @@
 const categoryModel = require('../models/categoryModel');
 const productModel = require('../models/productModel');
+const wishlistModel = require('../models/wishlistModel');
 const sharp = require('sharp');
 const path = require('path');
 const offerModel = require('../models/offerModel');
@@ -35,21 +36,21 @@ const loadProducts = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
-      // for (let product of products) {
-      //   const imageUrls = await Promise.all(
-      //     product.images.map(async (image) => {
-      //       const getObjectParams = {
-      //         Bucket: bucketName,
-      //         Key: image, 
-      //       };
-  
-      //       const command = new GetObjectCommand(getObjectParams);
-      //       const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); 
-      //       return signedUrl;
-      //     })
-      //   );
-      //   product.imageUrls = imageUrls; 
-      // }
+    // for (let product of products) {
+    //   const imageUrls = await Promise.all(
+    //     product.images.map(async (image) => {
+    //       const getObjectParams = {
+    //         Bucket: bucketName,
+    //         Key: image, 
+    //       };
+
+    //       const command = new GetObjectCommand(getObjectParams);
+    //       const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); 
+    //       return signedUrl;
+    //     })
+    //   );
+    //   product.imageUrls = imageUrls; 
+    // }
 
     const totalPages = Math.ceil(totalProducts / limit);
     currentPage = page;
@@ -86,7 +87,7 @@ const addProduct = async (req, res) => {
 
         const command = new PutObjectCommand(params);
         await s3Client.send(command);
-         return `https://${bucketName}.s3.${bucketRegion}.amazonaws.com/${s3Key}`;
+        return `https://${bucketName}.s3.${bucketRegion}.amazonaws.com/${s3Key}`;
       })
     );
 
@@ -126,30 +127,30 @@ const editProduct = async (req, res) => {
       stock
     } = req.body;
 
-const images = req.files;
-console.log(images);
+    const images = req.files;
+    console.log(images);
 
-const imageUrls = await Promise.all(
-  images.map(async (file, index) => {
-    const resizedImageBuffer = await sharp(file.path)
-      .resize(500, 500, { fit: 'cover' })
-      .jpeg({ quality: 80 })
-      .toBuffer();
+    const imageUrls = await Promise.all(
+      images.map(async (file, index) => {
+        const resizedImageBuffer = await sharp(file.path)
+          .resize(500, 500, { fit: 'cover' })
+          .jpeg({ quality: 80 })
+          .toBuffer();
 
-    const s3Key = `products/${Date.now()}-${index}-${file.originalname}`;
+        const s3Key = `products/${Date.now()}-${index}-${file.originalname}`;
 
-    const params = {
-      Bucket: bucketName,
-      Key: s3Key,
-      Body: resizedImageBuffer,
-      ContentType: file.mimety
-    };
+        const params = {
+          Bucket: bucketName,
+          Key: s3Key,
+          Body: resizedImageBuffer,
+          ContentType: file.mimety
+        };
 
-    const command = new PutObjectCommand(params);
-    await s3Client.send(command);
-     return `https://${bucketName}.s3.${bucketRegion}.amazonaws.com/${s3Key}`;
-  })
-);
+        const command = new PutObjectCommand(params);
+        await s3Client.send(command);
+        return `https://${bucketName}.s3.${bucketRegion}.amazonaws.com/${s3Key}`;
+      })
+    );
 
     const updatedProduct = await productModel.findByIdAndUpdate(
       productId,
@@ -160,7 +161,7 @@ const imageUrls = await Promise.all(
         description,
         price,
         stock,
-        images:imageUrls
+        images: imageUrls
       },
       { new: true }
     );
@@ -203,14 +204,25 @@ const isListedProduct = async (req, res) => {
 
 const loadProductPage = async (req, res) => {
   try {
-    const products = await productModel.find({ isListed: true }).populate('category');
+    const userId = req.session.user;
+    const page = Number.isNaN(parseInt(req.query.page)) ? 1 : parseInt(req.query.page);
+    const limit = 10;
+    const skip = (page - 1) * limit;
+    const totalProducts = await productModel.countDocuments();
+    const products = await productModel.find({ isListed: true }).populate('category')
+    .skip(skip)
+    .limit(limit);
+    const totalPages = Math.ceil(totalProducts / limit);
+    const currentPage = page;
+
     const offers = await offerModel.find({ isActive: true }).populate([
       { path: 'products' },
       { path: 'categories' }
     ]);
-
+    const wishlist = await wishlistModel.findOne({ userId: userId });
+    const wishlistProductIds = wishlist ? wishlist.products.map(product => product.productId.toString()) : [];
     const modifiedProducts = products.map(product => {
-
+      const isInWishlist = wishlistProductIds.includes(product._id.toString());
       const productOffers = offers.filter(offer => {
         const matchesProduct = offer.products.some(prod => {
 
@@ -246,10 +258,13 @@ const loadProductPage = async (req, res) => {
         imageUrl: product.images[2],
         offers: productOffers,
         offerPrice,
+        isInWishlist  
       };
     });
 
-    res.render('user/products', { products: modifiedProducts });
+     
+
+    res.render('user/products', { products: modifiedProducts,currentPage, totalPages, limit });
 
   } catch (error) {
     console.error('Error in loadProductPage:', error.message, error.stack);

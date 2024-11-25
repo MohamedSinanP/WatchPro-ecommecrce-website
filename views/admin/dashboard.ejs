@@ -15,7 +15,7 @@
 <body>
 
   <div class="dashboard-container">
-    <%- include('../partials/sidebar') %>
+    <%- include('../partials/admin/sidebar') %>
 
       <main class="main-content">
         <header class="main-header d-flex justify-content-between align-items-center">
@@ -177,7 +177,7 @@
             y: {
               beginAtZero: true,
               min: 0,
-              max: 100000, // Adjust as needed for monthly data
+              max: 1000000, // Adjust as needed for monthly data
               ticks: {
                 callback: function (value) {
                   return '$' + value.toFixed(2);
@@ -194,12 +194,12 @@
 
         if (selectedPeriod === 'monthly' && currentChart !== 'monthly') {
           salesChart.data = monthlyData;
-          salesChart.options.scales.y.max = 100000; // Static max for monthly
+          salesChart.options.scales.y.max = 1000000; // Static max for monthly
           salesChart.update();
           currentChart = 'monthly';
         } else if (selectedPeriod === 'yearly' && currentChart !== 'yearly') {
           salesChart.data = yearlyData;
-          salesChart.options.scales.y.max = 100000; // Static max for yearly
+          salesChart.options.scales.y.max = 1000000; // Static max for yearly
           salesChart.update();
           currentChart = 'yearly';
         }

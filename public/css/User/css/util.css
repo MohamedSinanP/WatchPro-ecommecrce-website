@@ -3715,3 +3715,8 @@ iframe {border: none;}
 .pointer-none {
 	pointer-events: none;
 }
+
+.blue-heart {
+  filter: hue-rotate(180deg);  /* You can use hue-rotate to change the icon color */
+  transition: all 0.3s ease-in-out;  /* Smooth transition for color change */
+} 

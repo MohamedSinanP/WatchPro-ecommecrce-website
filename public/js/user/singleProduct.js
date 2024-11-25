@@ -17,7 +17,7 @@ $(document).ready(function () {
 
 
     $.ajax({
-      url: '/user/cart',
+      url: '/cart',
       method: 'POST',
       contentType: 'application/json',
       data: JSON.stringify(productData),
@@ -29,7 +29,16 @@ $(document).ready(function () {
         }
       },
       error: function (xhr, status, error) {
-        toastr.success('Failed to add product to the cart.');
+        if (xhr.status === 401) {
+          const response = JSON.parse(xhr.responseText);
+          if (response.redirect) {
+            window.location.href = response.redirect; 
+          } else {
+            toastr.error(response.message || 'An unknown error occurred.');
+          }
+        } else {
+          toastr.error('An error occurred while processing your request.');
+        }
       }
     });
   });
@@ -54,7 +63,7 @@ $(document).ready(function () {
 
    
     $.ajax({
-      url: '/user/wishlist',
+      url: '/wishlist',
       method: 'POST',
       contentType: 'application/json',
       data: JSON.stringify(productData),
@@ -66,8 +75,16 @@ $(document).ready(function () {
         }
       },
       error: function (xhr) {
-        const response = JSON.parse(xhr.responseText);
-        toastr.error(response.message || 'An unknown error occurred.');
+        if (xhr.status === 401) {
+          const response = JSON.parse(xhr.responseText);
+          if (response.redirect) {
+            window.location.href = response.redirect; 
+          } else {
+            toastr.error(response.message || 'An unknown error occurred.');
+          }
+        } else {
+          toastr.error('An error occurred while processing your request.');
+        }
       }
     });
   });

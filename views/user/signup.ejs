@@ -9,26 +9,23 @@
 <body>
     <div class="container">
         <h2>Sign Up</h2>
-        <form method="post" action="/user/signup" id="signupForm">
+        <form method="post" action="/signup" id="signupForm">
             <input type="text" placeholder="Full Name" name="fullName">
             <input type="email" placeholder="Email" name="email">
             <input type="password" placeholder="Password" name="password">
             <input type="password" placeholder="Confirm Password" name="confirmPassword">
             <input type="text" placeholder="ReferralCode" name="referralCode">
             <button id="submit-btn" type="submit">Sign Up</button>
-            <p>Already have an account? <a href="/user/login">Login here</a></p>
+            <p>Already have an account? <a href="/login">Login here</a></p>
         </form>
         <div class="social-login">
             <p>Or sign up with:</p>
             <button class="google-btn">
                 <a href="/auth/google" >
-                    <img src="/images/search.png" alt="Google"> Sign up with Google
+                    <img src="/search.png" alt="Google"> Sign up with Google
                 </a>
             </button>
            
-            <button class="facebook-btn">
-                <img src="/images/facebook.png" alt="Facebook"> Sign up with Facebook
-            </button>
         </div>
     </div>
 

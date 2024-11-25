@@ -14,7 +14,7 @@ $(document).ready(function () {
             price: productPrice,
             quantity: productQuantity
         };
-        axios.post('/user/cart', productData)
+        axios.post('/cart', productData)
             .then(response => {
                 toastr.success('Product added to cart successfully!');
             })
@@ -27,7 +27,7 @@ $(document).ready(function () {
   function deleteProduct(productId) {
     console.log(productId);
   
-    axios.delete(`/user/deleteWishlistProduct/${productId}`)
+    axios.delete(`/deleteWishlistProduct/${productId}`)
         .then(response => {
             if (response.data.success) {
                 const productElement = document.getElementById(`product-${productId}`); 

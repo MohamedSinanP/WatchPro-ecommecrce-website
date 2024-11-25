@@ -20,6 +20,8 @@
     <link rel="stylesheet" type="text/css" href="/css/User/vendor/perfect-scrollbar/perfect-scrollbar.css">
     <link rel="stylesheet" type="text/css" href="/css/User/css/util.css">
     <link rel="stylesheet" type="text/css" href="/css/User/css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/css/User/userProfile.css">
@@ -35,12 +37,12 @@
             <aside class="sidebar-1">
                 <nav>
                     <ul>
-                        <li><a href="/user/profile">User Profile</a></li>
-                        <li><a href="/user/address">Address</a></li>
-                        <li><a href="/user/orders">Orders</a></li>
-                        <li><a href="/user/wallet">Wallet</a></li>
+                        <li><a href="/profile">User Profile</a></li>
+                        <li><a href="/address">Address</a></li>
+                        <li><a href="/orders">Orders</a></li>
+                        <li><a href="/wallet">Wallet</a></li>
                         <li>
-                            <form id="logoutForm" action="/user/logout" method="POST" style="display: inline;">
+                            <form id="logoutForm" action="/logout" method="POST" style="display: inline;">
                               <button type="submit" style="border: none; background: none; color: inherit; cursor: pointer;  font-size: inherit;">
                                 Logout
                               </button>
@@ -146,6 +148,7 @@
         <script src="/css/User/js/main.js"></script>
 
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
 <script src="/js/user/profile.js"></script>
 </body>

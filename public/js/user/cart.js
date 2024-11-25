@@ -54,7 +54,7 @@ function updateQuantity(cartId, productId, change) {
 
 
 function sendQuantityUpdate(cartId, productId, quantity) {
-  axios.put('/user/updateQuantity', {
+  axios.put('/updateQuantity', {
     cartId: cartId,
     id: productId,
     quantity: quantity
@@ -93,7 +93,7 @@ function sendQuantityUpdate(cartId, productId, quantity) {
         toastr.error(error.response.data.message, 'Error', {
           closeButton: true,
           progressBar: true,
-          timeOut: 2000, 
+          timeOut: 1000, 
           onHidden: function () {
             location.reload();
           }
@@ -104,7 +104,7 @@ function sendQuantityUpdate(cartId, productId, quantity) {
 function deleteProduct(productId) {
   console.log(productId);
 
-  axios.delete(`/user/deleteProduct/${productId}`)
+  axios.delete(`/deleteProduct/${productId}`)
     .then(response => {
       if (response.data.success) {
 
@@ -130,7 +130,7 @@ document.querySelector('.apply-coupon-btn').addEventListener('click', async () =
   console.log(couponCode, cartTotal);
 
   try {
-    const response = await axios.post('/user/applyCoupon', {
+    const response = await axios.post('/applyCoupon', {
       code: couponCode,
       cartTotal: cartTotal
     });
@@ -141,22 +141,29 @@ document.querySelector('.apply-coupon-btn').addEventListener('click', async () =
       console.log('Coupon applied successfully');
       const newTotal = response.data.newTotal;
       document.getElementById('cartTotal').textContent = `₹ ${newTotal}`;
-
-      Swal.fire({
-        icon: 'success',
-        title: 'Coupon Applied!',
-        text: 'Your coupon was applied successfully.',
+  
+      // Toastr success notification
+      toastr.success("Your coupon was applied successfully.", "Coupon Applied!", {
+        duration: 2000, 
+        closeButton: true,
+        gravity: "top", 
+        positionClass: "toast-right", 
+        backgroundColor: "green", 
+        stopOnFocus: true,
       });
-
+  
       const applyButton = document.querySelector('.apply-coupon-btn');
       applyButton.style.pointerEvents = 'none';
       applyButton.classList.add('disabled');
       document.querySelector('.remove-coupon-btn').style.display = 'inline-flex';
     } else {
-      Swal.fire({
-        icon: 'error',
-        title: 'Oops...',
-        text: response.data.message,
+      toastr.error(response.data.message, {
+        duration: 2000,
+        closeButton: true,
+        gravity: "top",
+        positionClass: "toast-right",
+        backgroundColor: "red",
+        stopOnFocus: true,
       });
     }
   } catch (error) {
@@ -170,7 +177,7 @@ document.querySelector('.remove-coupon-btn').addEventListener('click', async () 
   console.log(cartTotal);
 
   try {
-    const response = await axios.post('/user/removeCoupon', {
+    const response = await axios.post('/removeCoupon', {
       cartTotal: cartTotal
     });
 

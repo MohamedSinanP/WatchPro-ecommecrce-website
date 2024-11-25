@@ -14,7 +14,7 @@
 <body>
     <div class="container">
         <h2>OTP Verification</h2>
-        <form method="post" action="/user/verify-otp" id="otpForm" onsubmit="return validateOTPForm()">
+        <form method="post" action="/verify-otp" id="otpForm" onsubmit="return validateOTPForm()">
             <p>Please enter the OTP sent to your email:</p>
             <div class="otp-inputs">
                 <input type="text" maxlength="1" class="otp-input" required>
@@ -81,7 +81,7 @@
 
             $.ajax({
                 type: "POST",
-                url: "/user/verify-otp",
+                url: "/verify-otp",
                 data: { otp: otpValue },
                 success: (response) => {
                     if (response.success) {
@@ -115,7 +115,7 @@
         function resendOTP() {
             $.ajax({
                 type: "POST",
-                url: "/user/resend-otp",
+                url: "/resend-otp",
                 success: (response) => {
                     if (response.success) {
                         Swal.fire({

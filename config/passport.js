@@ -16,9 +16,9 @@ passport.use(new GoogleStrategy({
       return done(null, user);
     } else {
       user = new User({
-        name: profile.displayName,
+        fullName: profile.displayName,
         email: profile.emails[0].value, 
-        googleId: profile.id, // Consistent field name
+        googleId: profile.id, 
       });
       await user.save();
       return done(null, user);

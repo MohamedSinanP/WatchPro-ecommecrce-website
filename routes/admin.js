@@ -15,6 +15,7 @@ router.post('/login', adminController.login);
 router.get('/dashboard', adminAuth.checkSession, adminController.loadDashboard);
 router.get('/users', adminAuth.checkSession, adminController.loadUsers);
 router.put('/blockUser', adminAuth.checkSession, adminController.blockUser);
+router.post('/logout',adminAuth.checkSession, adminController.logout);
 
 // categoryManagement
 

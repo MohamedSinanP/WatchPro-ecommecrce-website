@@ -51,12 +51,9 @@ app.use(express.urlencoded ({extended:true}));
 app.use(express.json());
 
 
-app.use('/user', userRoutes);
+app.use('/', userRoutes);
 app.use('/admin', adminRoutes);
 app.use('/auth', authRoutes)
-
-
-
 
 
 const PORT = process.env.PORT || 3000;

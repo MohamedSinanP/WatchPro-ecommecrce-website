@@ -1,75 +1,76 @@
 document.addEventListener('DOMContentLoaded', function () {
-  document.getElementById('addAddressForm').addEventListener('submit', function (event) {
-    event.preventDefault();
-  
-    const fields = ['firstName', 'lastName', 'address', 'phoneNumber', 'city', 'state', 'pincode'];
+  document.getElementById('addAddressForm').addEventListener('submit', async function (event) {
+    event.preventDefault(); // Prevent default form submission (no page reload)
 
-    fields.forEach(field => {
-      document.getElementById(field).classList.remove('is-invalid', 'is-valid');
-    });
-  
-    let isValid = true;
+    // Extract form data manually using DOM
+    const formData = {
+      firstName: document.getElementById('firstName').value.trim(),
+      lastName: document.getElementById('lastName').value.trim(),
+      address: document.getElementById('address').value.trim(),
+      phoneNumber: document.getElementById('phoneNumber').value.trim(),
+      city: document.getElementById('city').value.trim(),
+      state: document.getElementById('state').value,
+      pincode: document.getElementById('pincode').value.trim(),
+    };
 
-    const firstName = document.getElementById('firstName');
-    if (firstName.value.trim() === '') {
-      firstName.classList.add('is-invalid');
-      isValid = false;
-    } else {
-      firstName.classList.add('is-valid');
-    }
+    console.log(formData); // Log the form data to verify
 
-    const lastName = document.getElementById('lastName');
-    if (lastName.value.trim() === '') {
-      lastName.classList.add('is-invalid');
-      isValid = false;
-    } else {
-      lastName.classList.add('is-valid');
-    }
-  
-    const address = document.getElementById('address');
-    if (address.value.trim() === '') {
-      address.classList.add('is-invalid');
-      isValid = false;
-    } else {
-      address.classList.add('is-valid');
-    }
+    try {
+      const response = await fetch('/defaultAddress', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json', // Set Content-Type header for JSON
+        },
+        body: JSON.stringify(formData), // Convert form data to JSON string
+      });
 
-    const phoneNumber = document.getElementById('phoneNumber');
-    if (phoneNumber.value.trim() === '') {
-      phoneNumber.classList.add('is-invalid');
-      isValid = false;
-    } else {
-      phoneNumber.classList.add('is-valid');
-    }
- 
-    const city = document.getElementById('city');
-    if (city.value.trim() === '') {
-      city.classList.add('is-invalid');
-      isValid = false;
-    } else {
-      city.classList.add('is-valid');
-    }
+      const data = await response.json();
 
-    const state = document.getElementById('state');
-    if (state.value === '') {
-      state.classList.add('is-invalid');
-      isValid = false;
-    } else {
-      state.classList.add('is-valid');
-    }
+      if (response.ok) {
+        const newAddress = data.newAddress;
 
-    const pincode = document.getElementById('pincode');
-    if (pincode.value === '' || Number(pincode.value) <= 0) {
-      pincode.classList.add('is-invalid');
-      isValid = false;
-    } else {
-      pincode.classList.add('is-valid');
-    }
+        const addressContainer = document.querySelector('.address-container .row');
 
-    if (isValid) {
-      this.submit();
+        const newAddressCard = document.createElement('div');
+        newAddressCard.classList.add('col-md-4');
+        newAddressCard.innerHTML = `
+          <div class="address-card p-3 mb-3 border rounded" data-address-id="${newAddress._id}">
+            <p><strong>${newAddress.firstName} ${newAddress.lastName}</strong></p>
+            <p>${newAddress.address}</p>
+            <p>${newAddress.city}, ${newAddress.state} - ${newAddress.pincode}</p>
+            <p>Phone: ${newAddress.phoneNumber}</p>
+            <button class="btn btn-outline-primary btn-sm mt-2" onclick="selectAddress('${newAddress._id}')">Select this address</button>
+          </div>
+        `;
+        addressContainer.appendChild(newAddressCard);
+
+        // Reset the form
+        document.getElementById('addAddressForm').reset();
+        location.reload();
+      } else {
+        toastr.error(data.message || 'Error adding address. Please try again.', {
+          duration: 2000,
+          closeButton: true,
+          gravity: "top",
+          positionClass: "toast-right",
+          backgroundColor: "red",
+          stopOnFocus: true,
+        });
+      }
+    } catch (error) {
+      // Handle network or server errors
+      console.log('Error:', error);
+      toastr.error('Something went wrong. Please try again later.', {
+        duration: 2000,
+        closeButton: true,
+        gravity: "top",
+        positionClass: "toast-right",
+        backgroundColor: "red",
+        stopOnFocus: true,
+      });
     }
   });
+
 
   function selectAddress(addressId) {
     document.querySelectorAll('.address-card').forEach(card => {
@@ -80,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function () {
       selectedCard.classList.add('selected');
     }
 
-    axios.post(`/user/defaultAddress/${addressId}`)
+    axios.post(`/defaultAddress/${addressId}`)
       .then(response => {
         if (!response.data.success) {
           alert('Error setting default address.');
@@ -115,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (paymentMethod.value === "Razorpay") {
       try {
-        const response = await axios.post('/user/createOrder', {
+        const response = await axios.post('/createOrder', {
           totalPrice: totalPrice,
           addressId: addressId,
           paymentMethod: paymentMethod.value,
@@ -135,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function () {
             handler: async function (response) {
               if (response.razorpay_payment_id && response.razorpay_order_id && response.razorpay_signature) {
                 const orderId = response.razorpay_order_id;
-                const result = await axios.post('/user/paymentSuccess', { orderid })
+                const result = await axios.post('/paymentSuccess', { orderid })
                 if (result.data.success) {
                   window.location.href = result.data.redirectUrl;
                 } else {
@@ -160,7 +161,7 @@ document.addEventListener('DOMContentLoaded', function () {
           const rzp = new Razorpay(options);
           rzp.on('payment.failed', function (response) {
             console.log("Payment failed:", response.error);
-            window.location.href = '/user/orders';
+            window.location.href = '/orders';
           });
           rzp.open();
         } else {
@@ -179,7 +180,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     } else if (paymentMethod.value === "COD") {
       try {
-        const response = await axios.post('/user/placeOrder', {
+        const response = await axios.post('/placeOrder', {
           totalPrice: totalPrice,
           paymentMethod: "COD",
           addressId: addressId,
@@ -187,7 +188,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         if (response.data.success) {
-          window.location.href = '/user/greetings';
+          window.location.href = '/greetings';
         } else {
           const message = response.data.message;
           Toastify({
@@ -206,7 +207,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     } else if (paymentMethod.value === "Wallet") {
       try {
-        const response = await axios.post('/user/walletOrder', {
+        const response = await axios.post('/walletOrder', {
           totalPrice: totalPrice,
           paymentMethod: "Wallet",
           addressId: addressId,
@@ -214,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         if (response.data.success) {
 
-          window.location.href = '/user/greetings';
+          window.location.href = '/greetings';
         } else {
           const message = response.data.message;
           Toastify({
@@ -246,7 +247,7 @@ document.addEventListener('DOMContentLoaded', function () {
         cancelButtonText: 'No, keep it',
       });
       if (result.isConfirmed) {
-        const response = await axios.post(`/user/returnOrder/${orderId}`);
+        const response = await axios.post(`/returnOrder/${orderId}`);
         if (response.data.success) {
           location.reload();
         }
@@ -265,7 +266,7 @@ document.addEventListener('DOMContentLoaded', function () {
   //   const data = Object.fromEntries(formData.entries());
 
   //   try {
-  //     const response = await axios.post("/user/defaultAddress", data);
+  //     const response = await axios.post("/defaultAddress", data);
 
   //     if (response.status === 200) {
   //       Toastify({

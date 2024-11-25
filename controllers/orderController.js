@@ -7,6 +7,7 @@ const walletModel = require('../models/walletModel');
 const Razorpay = require("razorpay");
 const crypto = require('crypto');
 const fs = require('fs');
+const PDFDocument = require('pdfkit');
 const easyinvoice = require('easyinvoice');
 require('dotenv').config();
 
@@ -418,7 +419,8 @@ const loadOrdersPage = async (req, res) => {
     const orders = await orderModel
       .find({ userId: userId }).populate('products.productId')
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .sort({ createdAt: -1 });;
 
     const totalPages = Math.ceil(totalOrders / limit);
     const currentPage = page;
@@ -446,14 +448,32 @@ const returnOrder = async (req, res) => {
 
         await productToUpdate.save();
       };
-      wallet.transaction.push({
-        transactionType: 'credit',
-        amount: order.total,
-        date: new Date()
-      });
 
-      wallet.balance = walletBalance;
-      await wallet.save();
+      if(wallet){
+        wallet.transaction.push({
+          transactionType: 'credit',
+          amount: order.total,
+          date: new Date()
+        });
+  
+        wallet.balance = walletBalance;
+        await wallet.save();
+      }else{
+        wallet = new walletModel({
+          userId,
+          transaction: [
+            {
+              transactionType:'credit',
+              amount: order.total,
+              date: new Date(),
+            },
+          ],
+          
+        });
+        wallet.balance = walletBalance;
+        await wallet.save();
+      }
+   
 
       order.save();
     }
@@ -473,7 +493,7 @@ const paymentSuccess = async (req, res) => {
     if (order) {
       order.paymentStatus = 'success';
       await order.save();
-      res.json({ success: true, redirectUrl: '/user/greetings' })
+      res.json({ success: true, redirectUrl: '/greetings' })
     };
 
   } catch (error) {
@@ -534,78 +554,143 @@ const downloadInvoice = async (req, res) => {
       .populate('userId')
       .populate('products.productId');
 
-    const subtotal = order.products.reduce((total, product) => {
-      return total + (product.quantity * product.price);
-    }, 0);
-
+    const subtotal = order.products.reduce((total, product) => total + (product.quantity * product.price), 0);
     const totalDiscount = order.totalDiscount || 0;
-
     const total = subtotal - totalDiscount;
 
-    const invoiceData = {
-      "documentTitle": "INVOICE",
-      "currency": "INR",
-      "taxNotation": "gst",
-      "marginTop": 25,
-      "marginRight": 25,
-      "marginLeft": 25,
-      "marginBottom": 25,
-      "logo": "https://public.easyinvoice.cloud/img/logo_en_original.png",
-      "sender": {
-        "company": "WatchPro",
-        "address": "pottikkallu 123 Hyderabad",
-        "zip": "12345",
-        "city": "Malappuram",
-        "country": "India"
+    const invoice = {
+      invoice_nr: `2024.000${orderId.slice(-4)}`,
+      subtotal,
+      paid: total,
+      shipping: {
+        name: order.userId.fullName,
+        address: order.address.address,
+        city: order.address.city,
+        state: "Kerala",
+        country: "India"
       },
-      "client": {
-        "company": order.userId.fullName,
-        "address": order.address.address,
-        "zip": "67890",
-        "city": order.address.city,
-        "country": "India"
-      },
-      "invoiceNumber": "2024.0001",
-      "invoiceDate": new Date().toISOString().split('T')[0],
-      "products": [
-        ...order.products.map(product => {
-          return {
-            "quantity": product.quantity,
-            "description": product.name,
-            "tax": 0,
-            "price": product.price
-          };
-        }),
-        {
-          "description": "Discount Applied (Total Off: ₹" + totalDiscount + ")",
-          "price": -totalDiscount,
-          "quantity": 1,
-          "tax": 0
-        }
-      ],
-      "bottomNotice": `Thank you for your purchase! Total Discount Applied: ₹${totalDiscount}`,
+      items: order.products.map(product => ({
+        item: product.productId.name,
+        amount: product.quantity * product.price,
+        quantity: product.quantity
+      }))
     };
 
-    const result = await easyinvoice.createInvoice(invoiceData);
+    const doc = new PDFDocument({ size: "A4", margin: 50 });
 
-
-    fs.writeFileSync("invoice.pdf", result.pdf, 'base64');
-
-    res.setHeader('Content-Disposition', 'attachment; filename=invoice.pdf');
+    const fileName = `invoice_${orderId}.pdf`;
+    res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
     res.setHeader('Content-Type', 'application/pdf');
 
-    // Send the PDF to the client
-    res.send(Buffer.from(result.pdf, 'base64'));
+    // Helper functions for each section
+    const generateHeader = (doc) => {
+      doc
+        .fillColor("#444444")
+        .fontSize(20)
+        .text("WatchPro", 50, 45)
+        .fontSize(10)
+        .text("WatchPro", 200, 50, { align: "right" })
+        .text("Pottikkallu 123 Hyderabad", 200, 65, { align: "right" })
+        .text("Malappuram, India", 200, 80, { align: "right" })
+        .moveDown();
+    };
+
+    const generateCustomerInformation = (doc, invoice) => {
+      doc
+        .fillColor("#444444")
+        .fontSize(20)
+        .text("Invoice", 50, 160);
+
+      generateHr(doc, 185);
+
+      const customerInformationTop = 200;
+      doc
+        .fontSize(10)
+        .text("Invoice Number:", 50, customerInformationTop)
+        .font("Helvetica-Bold")
+        .text(invoice.invoice_nr, 150, customerInformationTop)
+        .font("Helvetica")
+        .text("Invoice Date:", 50, customerInformationTop + 15)
+        .text(formatDate(new Date()), 150, customerInformationTop + 15)
+        .font("Helvetica-Bold")
+        .text(invoice.shipping.name, 300, customerInformationTop)
+        .font("Helvetica")
+        .text(invoice.shipping.address, 300, customerInformationTop + 15)
+        .text(`${invoice.shipping.city}, ${invoice.shipping.state}, ${invoice.shipping.country}`, 300, customerInformationTop + 30)
+        .moveDown();
+
+      generateHr(doc, 252);
+    };
+
+    const generateInvoiceTable = (doc, invoice) => {
+      let i;
+      const invoiceTableTop = 330;
+
+      doc.font("Helvetica-Bold");
+      generateTableRow(doc, invoiceTableTop, "Item", "Unit Cost", "Quantity", "Line Total");  // Remove "Description" here
+      generateHr(doc, invoiceTableTop + 20);
+      doc.font("Helvetica");
+
+      for (i = 0; i < invoice.items.length; i++) {
+        const item = invoice.items[i];
+        const position = invoiceTableTop + (i + 1) * 30;
+        generateTableRow(
+          doc,
+          position,
+          item.item,
+          formatCurrency(item.amount / item.quantity),
+          item.quantity,
+          formatCurrency(item.amount)
+        );
+        generateHr(doc, position + 20);
+      }
+
+      const subtotalPosition = invoiceTableTop + (i + 1) * 30;
+      generateTableRow(doc, subtotalPosition, "", "Subtotal", "", formatCurrency(invoice.subtotal));
+
+      const paidToDatePosition = subtotalPosition + 20;
+      generateTableRow(doc, paidToDatePosition, "", "Discount", "", formatCurrency(totalDiscount));
+
+      const duePosition = paidToDatePosition + 25;
+      doc.font("Helvetica-Bold");
+      generateTableRow(doc, duePosition, "", "Total", "", formatCurrency(total));
+      doc.font("Helvetica");
+    };
+
+    const generateFooter = (doc) => {
+      doc
+        .fontSize(10)
+        .text(" Thank you for your business.", 50, 650, { align: "center", width: 500 });
+    };
+
+    const generateTableRow = (doc, y, item, unitCost, quantity, lineTotal) => {
+      doc.fontSize(10)
+        .text(item, 50, y)
+        .text(unitCost, 280, y, { width: 90, align: "right" })
+        .text(quantity, 370, y, { width: 90, align: "right" })
+        .text(lineTotal, 0, y, { align: "right" });
+    };
+
+    const generateHr = (doc, y) => {
+      doc.strokeColor("#aaaaaa").lineWidth(1).moveTo(50, y).lineTo(550, y).stroke();
+    };
+
+    const formatCurrency = (cents) => `₹${(cents).toFixed(2)}`;
+    const formatDate = (date) => date.toISOString().split('T')[0];
+
+    generateHeader(doc);
+    generateCustomerInformation(doc, invoice);
+    generateInvoiceTable(doc, invoice);
+    generateFooter(doc);
+
+    doc.pipe(res);
+    doc.end();
 
   } catch (error) {
-    console.log("Error generating invoice:", error);
+    console.error("Error generating invoice:", error);
     res.status(500).json({ message: "Error generating invoice" });
   }
 };
-
-
-
-
 module.exports = {
   loadOrders,
   updateStatus,

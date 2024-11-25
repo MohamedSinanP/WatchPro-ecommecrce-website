@@ -11,6 +11,7 @@ const userAuth = require('../middlewares/userAuth');
 
 // routes for user signup , login and load home page
 
+router.get('/',userController.loadHomePage);
 router.get('/signup', userController.loadSignupPage);
 router.get('/login', userController.loadLoginPage);
 router.post('/signup', userController.signup);
@@ -31,12 +32,13 @@ router.get('/searchProduct', prodcutController.searchProduct);
 // routes user account management 
 
 router.get('/profile', userAuth.checkSession, userController.loadProfilePage);
-router.post('/updateUser/:userId', userController.updateUser);
-router.post('/changePassword', userController.changePassword);
+router.put('/updateUser/:userId', userController.updateUser);
+router.patch('/changePassword',userAuth.checkSession, userController.changePassword);
 router.get('/address', userAuth.checkSession, userController.loadAddressPage);
 router.post('/addAddress', userController.addAddress);
 router.put('/updateAddress/:id', userController.updateAddress);
 router.delete('/deleteAddress/:id', userController.deleteAddress);
+router.post('/defaultAddress', userController.addDefaultAddress);
 router.get('/orders', userAuth.checkSession, orderController.loadOrdersPage);
 
 // routes for cart 
@@ -45,6 +47,9 @@ router.get('/cart', userAuth.checkSession, cartController.loadCartPage);
 router.post('/cart', userAuth.checkSession, cartController.addToCart);
 router.put('/updateQuantity', cartController.updateQuantity);
 router.delete('/deleteProduct/:id', cartController.deleteCartProduct);
+
+// coupon routes 
+
 router.post('/applyCoupon', couponController.applyCoupon);
 router.post('/removeCoupon', couponController.removeCoupon);
 
@@ -68,7 +73,6 @@ router.get('/about', userController.loadAboutPage);
 // routes for checkout and place order
 
 router.get('/checkout', orderController.loadCheckoutPage);
-router.post('/defaultAddress', userController.addDefaultAddress);
 router.post('/placeOrder', orderController.addOrderDetails);
 router.post('/createOrder', orderController.createOrder);
 router.delete('/deleteOrderItem/:id', orderController.deleteOrderItem);
