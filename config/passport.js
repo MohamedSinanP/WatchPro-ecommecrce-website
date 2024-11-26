@@ -24,8 +24,6 @@ passport.use(new GoogleStrategy({
       return done(null, user);
     }
   } catch (error) {
-    console.log('error in starategy callback',error);
-    
     return done(error, null);
   }
 }));

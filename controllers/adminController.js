@@ -26,7 +26,7 @@ const login = async (req, res) => {
 
   } catch (error) {
     res.send(error);
-    console.log("error", error);
+    console.error(error);
 
   }
 };
@@ -82,8 +82,6 @@ const loadDashboard = async (req, res) => {
         }
       }
     ]);
-
-    console.log(monthlySales, yearlySales);
 
     // Aggregate top-selling products, categories, and brands
     const [topSellingProducts, topSellingCategories, topSellingBrands] = await Promise.all([
@@ -206,6 +204,7 @@ const loadDashboard = async (req, res) => {
     res.send('An error occurred while loading the dashboard.');
   }
 };
+
 const loadUsers = async (req, res) => {
   try {
     const page = Number.isNaN(parseInt(req.query.page)) ? 1 : parseInt(req.query.page);
@@ -227,7 +226,6 @@ const loadUsers = async (req, res) => {
 };
 
 const blockUser = async (req, res) => {
-  console.log(req.body);
 
   const { userId, isBlocked } = req.body;
   try {
@@ -241,7 +239,7 @@ const blockUser = async (req, res) => {
       res.json({ success: true });
     }
   } catch (error) {
-    console.log(error)
+    console.error(error)
     res.status(500).json({ success: false, message: 'failed to bloack user' });
   }
 
@@ -255,7 +253,6 @@ const loadInventory = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const totalProducts = await productModel.countDocuments();
-    console.log(totalProducts)
     const products = await productModel.find({})
       .skip(skip)
       .limit(limit);
@@ -266,7 +263,7 @@ const loadInventory = async (req, res) => {
     res.render('admin/inventory', { products, currentPage, limit, totalPages });
   } catch (error) {
     res.send(error);
-    console.log('error', error)
+    console.error(error)
   }
 };
 
@@ -344,7 +341,7 @@ const loadSalesReport = async (req, res) => {
       timeframe,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };

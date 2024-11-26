@@ -18,6 +18,8 @@ const razorpay = new Razorpay({
 });
 
 
+// admin order management 
+
 const loadOrders = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1; // Default to page 1 if not provided
@@ -41,7 +43,7 @@ const loadOrders = async (req, res) => {
       res.render('admin/order', { orders, currentPage: page, totalPages, limit });
     }
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).send('Server Error');
   }
 };
@@ -87,7 +89,6 @@ const cancelOrder = async (req, res) => {
 }
 
 
-
 // user order management 
 
 
@@ -104,7 +105,7 @@ const loadCheckoutPage = async (req, res) => {
 
     res.render('user/checkout', { cartItems, addresses, cartTotal, user, shippingCharge, total, totalDiscount });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ message: 'internal server error' });
   }
 }
@@ -185,7 +186,7 @@ const createOrder = async (req, res) => {
       Id: newOrder._id
     });
   } catch (error) {
-    console.log("Error creating order:", error);
+    console.error("Error creating order:", error);
     res.status(500).json({ error: "Something went wrong while creating order" });
   }
 };
@@ -214,8 +215,6 @@ const addOrderDetails = async (req, res) => {
       name: item.productId.name,
       price: item.productId.price
     }));
-
-    console.log("addOrderDetails products:", products);
 
 
     const newOrder = await orderModel.create({
@@ -248,7 +247,7 @@ const addOrderDetails = async (req, res) => {
     const deleteUserCart = await cartModel.findOneAndDelete({ userId: userId });
     res.json({ success: true });
   } catch (error) {
-    console.log("Error placing order:", error);
+    console.error("Error placing order:", error);
     res.status(500).send("Internal Server Error");
   }
 
@@ -256,8 +255,6 @@ const addOrderDetails = async (req, res) => {
 
 const walletOrder = async (req, res) => {
   const { totalPrice, paymentMethod, addressId, totalDiscount } = req.body;
-  console.log(paymentMethod);
-
   const userId = req.session.user;
 
   try {
@@ -281,7 +278,6 @@ const walletOrder = async (req, res) => {
       price: item.productId.price
     }));
 
-    console.log("addOrderDetails products:", products);
 
 
     const newOrder = await orderModel.create({
@@ -323,7 +319,7 @@ const walletOrder = async (req, res) => {
 
     res.json({ success: true });
   } catch (error) {
-    console.log("Error placing order:", error);
+    console.error("Error placing order:", error);
     res.status(500).send("Internal Server Error");
   }
 
@@ -339,7 +335,6 @@ const deleteOrderItem = async (req, res) => {
   const orderId = req.params.id;
   const { total } = req.body;
   const userId = req.session.user;
-  console.log(total);
 
   try {
     const order = await orderModel.findOne({ _id: orderId });
@@ -375,7 +370,6 @@ const deleteOrderItem = async (req, res) => {
       const transactionType = 'credit';
 
       if (wallet) {
-        console.log('wallet found');
 
         wallet.transaction.push({
           transactionType,
@@ -403,7 +397,7 @@ const deleteOrderItem = async (req, res) => {
     }
     res.json({ success: true });
   } catch (error) {
-    console.log('Error cancelling product:', error);
+    console.error('Error cancelling product:', error);
     res.status(500).json({ success: false, message: 'Failed to cancel product' });
   }
 };
@@ -479,8 +473,7 @@ const returnOrder = async (req, res) => {
     }
     res.json({ success: true });
   } catch (error) {
-    console.log(error);
-
+    console.error(error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }
@@ -525,7 +518,6 @@ const retryPayment = async (req, res) => {
     const razorpayOrder = await razorpay.orders.create(options);
 
     if (razorpayOrder && razorpayOrder.status) {
-      console.log('Order status:', razorpayOrder.status);
     } else {
       console.log('Error: razorpayOrder or razorpayOrder.status is undefined');
     }
@@ -541,7 +533,7 @@ const retryPayment = async (req, res) => {
       order: order
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ success: false, message: "Error creating Razorpay order" });
   }
 }
@@ -691,6 +683,8 @@ const downloadInvoice = async (req, res) => {
     res.status(500).json({ message: "Error generating invoice" });
   }
 };
+
+
 module.exports = {
   loadOrders,
   updateStatus,

@@ -10,10 +10,8 @@ const loadWishlistPage = async (req, res) => {
   try {
     const wishlist = await wishlistModel.findOne({ userId: userId });
     const coupons = await couponModel.find({});
-    console.log(coupons);
 
     if (!wishlist || !wishlist.products.length) {
-      console.log("Wish list is not found or empty for this user");
       return res.render('user/wishlist', { products: [], coupons: coupons });
     }
 
@@ -21,7 +19,6 @@ const loadWishlistPage = async (req, res) => {
     const productsWithImages = await Promise.all(
       wishlist.products.map(async (product) => {
         const productDetails = await productModel.findById(product.productId).lean();
-        console.log(productDetails);
 
 
         return {
@@ -44,7 +41,7 @@ const loadWishlistPage = async (req, res) => {
       coupons: coupons
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }
@@ -89,14 +86,13 @@ const deleteWishlistProduct = async (req, res) => {
     );
 
     if (!deleteItem) {
-      console.log('nnn');
 
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
     res.json({ success: true, deleteItem })
 
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json('Failed to delete the product from the wishlist');
   }
 

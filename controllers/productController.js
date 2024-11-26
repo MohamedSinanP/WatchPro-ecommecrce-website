@@ -23,8 +23,6 @@ const s3Client = new S3Client({
   },
 });
 
-
-
 const loadProducts = async (req, res) => {
   try {
     const page = Number.isNaN(parseInt(req.query.page)) ? 1 : parseInt(req.query.page);
@@ -56,7 +54,7 @@ const loadProducts = async (req, res) => {
     currentPage = page;
     res.render('admin/products', { products, categories, currentPage, limit, totalPages });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).send('internal server error')
   }
 }
@@ -67,7 +65,6 @@ const addProduct = async (req, res) => {
   try {
     const { name, brand, price, description, category, stock } = req.body;
     const images = req.files;
-    console.log(req.body);
 
     const imageUrls = await Promise.all(
       images.map(async (file, index) => {
@@ -114,9 +111,6 @@ const addProduct = async (req, res) => {
 const editProduct = async (req, res) => {
   try {
     const productId = req.params.id;
-    console.log(productId);
-
-    console.log(req.body);
 
     const {
       name,
@@ -128,7 +122,6 @@ const editProduct = async (req, res) => {
     } = req.body;
 
     const images = req.files;
-    console.log(images);
 
     const imageUrls = await Promise.all(
       images.map(async (file, index) => {
@@ -175,7 +168,7 @@ const editProduct = async (req, res) => {
       product: updatedProduct,
     });
   } catch (error) {
-    console.log('Error updating product:', error);
+    console.error('Error updating product:', error);
     res.status(500).json({ message: 'An error occurred while updating the product' });
   }
 };
@@ -278,7 +271,6 @@ const loadSingleProductPage = async (req, res) => {
 
     const product = await productModel.findById(productId).populate('category');
 
-    console.log(product.category);
 
     const relatedProducts = await productModel
       .find({ category: product.category._id, _id: { $ne: productId } })
@@ -346,7 +338,6 @@ const filterProduct = async (req, res) => {
     if (category || genderType) {
 
       const categoryDoc = await categoryModel.findOne({ name: category, genderType: genderType });
-      console.log(categoryDoc);
 
       if (categoryDoc) {
         categoryFilter = { category: categoryDoc._id };
@@ -392,7 +383,7 @@ const filterProduct = async (req, res) => {
       totalProducts
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json('Failed to filter data');
   }
 };
@@ -400,7 +391,6 @@ const filterProduct = async (req, res) => {
 const searchProduct = async (req, res) => {
 
   const query = req.query.query;
-  console.log(query);
 
   try {
 
@@ -413,8 +403,6 @@ const searchProduct = async (req, res) => {
         ...product._doc,
         imageUrl: product.images[product.images.length - 1],
       }));
-
-      console.log(modifiedProducts);
 
       res.json({ success: true, products: modifiedProducts });
     } else {

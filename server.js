@@ -16,7 +16,6 @@ const Razorpay = require('razorpay');
 const app = express();
 
 
-
 app.use(session({
   secret:'secretkey',
   reseve:false,
@@ -35,7 +34,6 @@ app.use((req, res, next) => {
   next();
 });
 
-
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -50,11 +48,14 @@ connectDB();
 app.use(express.urlencoded ({extended:true}));
 app.use(express.json());
 
+// express.router setup
 
 app.use('/', userRoutes);
 app.use('/admin', adminRoutes);
 app.use('/auth', authRoutes)
 
+
+// server start setup
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

@@ -26,7 +26,6 @@ const loadCartPage = async (req, res) => {
     let totalDiscount = 0;
 
     if (!cart || !cart.products.length) {
-      console.log("Cart not found or empty for this user");
       return res.render('user/cart', { products: [], coupons: activeCoupons, subtotal, totalDiscount });
     }
 
@@ -127,7 +126,7 @@ const addToCart = async (req, res) => {
 
 
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).send("Something went wrong");
   }
 
@@ -178,13 +177,13 @@ const updateQuantity = async (req, res) => {
     ]);
 
     let subtotal = 0;
-    let totalDiscount = 0;  
+    let totalDiscount = 0;
 
     const updatedProducts = await Promise.all(
       cart.products.map(async (product) => {
         const productDetails = await productModel.findById(product.productId).lean();
         let offerPrice = productDetails.price;
-        let productDiscount = 0;  
+        let productDiscount = 0;
 
         const productOffers = activeOffers.filter(offer => {
           const matchesProduct = offer.products.some(prod => prod._id.equals(product.productId));
@@ -202,18 +201,18 @@ const updateQuantity = async (req, res) => {
             productDiscount = discountAmount * product.quantity;  // Calculate discount for this product
           } else if (bestOffer.discountType === 'amount') {
             offerPrice = productDetails.price - bestOffer.discountValue;
-            productDiscount = bestOffer.discountValue * product.quantity;  
+            productDiscount = bestOffer.discountValue * product.quantity;
           }
         }
 
         subtotal += offerPrice * product.quantity;
-        totalDiscount += productDiscount;  
+        totalDiscount += productDiscount;
 
         return {
           ...product,
           offerPrice: offerPrice.toFixed(2),
           quantity: product.quantity,
-          productDiscount: productDiscount.toFixed(2) 
+          productDiscount: productDiscount.toFixed(2)
         };
       })
     );
@@ -224,11 +223,11 @@ const updateQuantity = async (req, res) => {
       product: updatedProducts[productIndex],
       updatedProducts,
       subtotal: subtotal.toFixed(2),
-      totalDiscount: totalDiscount.toFixed(2)  
+      totalDiscount: totalDiscount.toFixed(2)
     });
 
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json('Internal server error');
   }
 };
@@ -236,7 +235,6 @@ const updateQuantity = async (req, res) => {
 const deleteCartProduct = async (req, res) => {
   const productId = req.params.id;
   const userId = req.session.user;
-  console.log(productId);
 
   try {
     const deleteProduct = await cartModel.updateOne(
@@ -245,7 +243,6 @@ const deleteCartProduct = async (req, res) => {
     );
 
     if (!deleteProduct) {
-      console.log('nnn');
 
       return res.status(404).json({ success: false, message: 'Product not found' });
     }

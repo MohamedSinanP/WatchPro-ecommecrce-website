@@ -20,7 +20,6 @@ const loadCoupons = async (req, res) => {
 }
 
 const addCoupon = async (req, res) => {
-  console.log(req.body);
 
   const { name, code, expireDate, discountType, discount, minPurchaseLimit, isActive } = req.body;
 
@@ -98,10 +97,8 @@ const applyCoupon = async (req, res) => {
 
     if (coupon.discountType === 'percentage') {
       discount = (cartTotal * coupon.discount) / 100;
-      console.log(discount);
       if(discount >= coupon.maxDiscount){
         discount = coupon.maxDiscount;
-        console.log(discount);
         
       }
     } else if (coupon.discountType === 'amount') {
@@ -114,7 +111,7 @@ const applyCoupon = async (req, res) => {
 
     return res.json({ success: true, newTotal: newTotal, message: 'Coupon applied successfully' });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ success: false })
   }
 
@@ -122,14 +119,13 @@ const applyCoupon = async (req, res) => {
 
 const removeCoupon = async (req, res) => {
   const oldCartTotal = req.session.cartTotal;
-  console.log(oldCartTotal);
 
   try {
     res.json({ success: true, oldCartTotal: oldCartTotal });
 
     req.session.cartTotal = null;
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ success: false });
 
   }

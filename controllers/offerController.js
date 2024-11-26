@@ -62,7 +62,7 @@ const addOffer = async (req, res) => {
     await newOffer.save();
     res.status(201).json({ success: true, message: 'New offer added successfully' });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
@@ -75,7 +75,7 @@ const deleteOffer = async (req, res) => {
       res.status(201).json({ success: true })
     }
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ success: false })
   }
 };

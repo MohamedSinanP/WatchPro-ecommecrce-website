@@ -57,7 +57,7 @@ const loadHomePage = async (req, res) => {
     });
     res.render('user/home', { user ,products:modifiedProducts});
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).send('Failed to load home page Try again');
   }
 };
@@ -67,7 +67,7 @@ const loadLoginPage = async (req, res) => {
   try {
     res.render('user/login', { message: undefined });
   } catch (error) {
-    console.log('Error loading login page:', error);
+    console.error('Error loading login page:', error);
     res.status(500).send('An error occurred while loading the login page.');
   }
 
@@ -124,7 +124,6 @@ const signup = async (req, res) => {
 
   try {
     const { fullName, email, password, confirmPassword, referralCode } = req.body;
-    console.log(req.body);
 
     if (password !== confirmPassword) {
       return res.render('user/signup', { message: "Password does not match" });
@@ -148,15 +147,11 @@ const signup = async (req, res) => {
     if (referralCode) {
       req.session.referralCode = referralCode;
     }
-
-
     res.render('user/verify-otp');
     console.log('OTP Sent', otp);
 
-
-
   } catch (error) {
-    console.log('Signup error', error);
+    console.error('Signup error', error);
     res.status(500).send('internal server error');
   }
 }
@@ -171,7 +166,6 @@ const verifyOtp = async (req, res) => {
   try {
 
     const { otp } = req.body;
-    console.log(otp);
 
     if (otp === req.session.userOtp) {
       const user = req.session.userData;
@@ -387,7 +381,7 @@ const changePassword = async (req, res) => {
     );
     res.status(200).json({ message: 'Password changed successfully' });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ message: 'Failed to change password, please try again' });
   }
 };
@@ -438,12 +432,11 @@ const addAddress = async (req, res) => {
     await newAddress.save();
     res.status(201).json('address added successfully');
   } catch (error) {
-    console.log(error)
+    console.error(error)
     res.status(500).send('Failed to add new address Try again');
   }};
 
 const addDefaultAddress = async (req, res) => {
-  console.log('hhhh',req.body);
   
   const { firstName, lastName, email, address, phoneNumber, city, state, pincode } = req.body;
   const userId = req.session.user;
@@ -467,7 +460,7 @@ const addDefaultAddress = async (req, res) => {
     });
 
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ message: 'Interenal server error' });
   }
 }
@@ -512,7 +505,6 @@ const deleteAddress = async (req, res) => {
     const addressId = req.params.id;
 
     addressDelete = await addressModel.findByIdAndDelete({ _id: addressId });
-    console.log(addressDelete);
 
     if (!addressDelete) {
       return res.status(404).json({ success: false, message: 'Cannot delete address. Address not found.' });
@@ -522,8 +514,7 @@ const deleteAddress = async (req, res) => {
 
 
   } catch (error) {
-    console.log(error);
-
+    console.error(error);
     res.status(500).send('Failed to delete address Try again');
   }
 
@@ -556,7 +547,7 @@ const logout = async(req,res) => {
     }
     res.redirect('/home');
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).send('Internal server error');
   }
 }
