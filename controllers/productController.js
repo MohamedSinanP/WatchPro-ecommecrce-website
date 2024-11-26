@@ -127,43 +127,52 @@ const editProduct = async (req, res) => {
       stock
     } = req.body;
 
-    const images = req.files;
+  
+    let imageUrls;
 
-    const imageUrls = await Promise.all(
-      images.map(async (file, index) => {
-        const resizedImageBuffer = await sharp(file.path)
-          .resize(500, 500, { fit: 'cover' })
-          .jpeg({ quality: 80 })
-          .toBuffer();
+    if (req.files && req.files.length > 0) {
+      imageUrls = await Promise.all(
+        req.files.map(async (file, index) => {
+          const resizedImageBuffer = await sharp(file.path)
+            .resize(500, 500, { fit: 'cover' })
+            .jpeg({ quality: 80 })
+            .toBuffer();
 
-        const s3Key = `products/${Date.now()}-${index}-${file.originalname}`;
+          const s3Key = `products/${Date.now()}-${index}-${file.originalname}`;
 
-        const params = {
-          Bucket: bucketName,
-          Key: s3Key,
-          Body: resizedImageBuffer,
-          ContentType: file.mimety
-        };
+          const params = {
+            Bucket: bucketName,
+            Key: s3Key,
+            Body: resizedImageBuffer,
+            ContentType: file.mimetype
+          };
 
-        const command = new PutObjectCommand(params);
-        await s3Client.send(command);
-        return `https://${bucketName}.s3.${bucketRegion}.amazonaws.com/${s3Key}`;
-      })
-    );
+          const command = new PutObjectCommand(params);
+          await s3Client.send(command);
+          return `https://${bucketName}.s3.${bucketRegion}.amazonaws.com/${s3Key}`;
+        })
+      );
+    }
+
+    const updateData = {
+      name,
+      brand,
+      category,
+      description,
+      price,
+      stock
+    };
+
+    if (imageUrls) {
+      updateData.images = imageUrls; 
+    }
 
     const updatedProduct = await productModel.findByIdAndUpdate(
       productId,
-      {
-        name,
-        brand,
-        category,
-        description,
-        price,
-        stock,
-        images: imageUrls
-      },
+      updateData,
       { new: true }
     );
+
 
     if (!updatedProduct) {
       return res.status(404).json({ message: 'Product not found' });
@@ -211,8 +220,8 @@ const loadProductPage = async (req, res) => {
     const skip = (page - 1) * limit;
     const totalProducts = await productModel.countDocuments();
     const products = await productModel.find({ isListed: true }).populate('category')
-    .skip(skip)
-    .limit(limit);
+      .skip(skip)
+      .limit(limit);
     const totalPages = Math.ceil(totalProducts / limit);
     const currentPage = page;
 
@@ -259,13 +268,13 @@ const loadProductPage = async (req, res) => {
         imageUrl: product.images[2],
         offers: productOffers,
         offerPrice,
-        isInWishlist  
+        isInWishlist
       };
     });
 
-     
 
-    res.render('user/products', { products: modifiedProducts,currentPage, totalPages, limit });
+
+    res.render('user/products', { products: modifiedProducts, currentPage, totalPages, limit });
 
   } catch (error) {
     console.error('Error in loadProductPage:', error.message, error.stack);

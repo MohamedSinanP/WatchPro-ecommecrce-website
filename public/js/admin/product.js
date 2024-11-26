@@ -80,14 +80,11 @@ async function toggleListing(productId, isCurrentlyListed) {
 
 
         if (data.success) {
-            alert(`Category ${newStatus ? 'listed' : 'unlisted'} successfully!`);
             location.reload();
         } else {
-            alert('Failed to update the category status. Please try again.');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('An error occurred while updating the category status.');
     }
 }
 
@@ -226,7 +223,6 @@ async function uploadProduct(formData) {
         },
         error: function (xhr, status, error) {
             console.error("Error in uploadProduct:", error);
-            alert('Error adding product: ' + xhr.responseText);
         }
     });
 }
@@ -249,7 +245,6 @@ function handleEditClick(button) {
 let croppers = [];
 let imageUpdates = [];
 
-// Open Edit Modal and Populate Data
 async function openEditModal(id, name, brand, categoryid, description, price, stock, images) {
     console.log('Opening Edit Modal');
 
@@ -265,7 +260,7 @@ async function openEditModal(id, name, brand, categoryid, description, price, st
     // Clear previous image previews and reset croppers
     $('#editImagePreview').html('');
     croppers = [];
-    imageUpdates = [];  // Reset image updates on modal open
+    imageUpdates = []; // Reset image updates on modal open
 
     // Load existing images into the preview
     const imageArray = Array.isArray(images) ? images : JSON.parse(images || "[]");
@@ -356,31 +351,37 @@ function handleImageChange(index, imgElement) {
     };
     fileInput.click();
 }
+
 // Prepare Cropped Image Data for Submission
 async function prepareImageData(formData) {
     for (let i = 0; i < croppers.length; i++) {
-        const cropperCanvas = croppers[i].getCroppedCanvas();
+        const cropper = croppers[i];
 
-        // Add a white background to the canvas
-        const canvas = document.createElement('canvas');
-        canvas.width = cropperCanvas.width;
-        canvas.height = cropperCanvas.height;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(cropperCanvas, 0, 0);
+        // Check if cropper exists and has valid canvas
+        if (cropper && cropper.getCroppedCanvas()) {
+            const cropperCanvas = cropper.getCroppedCanvas();
 
-        // Convert to Blob and append to FormData
-        await new Promise((resolve) => {
-            canvas.toBlob(
-                (blob) => {
-                    formData.append('productImages', blob, `image-${i}.jpg`);
-                    resolve();
-                },
-                'image/jpeg',
-                0.95 // High-quality JPEG compression
-            );
-        });
+            // Add a white background to the canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = cropperCanvas.width;
+            canvas.height = cropperCanvas.height;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(cropperCanvas, 0, 0);
+
+            // Convert to Blob and append to FormData
+            await new Promise((resolve) => {
+                canvas.toBlob(
+                    (blob) => {
+                        formData.append('productImages', blob, `image-${i}.jpg`);
+                        resolve();
+                    },
+                    'image/jpeg',
+                    0.95 // High-quality JPEG compression
+                );
+            });
+        }
     }
 
     // Add image updates (if any) from imageChanges
@@ -392,7 +393,6 @@ async function prepareImageData(formData) {
 }
 
 // Handle Edit Form Submission (API triggers only when form is submitted)
-// Handle Edit Form Submission (only when "Save Changes" is clicked)
 $(document).ready(function () {
     // Prevent form submission when clicking on other buttons
     $('#editProductForm').on('submit', function (event) {
@@ -423,7 +423,7 @@ $(document).ready(function () {
             contentType: false,
             success: function (response) {
                 $('#editProductModal').modal('hide');
-                location.reload()
+                location.reload();
             },
             error: function (error) {
                 console.error('Error updating product:', error);
