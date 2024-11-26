@@ -2,7 +2,7 @@ const productModel = require('../models/productModel');
 const wishlistModel = require('../models/wishlistModel');
 const couponModel = require('../models/couponModel');
 
-
+// to load wishlist page for the user
 
 const loadWishlistPage = async (req, res) => {
   const userId = req.session.user;
@@ -46,6 +46,8 @@ const loadWishlistPage = async (req, res) => {
   }
 }
 
+// to add new product to wihslist
+
 const addToWishlist = async (req, res) => {
   const userId = req.session.user;
   const { productId, name, price, quantity } = req.body;
@@ -74,6 +76,8 @@ const addToWishlist = async (req, res) => {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 }
+
+// to delete a product from user wishlist
 
 const deleteWishlistProduct = async (req, res) => {
   const productId = req.params.id;

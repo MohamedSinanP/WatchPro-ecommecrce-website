@@ -5,10 +5,13 @@ const orderModel = require('../models/orderModel');
 const PDFDocument = require('pdfkit');
 const ExcelJS = require('exceljs')
 
+// to show login page
 
 const loadLogin = async (req, res) => {
   res.render('admin/login')
 };
+
+// to verify login
 
 const login = async (req, res) => {
 
@@ -31,6 +34,8 @@ const login = async (req, res) => {
   }
 };
 
+// to logout from website
+
 const logout = async(req,res) => {
   try {
     req.session.admin = false;
@@ -39,6 +44,8 @@ const logout = async(req,res) => {
     res.status(500).send('Internal server error');
   }
 }
+
+// to show dashboard
 
 const loadDashboard = async (req, res) => {
   try {
@@ -205,6 +212,8 @@ const loadDashboard = async (req, res) => {
   }
 };
 
+// to show users in website
+
 const loadUsers = async (req, res) => {
   try {
     const page = Number.isNaN(parseInt(req.query.page)) ? 1 : parseInt(req.query.page);
@@ -224,6 +233,8 @@ const loadUsers = async (req, res) => {
     console.log('error', error)
   }
 };
+
+// to bloack user 
 
 const blockUser = async (req, res) => {
 
@@ -246,6 +257,8 @@ const blockUser = async (req, res) => {
 
 }
 
+// to show inventory page 
+
 const loadInventory = async (req, res) => {
   try {
     const page = Number.isNaN(parseInt(req.query.page)) ? 1 : parseInt(req.query.page);
@@ -266,6 +279,8 @@ const loadInventory = async (req, res) => {
     console.error(error)
   }
 };
+
+// to update inventory items
 
 const updateInventory = async (req, res) => {
 
@@ -291,6 +306,8 @@ const updateInventory = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' }); // Send a JSON response
   }
 };
+
+// to show sales report page 
 
 const loadSalesReport = async (req, res) => {
   try {
@@ -346,6 +363,8 @@ const loadSalesReport = async (req, res) => {
   }
 };
 
+// to downllad pdf
+
 const downloadPDF = async (req, res) => {
   try {
     const salesReport = await getSalesReportData(req.query.timeframe || 'yearly');
@@ -378,6 +397,8 @@ const downloadPDF = async (req, res) => {
     res.status(500).json({ message: 'Could not generate PDF' });
   }
 };
+
+// to download exel sheet
 
 const downloadExcel = async (req, res) => {
   try {
@@ -415,6 +436,8 @@ const downloadExcel = async (req, res) => {
     res.status(500).json({ message: 'Could not generate Excel file' });
   }
 };
+
+// to get the sales report of a certain timeframe
 
 const getSalesReportData = async (timeframe) => {
   const matchStage = {}; 

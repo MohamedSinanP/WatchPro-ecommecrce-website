@@ -6,6 +6,7 @@ const bcrypt = require('bcrypt');
 const addressModel = require('../models/addressModel');
 const walletModel = require('../models/walletModel');
 
+// load home page for the user
 
 const loadHomePage = async (req, res) => {
   try {
@@ -62,6 +63,8 @@ const loadHomePage = async (req, res) => {
   }
 };
 
+// load login page for the user
+
 const loadLoginPage = async (req, res) => {
 
   try {
@@ -73,6 +76,8 @@ const loadLoginPage = async (req, res) => {
 
 }
 
+// load signup page for the user
+
 const loadSignupPage = async (req, res) => {
   try {
     res.render('user/signup');
@@ -83,13 +88,19 @@ const loadSignupPage = async (req, res) => {
 
 }
 
+// to generate OTP
+
 const generateOtp = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
+// to generate referral offer
+
 const generateReferralCode = () => {
   return Math.random().toString(36).substr(2, 8).toUpperCase();
 }
+
+// to send otp to the user 
 
 const sendVerificationEmail = async (email, otp) => {
   try {
@@ -119,6 +130,8 @@ const sendVerificationEmail = async (email, otp) => {
     return false;
   }
 }
+
+// to save user informations 
 
 const signup = async (req, res) => {
 
@@ -156,11 +169,15 @@ const signup = async (req, res) => {
   }
 }
 
+// to bcrypt the user password for security
+
 const securePassword = async (password) => {
   const passwordHash = await bcrypt.hash(password, 10);
 
   return passwordHash;
 }
+
+// to verify user otp
 
 const verifyOtp = async (req, res) => {
   try {
@@ -221,6 +238,8 @@ const verifyOtp = async (req, res) => {
   }
 }
 
+// to send resend otp to the usesr
+
 const resendOtp = async (req, res) => {
 
   try {
@@ -246,6 +265,8 @@ const resendOtp = async (req, res) => {
 
 
 };
+
+// to authenticate user login
 
 const login = async (req, res) => {
   try {
@@ -276,6 +297,8 @@ const login = async (req, res) => {
   }
 }
 
+// demologin 
+
 const demoLogin = async (req, res) => {
   try {
 
@@ -294,15 +317,7 @@ const demoLogin = async (req, res) => {
   }
 };
 
-const loadAccountPage = async (req, res) => {
-  try {
-    res.render('user/account');
-  } catch (error) {
-    res.status(500).send('failed to load user account page');
-  }
-
-
-}
+// to show user profile page
 
 const loadProfilePage = async (req, res) => {
 
@@ -322,6 +337,8 @@ const loadProfilePage = async (req, res) => {
 
 
 };
+
+// to update user informations
 
 const updateUser = async (req, res) => {
   try {
@@ -352,6 +369,8 @@ const updateUser = async (req, res) => {
     res.status(500).send('Failed to edit profile, please try again');
   }
 };
+
+// to change user password
 
 const changePassword = async (req, res) => {
   try {
@@ -386,6 +405,8 @@ const changePassword = async (req, res) => {
   }
 };
 
+// to show user addresses in user side
+
 const loadAddressPage = async (req, res) => {
   try {
     const userId = req.session.user;
@@ -414,6 +435,8 @@ const loadAddressPage = async (req, res) => {
   }
 };
 
+// to add new address for users
+
 const addAddress = async (req, res) => {
   try {
     const userId = req.session.user;
@@ -435,6 +458,8 @@ const addAddress = async (req, res) => {
     console.error(error)
     res.status(500).send('Failed to add new address Try again');
   }};
+
+// to add default address from checkout page
 
 const addDefaultAddress = async (req, res) => {
   
@@ -464,6 +489,8 @@ const addDefaultAddress = async (req, res) => {
     res.status(500).json({ message: 'Interenal server error' });
   }
 }
+
+// to update an existing addresss
 
 const updateAddress = async (req, res) => {
   try {
@@ -499,6 +526,8 @@ const updateAddress = async (req, res) => {
 
 };
 
+// to delete address of a specific user
+
 const deleteAddress = async (req, res) => {
 
   try {
@@ -521,6 +550,8 @@ const deleteAddress = async (req, res) => {
 
 };
 
+// to load about page for the user
+
 const loadAboutPage = async(req,res) => {
 try {
   res.render('user/about');
@@ -528,6 +559,8 @@ try {
   res.status(500).send('Internal server error');
 }
 }
+
+// to load contact page for the user
 
 const loadContactPage = async(req,res) => {
 try {
@@ -537,6 +570,8 @@ try {
 }
 
 }
+
+// to logout for users
 
 const logout = async(req,res) => {
   try {
@@ -562,7 +597,6 @@ module.exports = {
   resendOtp,
   login,
   demoLogin,
-  loadAccountPage,
   loadProfilePage,
   updateUser,
   changePassword,

@@ -6,6 +6,8 @@ const offerModel = require('../models/offerModel');
 
 const MAX_QUANTITY = 4;
 
+// to show the cart page 
+
 const loadCartPage = async (req, res) => {
   const userId = req.session.user;
 
@@ -88,6 +90,8 @@ const loadCartPage = async (req, res) => {
   }
 };
 
+// to add the product into user cart collection
+
 const addToCart = async (req, res) => {
   const userId = req.session.user;
 
@@ -131,6 +135,8 @@ const addToCart = async (req, res) => {
   }
 
 }
+
+// to update the quatity of the prodcut in the user cart 
 
 const updateQuantity = async (req, res) => {
   const { cartId, id, quantity } = req.body;
@@ -231,6 +237,8 @@ const updateQuantity = async (req, res) => {
     res.status(500).json('Internal server error');
   }
 };
+
+// to delete the product from a specific user cart
 
 const deleteCartProduct = async (req, res) => {
   const productId = req.params.id;

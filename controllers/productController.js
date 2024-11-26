@@ -8,7 +8,7 @@ const { S3Client, GetObjectCommand, PutObjectCommand } = require('@aws-sdk/clien
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 require('dotenv').config();
 
-// admin product management
+// aws s3 bucket informations
 
 const bucketName = process.env.BUCKET_NAME;
 const bucketRegion = process.env.BUCKET_REGION;
@@ -22,6 +22,8 @@ const s3Client = new S3Client({
     secretAccessKey: secretAccessKey,
   },
 });
+
+// to show products in admin side 
 
 const loadProducts = async (req, res) => {
   try {
@@ -58,6 +60,8 @@ const loadProducts = async (req, res) => {
     res.status(500).send('internal server error')
   }
 }
+
+// to add new product in products collection
 
 const addProduct = async (req, res) => {
 
@@ -107,6 +111,8 @@ const addProduct = async (req, res) => {
     res.status(500).json({ message: 'Error adding product', error: error.message });
   }
 };
+
+// to edit an existing product in products collecion
 
 const editProduct = async (req, res) => {
   try {
@@ -173,6 +179,8 @@ const editProduct = async (req, res) => {
   }
 };
 
+// to change the status of the products (listed/unlisted)
+
 const isListedProduct = async (req, res) => {
   try {
     const { productId, isListed } = req.body;
@@ -193,7 +201,7 @@ const isListedProduct = async (req, res) => {
   }
 };
 
-// user product management
+// to list the products in user side
 
 const loadProductPage = async (req, res) => {
   try {
@@ -265,6 +273,8 @@ const loadProductPage = async (req, res) => {
   }
 };
 
+// to load product details page for a specific product
+
 const loadSingleProductPage = async (req, res) => {
   try {
     const productId = req.params.id;
@@ -328,6 +338,8 @@ const loadSingleProductPage = async (req, res) => {
   }
 };
 
+// to filter products 
+
 const filterProduct = async (req, res) => {
   const { category, genderType, sortBy, price, order, page = 1, limit = 10 } = req.query;
 
@@ -387,6 +399,8 @@ const filterProduct = async (req, res) => {
     res.status(500).json('Failed to filter data');
   }
 };
+
+// to search products
 
 const searchProduct = async (req, res) => {
 

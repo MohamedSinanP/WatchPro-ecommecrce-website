@@ -18,7 +18,7 @@ const razorpay = new Razorpay({
 });
 
 
-// admin order management 
+// to show orders in admin side
 
 const loadOrders = async (req, res) => {
   try {
@@ -48,6 +48,8 @@ const loadOrders = async (req, res) => {
   }
 };
 
+// to update the status of the order
+
 const updateStatus = async (req, res) => {
   try {
     const statusOrder = ['Pending', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled', 'Returned'];
@@ -70,6 +72,8 @@ const updateStatus = async (req, res) => {
   }
 }
 
+// to delete the order document from database
+
 const cancelOrder = async (req, res) => {
   const { id } = req.params;
   try {
@@ -87,10 +91,8 @@ const cancelOrder = async (req, res) => {
   }
 
 }
-
-
-// user order management 
-
+ 
+// to show checkout page in user side 
 
 const loadCheckoutPage = async (req, res) => {
   try {
@@ -109,6 +111,8 @@ const loadCheckoutPage = async (req, res) => {
     res.status(500).json({ message: 'internal server error' });
   }
 }
+
+// to create a order for the user with the razorpay
 
 const createOrder = async (req, res) => {
 
@@ -191,6 +195,8 @@ const createOrder = async (req, res) => {
   }
 };
 
+// to create a order for the user with COD
+
 const addOrderDetails = async (req, res) => {
   const { totalPrice, paymentMethod, addressId, totalDiscount } = req.body;
 
@@ -252,6 +258,8 @@ const addOrderDetails = async (req, res) => {
   }
 
 }
+
+// to create a order for the user using wallet payment 
 
 const walletOrder = async (req, res) => {
   const { totalPrice, paymentMethod, addressId, totalDiscount } = req.body;
@@ -326,10 +334,14 @@ const walletOrder = async (req, res) => {
 
 }
 
+// to show the greetings page for the user
+
 const loadGreetingsPage = async (req, res) => {
 
   res.render('user/orderGreetings');
 }
+
+// to cancel the order of the user
 
 const deleteOrderItem = async (req, res) => {
   const orderId = req.params.id;
@@ -402,6 +414,8 @@ const deleteOrderItem = async (req, res) => {
   }
 };
 
+// to show the order page in user side 
+
 const loadOrdersPage = async (req, res) => {
   try {
     userId = req.session.user;
@@ -425,6 +439,8 @@ const loadOrdersPage = async (req, res) => {
     res.status(500).send('Cannot load order page. Try again');
   }
 };
+
+// to return the order of the user (change status and update stock etc.)
 
 const returnOrder = async (req, res) => {
   orderId = req.params.id;
@@ -478,6 +494,8 @@ const returnOrder = async (req, res) => {
   }
 }
 
+// to verify payment
+
 const paymentSuccess = async (req, res) => {
   console.log('hhhhhhhhhh');
   try {
@@ -494,6 +512,8 @@ const paymentSuccess = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
+// to retry payment for the user
 
 const retryPayment = async (req, res) => {
   const { orderId, razorpayId } = req.body;
@@ -537,6 +557,8 @@ const retryPayment = async (req, res) => {
     res.status(500).json({ success: false, message: "Error creating Razorpay order" });
   }
 }
+
+// to download the invoice of the order for user
 
 const downloadInvoice = async (req, res) => {
   const orderId = req.params.id;

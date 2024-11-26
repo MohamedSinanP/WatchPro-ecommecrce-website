@@ -1,6 +1,7 @@
 
 const walletModel = require('../models/walletModel');
 
+// to show wallet page for the user
 
 const loadWalletPage = async (req, res) => {
   const userId = req.session.user;

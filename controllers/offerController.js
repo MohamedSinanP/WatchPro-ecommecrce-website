@@ -2,6 +2,7 @@ const categoryModel = require('../models/categoryModel');
 const productModel = require('../models/productModel');
 const offerModel = require('../models/offerModel');
 
+// to show offers in admin side 
 
 const loadOffers = async (req, res) => {
 
@@ -26,6 +27,8 @@ const loadOffers = async (req, res) => {
   }
 
 };
+
+// to add new offer 
 
 const addOffer = async (req, res) => {
   const { title, discountType, discountValue, products, categories, expireDate, isActive } = req.body;
@@ -66,6 +69,8 @@ const addOffer = async (req, res) => {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
+
+// to delete a existing offer
 
 const deleteOffer = async (req, res) => {
   const offerId = req.params.id;

@@ -1,5 +1,6 @@
 const categoryModel = require('../models/categoryModel');
 
+// to show the categories page in admin side 
 
 const loadCategories = async (req, res) => {
   try {
@@ -18,6 +19,8 @@ const loadCategories = async (req, res) => {
   }
 }
 
+// to add category to the category collection
+
 const addCategory = async (req, res) => {
   try {
     const { name, genderType } = req.body;
@@ -34,6 +37,8 @@ const addCategory = async (req, res) => {
 
 
 };
+
+// to edit the existing category 
 
 const editCategory = async (req, res) => {
   try {
@@ -60,6 +65,8 @@ const editCategory = async (req, res) => {
 
 
 }
+
+// to change the staus of category (listed/unlisted)
 
 const isListedCategory = async (req, res) => {
   try {

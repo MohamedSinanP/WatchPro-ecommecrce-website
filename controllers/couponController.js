@@ -1,5 +1,6 @@
 const couponModel = require('../models/couponModel');
 
+// to show coupons in admin side
 
 const loadCoupons = async (req, res) => {
   try {
@@ -18,6 +19,8 @@ const loadCoupons = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to load coupons' });
   }
 }
+
+// to add new coupon in coupon collection 
 
 const addCoupon = async (req, res) => {
 
@@ -52,6 +55,8 @@ const addCoupon = async (req, res) => {
   }
 };
 
+// to delete a coupon
+
 const deleteCoupon = async (req, res) => {
   const couponId = req.params.id;
   try {
@@ -65,7 +70,7 @@ const deleteCoupon = async (req, res) => {
   }
 };
 
-// user coupon management
+// to apply coupon to the user cart total 
 
 const applyCoupon = async (req, res) => {
   const { code, cartTotal } = req.body;
@@ -116,6 +121,8 @@ const applyCoupon = async (req, res) => {
   }
 
 }
+
+// to remove coupon from cart total
 
 const removeCoupon = async (req, res) => {
   const oldCartTotal = req.session.cartTotal;
