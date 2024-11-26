@@ -41,14 +41,11 @@ function loadPage(pageNumber) {
 
         const data = await response.json();
         if (data.success) {
-          alert('Order status updated successfully!');
           location.reload();
         } else {
-          alert('Failed to update the order status.');
         }
       } catch (error) {
         console.error('Error:', error);
-        alert('An error occurred while updating the order status.');
       }
     }
 

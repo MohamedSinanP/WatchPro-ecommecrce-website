@@ -23,26 +23,15 @@ async function toggleOfferStatus(offerId, isCurrentlyActive) {
     });
 
     if (response.data.success) {
-      alert('Offer status updated successfully!');
       location.reload();
     } else {
-      alert('Failed to update offer status. Please try again.');
     }
   } catch (error) {
     console.error('Error:', error);
-    alert('An error occurred while updating the offer status.');
   }
 }
 
-function editOffer(offerId) {
-  alert("Edit Offer modal opened for Offer ID: " + offerId);
-}
 
-function deleteOffer(offerId) {
-  if (confirm('Are you sure you want to delete this offer?')) {
-    alert("Offer deleted successfully!");
-  }
-}
 function toggleApplicableFields() {
   const applicableTo = document.getElementById('applicableTo').value;
   const productsField = document.getElementById('productsField');
@@ -120,14 +109,12 @@ document.getElementById('addOfferForm').addEventListener('submit', async functio
     const response = await axios.post('/admin/addOffer', formData);
 
     if (response.data.success) {
-      alert('Offer added successfully!');
       location.reload();
     } else {
       Swal.fire('error', response.data.message, 'error')
     }
   } catch (error) {
     console.error('Error:', error);
-    alert('An error occurred while adding the offer.');
   }
 });
 

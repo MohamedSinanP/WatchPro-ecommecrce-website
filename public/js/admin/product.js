@@ -217,7 +217,6 @@ async function uploadProduct(formData) {
         processData: false,
         contentType: false,
         success: function (response) {
-            alert('Product added successfully!');
             $('#addProductModal').modal('hide');
             location.reload();
         },

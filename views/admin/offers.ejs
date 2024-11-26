@@ -70,11 +70,6 @@
                             </span>
                           </td>
                           <td>
-                            <button class="btn btn-sm px-0 mb-3 <%= offer.isActive ? 'btn-danger' : 'btn-success' %>"
-                              style="font-size: 14px;"
-                              onclick="toggleOfferStatus('<%= offer._id %>', '<%= offer.isActive %>')">
-                              <%= offer.isActive ? 'Deactivate' : 'Activate' %>
-                            </button>
                             <button class="btn btn-sm btn-danger" style="font-size: 14px;"
                               onclick="deleteOffer('<%= offer._id %>')">Delete</button>
                           </td>

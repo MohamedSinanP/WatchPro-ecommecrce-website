@@ -49,15 +49,11 @@ console.log(isActive);
   })
     .then(response => {
       if (response.data.success) {
-        alert('Coupon added successfully!');
         location.reload();
-      } else {
-        alert('Failed to add the coupon. Please try again.');
-      }
+      } 
     })
     .catch(error => {
       console.error('Error:', error);
-      alert('An error occurred while adding the coupon.');
     });
 }
 
