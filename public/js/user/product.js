@@ -13,73 +13,66 @@ document.querySelectorAll('.filter-link').forEach(link => {
     const sortBy = e.target.closest('.filter-col1') ? e.target.innerText.toLowerCase().replace(/\s+/g, '') : null;
     const price = e.target.closest('.filter-col2') ? e.target.innerText.toLowerCase().replace(/\s+/g, '') : null;
     const order = e.target.closest('.filter-col4') ? e.target.innerText.toLowerCase().replace(/\s+/g, '') : null;
-    let currentPage = 1;
     const limit = 10;
 
+    // Function to fetch products
     function fetchProducts(page = 1) {
-      axios.get(`/products/filter`, {
-        params: { page, limit, sortBy, price, category, genderType: genderType, order }
+      axios.get('/products/filter', {
+        params: { page, limit, sortBy, price, category, genderType, order }
       })
-        .then(response => {
-          const { products, totalPages, currentPage } = response.data;
+      .then(response => {
+        const { products, totalPages, currentPage } = response.data;
 
-          // Render products
-          document.querySelector('#product-list').innerHTML = products.map(product => `
-    <div class="col-sm-6 col-md-4 col-lg-3 p-b-35 isotope-item ${product.category}">
-        <div class="block2">
-            <div class="block2-pic hov-img0">
+        // Render products
+        document.querySelector('#product-list').innerHTML = products.map(product => `
+          <div class="col-sm-6 col-md-4 col-lg-3 p-b-35 isotope-item ${product.category}">
+            <div class="block2">
+              <div class="block2-pic hov-img0">
                 <img src="${product.imageUrl}" alt="IMG-PRODUCT">
-                <a href="/singleProduct/${product._id}"
-                   class="block2-btn flex-c-m stext-103 cl2 size-102 bg0 bor2 hov-btn1 p-lr-15 trans-04">
-                    Quick View
+                <a href="/singleProduct/${product._id}" class="block2-btn flex-c-m stext-103 cl2 size-102 bg0 bor2 hov-btn1 p-lr-15 trans-04">
+                  Quick View
                 </a>
-            </div>
-            <div class="block2-txt flex-w flex-t p-t-14">
+              </div>
+              <div class="block2-txt flex-w flex-t p-t-14">
                 <div class="block2-txt-child1 flex-col-l">
-                    <a href="/singleProduct/${product._id}" class="stext-104 cl4 hov-cl1 trans-04 js-name-b2 p-b-6">
-                        ${product.name}
-                    </a>
-                    <span class="stext-105 cl3">
-                        $${product.price.toFixed(2)}
-                    </span>
+                  <a href="/singleProduct/${product._id}" class="stext-104 cl4 hov-cl1 trans-04 js-name-b2 p-b-6">
+                    ${product.name}
+                  </a>
+                  <span class="stext-105 cl3">
+                    $${product.price.toFixed(2)}
+                  </span>
                 </div>
                 <div class="block2-txt-child2 flex-r p-t-3">
-                    <a href="#" class="btn-addwish-b2 dis-block pos-relative js-addwish-b2">
-                        <img class="icon-heart1 dis-block trans-04" src="/css/User/images/icons/icon-heart-01.png" alt="ICON">
-                        <img class="icon-heart2 dis-block trans-04 ab-t-l" src="/css/User/images/icons/icon-heart-02.png" alt="ICON">
-                    </a>
+                  <a href="#" class="btn-addwish-b2 dis-block pos-relative js-addwish-b2">
+                    <img class="icon-heart1 dis-block trans-04" src="/css/User/images/icons/icon-heart-01.png" alt="ICON">
+                    <img class="icon-heart2 dis-block trans-04 ab-t-l" src="/css/User/images/icons/icon-heart-02.png" alt="ICON">
+                  </a>
                 </div>
+              </div>
             </div>
-        </div>
-    </div>
-            `).join('');
+          </div>
+        `).join('');
 
+        // Update pagination info
+        document.getElementById('page-info').innerText = `Page ${currentPage} of ${totalPages}`;
+        document.getElementById('prev-page').disabled = currentPage === 1;
+        document.getElementById('next-page').disabled = currentPage === totalPages;
 
-          document.getElementById('page-info').innerText = `Page ${currentPage} of ${totalPages}`;
-          document.getElementById('prev-page').disabled = currentPage === 1;
-          document.getElementById('next-page').disabled = currentPage === totalPages;
-        })
-        .catch(error => console.error('Error fetching products:', error));
+        // Update the current page number in the hidden input (if used)
+        document.getElementById('currentPage').value = currentPage;
+      })
+      .catch(error => console.error('Error fetching products:', error));
     }
 
+    // Pagination buttons
+    function loadPage(pageNumber) {
+      fetchProducts(pageNumber);
+    }
 
-    document.getElementById('prev-page').addEventListener('click', () => {
-      if (currentPage > 1) {
-        currentPage--;
-        fetchProducts(currentPage);
-      }
-    });
-
-    document.getElementById('next-page').addEventListener('click', () => {
-      currentPage++;
-      fetchProducts(currentPage);
-    });
-
-
-    fetchProducts(currentPage);
+    // Initialize fetch for the current page (on page load or first filter click)
+    fetchProducts(1); // Start with page 1
   });
 });
-
 
 
 document.addEventListener('DOMContentLoaded', () => {

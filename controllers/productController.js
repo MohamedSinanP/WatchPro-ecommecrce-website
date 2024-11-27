@@ -350,6 +350,7 @@ const loadSingleProductPage = async (req, res) => {
 // to filter products 
 
 const filterProduct = async (req, res) => {
+  
   const { category, genderType, sortBy, price, order, page = 1, limit = 10 } = req.query;
 
   try {
