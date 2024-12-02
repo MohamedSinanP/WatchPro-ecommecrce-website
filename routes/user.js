@@ -11,7 +11,7 @@ const userAuth = require('../middlewares/userAuth');
 
 // routes for user signup , login and load home page
 
-router.get('/',userController.loadHomePage);
+router.get('/', userController.loadHomePage);
 router.get('/signup', userController.loadSignupPage);
 router.get('/login', userController.loadLoginPage);
 router.post('/signup', userController.signup);
@@ -20,7 +20,7 @@ router.post('/resend-otp', userController.resendOtp);
 router.post('/login', userController.login);
 router.post('/demo-login', userController.demoLogin);
 router.get('/home', userController.loadHomePage);
-router.post('/logout',userAuth.checkSession,userController.logout);
+router.post('/logout', userAuth.checkSession, userController.logout);
 
 // routes for product listing
 
@@ -33,7 +33,7 @@ router.get('/searchProduct', prodcutController.searchProduct);
 
 router.get('/profile', userAuth.checkSession, userController.loadProfilePage);
 router.put('/updateUser/:userId', userController.updateUser);
-router.patch('/changePassword',userAuth.checkSession, userController.changePassword);
+router.patch('/changePassword', userAuth.checkSession, userController.changePassword);
 router.get('/address', userAuth.checkSession, userController.loadAddressPage);
 router.post('/addAddress', userController.addAddress);
 router.put('/updateAddress/:id', userController.updateAddress);
@@ -72,14 +72,15 @@ router.get('/about', userController.loadAboutPage);
 
 // routes for checkout and place order
 
-router.get('/checkout', orderController.loadCheckoutPage);
-router.post('/placeOrder', orderController.addOrderDetails);
-router.post('/createOrder', orderController.createOrder);
-router.delete('/deleteOrderItem/:id', orderController.deleteOrderItem);
+router.get('/checkout', userAuth.checkSession, orderController.loadCheckoutPage);
+router.post('/placeOrder', userAuth.checkSession, orderController.addOrderDetails);
+router.post('/createOrder', userAuth.checkSession, orderController.createOrder);
+router.delete('/deleteOrderItem/:id', userAuth.checkSession, orderController.deleteOrderItem);
 router.get('/greetings', orderController.loadGreetingsPage);
-router.post('/returnOrder/:id', orderController.returnOrder);
-router.post('/paymentSuccess', orderController.paymentSuccess);
-router.post('/retryPayment', orderController.retryPayment);
-router.get('/invoice/:id', orderController.downloadInvoice);
+router.post('/returnOrder/:id', userAuth.checkSession, orderController.returnOrder);
+router.post('/paymentSuccess', userAuth.checkSession, orderController.paymentSuccess);
+router.post('/retryPayment', userAuth.checkSession, orderController.retryPayment);
+router.get('/invoice/:id', userAuth.checkSession, orderController.downloadInvoice);
+router.get('/retryPaymentPage/:id', userAuth.checkSession, orderController.loadRetryPaymentPage);
 
 module.exports = router;

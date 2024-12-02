@@ -187,7 +187,8 @@ const createOrder = async (req, res) => {
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency,
       deliveryDate: newOrder.deliveryDate,
-      Id: newOrder._id
+      Id: newOrder._id,
+      order:newOrder
     });
   } catch (error) {
     console.error("Error creating order:", error);
@@ -497,7 +498,6 @@ const returnOrder = async (req, res) => {
 // to verify payment
 
 const paymentSuccess = async (req, res) => {
-  console.log('hhhhhhhhhh');
   try {
     const { orderid } = req.body;
     const order = await orderModel.findOne({ _id: orderid });
@@ -555,6 +555,18 @@ const retryPayment = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Error creating Razorpay order" });
+  }
+}
+
+// to show retry payment page
+
+const loadRetryPaymentPage = async(req,res)=> {
+  try {
+    const orderId = req.params.id;
+    const order = await orderModel.findById(orderId);
+    res.render('user/retryPaymentPage',{order});
+  } catch (error) {
+    res.status(500).send('Internal server error');
   }
 }
 
@@ -652,29 +664,29 @@ const downloadInvoice = async (req, res) => {
           doc,
           position,
           item.item,
-          formatCurrency(item.amount / item.quantity),
+          (item.amount / item.quantity).toFixed(2),
           item.quantity,
-          formatCurrency(item.amount)
+          (item.amount)
         );
         generateHr(doc, position + 20);
       }
 
       const subtotalPosition = invoiceTableTop + (i + 1) * 30;
-      generateTableRow(doc, subtotalPosition, "", "Subtotal", "", formatCurrency(invoice.subtotal));
+      generateTableRow(doc, subtotalPosition, "", "Subtotal", "", (invoice.subtotal));
 
       const paidToDatePosition = subtotalPosition + 20;
-      generateTableRow(doc, paidToDatePosition, "", "Discount", "", formatCurrency(totalDiscount));
+      generateTableRow(doc, paidToDatePosition, "", "Discount", "", (totalDiscount));
 
       const duePosition = paidToDatePosition + 25;
       doc.font("Helvetica-Bold");
-      generateTableRow(doc, duePosition, "", "Total", "", formatCurrency(total));
+      generateTableRow(doc, duePosition, "", "Total", "", (total));
       doc.font("Helvetica");
     };
 
     const generateFooter = (doc) => {
       doc
         .fontSize(10)
-        .text(" Thank you for your business.", 50, 650, { align: "center", width: 500 });
+        .text(" Thank you for your order.", 50, 650, { align: "center", width: 500 });
     };
 
     const generateTableRow = (doc, y, item, unitCost, quantity, lineTotal) => {
@@ -689,7 +701,6 @@ const downloadInvoice = async (req, res) => {
       doc.strokeColor("#aaaaaa").lineWidth(1).moveTo(50, y).lineTo(550, y).stroke();
     };
 
-    const formatCurrency = (cents) => `₹${(cents).toFixed(2)}`;
     const formatDate = (date) => date.toISOString().split('T')[0];
 
     generateHeader(doc);
@@ -721,5 +732,6 @@ module.exports = {
   returnOrder,
   paymentSuccess,
   retryPayment,
+  loadRetryPaymentPage,
   downloadInvoice
 }

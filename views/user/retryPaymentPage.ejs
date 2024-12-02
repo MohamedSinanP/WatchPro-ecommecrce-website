@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Greetings</title>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="icon" type="image/png" href="/css/User/images/icons/favicon.png" />
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/bootstrap/css/bootstrap.min.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/fonts/iconic/css/material-design-iconic-font.min.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/fonts/linearicons-v1.0.0/icon-font.min.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/animate/animate.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/css-hamburgers/hamburgers.min.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/animsition/css/animsition.min.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/select2/select2.min.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/daterangepicker/daterangepicker.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/slick/slick.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/MagnificPopup/magnific-popup.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/vendor/perfect-scrollbar/perfect-scrollbar.css">
+  <!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="/css/User/css/util.css">
+  <link rel="stylesheet" type="text/css" href="/css/User/css/main.css">
+  <link rel="stylesheet" href="/css/User/greetings.css">
+</head>
+<body>
+<!-- header -->
+<%- include('../partials/user/header') %>
+<div class="greetings-confirmation">
+  <div class="confirmation-container">
+    <div class="confirmation-card">
+      <div class="icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="red" class="bi bi-x-circle" viewBox="0 0 16 16">
+          <path d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm4.146-9.854a.5.5 0 0 1 0 .708L8.707 8l3.439 3.439a.5.5 0 1 1-.708.708L8 8.707l-3.439 3.439a.5.5 0 1 1-.708-.708L7.293 8 3.854 4.561a.5.5 0 1 1 .708-.708L8 7.293l3.439-3.439a.5.5 0 0 1 .707 0z"/>
+        </svg>
+        
+      </div>
+      <h1>The Payment failed due to some issues</h1>
+      <button onclick="retryPayment('<%= order._id %>','<%= order.razorpayId %>')">Retry Payment</button>
+      <button onclick="window.location.href='/orders'">View Orders</button>
+    </div>
+  </div>
+</div>
+<!-- footer-->
+<%- include('../partials/user/footer') %>
+
+<script src="/css/User/vendor/jquery/jquery-3.2.1.min.js"></script>
+<script src="/css/User/vendor/animsition/js/animsition.min.js"></script>
+<script src="/css/User/vendor/bootstrap/js/popper.js"></script>
+<script src="/css/User/vendor/bootstrap/js/bootstrap.min.js"></script>
+<script src="/css/User/vendor/select2/select2.min.js"></script>
+<script src="/css/User/vendor/daterangepicker/moment.min.js"></script>
+<script src="/css/User/vendor/daterangepicker/daterangepicker.js"></script>
+<script src="/css/User/vendor/slick/slick.min.js"></script>
+<script src="/css/User/vendor/MagnificPopup/jquery.magnific-popup.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="/css/User/vendor/perfect-scrollbar/perfect-scrollbar.min.js"></script>
+<script src="/css/User/js/main.js"></script>
+<script src="/js/user/retryPayment.js"></script>
+</body>
+</html>

@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         if (response.data.success) {
-          const { orderId, amount, currency, Id } = response.data;
+          const { orderId, amount, currency, Id, order } = response.data;
           const orderid = Id;
           const options = {
             key: "rzp_test_X9NFs9mKeaCGys",
@@ -161,7 +161,8 @@ document.addEventListener('DOMContentLoaded', function () {
           const rzp = new Razorpay(options);
           rzp.on('payment.failed', function (response) {
             console.log("Payment failed:", response.error);
-            window.location.href = '/orders';
+            const retryUrl = `/retryPaymentPage/${orderid}`;
+            window.location.href = retryUrl;
           });
           rzp.open();
         } else {

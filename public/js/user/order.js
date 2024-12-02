@@ -3,7 +3,7 @@ function loadPage(pageNumber) {
 }
 
 async function cancelOrderProduct(orderId, total) {
-console.log(total);
+  console.log(total);
 
   try {
     const response = await axios.delete(`/deleteOrderItem/${orderId}`, {
@@ -52,9 +52,6 @@ async function retryPayment(orderId, razorpayId) {
       const { orderId, amount, currency, name, email, phoneNumber, order } = response.data;
       const orderid = order._id;
 
-
-      console.log('hhhhhhh');
-
       const options = {
         key: "rzp_test_X9NFs9mKeaCGys",
         amount: amount,
@@ -64,7 +61,6 @@ async function retryPayment(orderId, razorpayId) {
         order_id: orderId,
         handler: async function (response) {
           if (response.razorpay_payment_id && response.razorpay_order_id && response.razorpay_signature) {
-            console.log('hhhhhhhh');
 
             const orderId = response.razorpay_order_id;
             const result = await axios.post('/paymentSuccess', { orderid })
@@ -92,7 +88,8 @@ async function retryPayment(orderId, razorpayId) {
       const rzp = new Razorpay(options);
       rzp.on('payment.failed', function (response) {
         console.log("Payment failed:", response.error);
-        window.location.href = '/orders';
+        const retryUrl = `/retryPaymentPage/${orderid}`;
+        window.location.href = retryUrl;
       });
 
       rzp.open();
@@ -117,7 +114,7 @@ async function retryPayment(orderId, razorpayId) {
 async function downloadInvoice(orderId) {
   try {
     const response = await axios.get(`/invoice/${orderId}`, { responseType: 'blob' });
-console.log(response)
+    console.log(response)
     if (response.status === 200) {
       const blob = new Blob([response.data], { type: 'application/pdf' });
 
