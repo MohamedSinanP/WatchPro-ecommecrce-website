@@ -63,10 +63,10 @@
                             <%= coupon.discountType==='percentage' ? coupon.discount + '%' : '$' + coupon.discount %>
                           </td>
                           <td>
-                            <%= coupon.minPurchaseLimit %>
+                            ₹ <%= coupon.minPurchaseLimit %>
                           </td>
                           <td>
-                            <%= coupon.maxDiscount ? '$' + coupon.maxDiscount : 'N/A' %>
+                            <%= coupon.maxDiscount ? '₹' + coupon.maxDiscount : 'N/A' %>
                           </td>
                           <td>
                             <%= coupon.expireDate.toDateString() %>

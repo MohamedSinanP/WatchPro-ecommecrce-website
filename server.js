@@ -14,11 +14,18 @@ const passport = require('./config/passport');
 const bodyParser = require('body-parser');
 const Razorpay = require('razorpay');
 const app = express();
+const nocache = require('nocache');
 
-
+app.use(nocache());
+app.use((req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
 app.use(session({
   secret:'secretkey',
-  reseve:false,
+  resave:false,
   saveUninitialized:true,
   cookie: {
     secure:false,

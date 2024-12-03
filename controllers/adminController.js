@@ -383,9 +383,9 @@ const downloadPDF = async (req, res) => {
       const day = report._id.day ? `-${report._id.day}` : '';
 
       doc.fontSize(12).text(`Date: ${report._id.year}${month}${day}`);
-      doc.text(`Total Sales Revenue: ₹${report.totalSalesRevenue || 0}`);
-      doc.text(`Discount Applied: ₹${report.totalDiscount || 0}`);
-      doc.text(`Net Sales: ₹${(report.totalSalesRevenue || 0) - (report.totalDiscount || 0)}`);
+      doc.text(`Total Sales Revenue: ${report.totalSalesRevenue || 0}`);
+      doc.text(`Discount Applied: ${report.totalDiscount || 0}`);
+      doc.text(`Net Sales: ${(report.totalSalesRevenue || 0) - (report.totalDiscount || 0)}`);
       doc.text(`Number of Orders: ${report.totalOrders || 0}`);
       doc.text(`Total Items Sold: ${report.totalItemsSold || 0}`);
       doc.moveDown();
@@ -440,7 +440,8 @@ const downloadExcel = async (req, res) => {
 // to get the sales report of a certain timeframe
 
 const getSalesReportData = async (timeframe) => {
-  const matchStage = {}; 
+  const matchStage = { status: 'Delivered' };  
+
   let groupStage = {
     _id: {
       year: { $year: '$createdAt' },
@@ -448,9 +449,9 @@ const getSalesReportData = async (timeframe) => {
       day: { $dayOfMonth: '$createdAt' }
     },
     totalSalesRevenue: { $sum: '$total' },
-    totalDiscount: { $sum: '$discount' }, 
+    totalDiscount: { $sum: '$totalDiscount' },
     totalOrders: { $sum: 1 },
-    totalItemsSold: { $sum: '$products.quantity' }
+    totalItemsSold: { $sum: '$products.quantity' }  
   };
 
   if (timeframe === 'monthly') {
@@ -462,12 +463,12 @@ const getSalesReportData = async (timeframe) => {
   }
 
   return await orderModel.aggregate([
-    { $match: matchStage },
-    { $group: groupStage },
-    { $sort: { '_id.year': -1, '_id.month': -1, '_id.day': -1 } }
+    { $match: matchStage },  
+    { $unwind: '$products' },
+    { $group: groupStage }, 
+    { $sort: { '_id.year': -1, '_id.month': -1, '_id.day': -1 } }  
   ]);
 };
-
 module.exports = {
   loadLogin,
   login,
