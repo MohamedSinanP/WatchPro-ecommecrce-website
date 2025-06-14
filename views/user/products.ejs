@@ -203,7 +203,7 @@
 							<!-- Block2 -->
 							<div class="block2">
 								<div class="block2-pic hov-img0">
-									<img src="<%= product.imageUrl %>" alt="IMG-PRODUCT">
+									<img src="<%= product.images[0] %>" alt="IMG-PRODUCT">
 
 									<a href="/singleProduct/<%= product._id %>"
 										class="block2-btn flex-c-m stext-103 cl2 size-102 bg0 bor2 hov-btn1 p-lr-15 trans-04 ">
@@ -238,9 +238,10 @@
 											data-product-price="<%= product.price %>" data-product-quantity="1">
 											<% if (product.isInWishlist) { %>
 												<i class="bi bi-heart-fill text-primary" style="font-size: 16px;"></i>
-										<% } else { %>
-												<img class="dis-block text-secondary" src="/css/User/images/icons/icon-heart-01.png" alt="ICON" >
-										<% } %>
+												<% } else { %>
+													<img class="dis-block text-secondary" src="/css/User/images/icons/icon-heart-01.png"
+														alt="ICON">
+													<% } %>
 										</div>
 									</div>
 								</div>
@@ -253,22 +254,21 @@
 
 		<div class="pagination-controls d-flex justify-content-center my-3">
 			<% if (totalPages> 1) { %>
-					<% if (currentPage> 1) { %>
-							<button onclick="loadPage('<%= currentPage - 1 %>')"
-									class="btn btn-primary mx-1 my-1">&laquo;</button>
+				<% if (currentPage> 1) { %>
+					<button onclick="loadPage('<%= currentPage - 1 %>')" class="btn btn-primary mx-1 my-1">&laquo;</button>
+					<% } %>
+						<% for (let i=1; i <=totalPages; i++) { %>
+							<button onclick="loadPage('<%= i %>')"
+								class="btn <%= i === currentPage ? 'btn-secondary' : 'btn-light' %> mx-1">
+								<%= i %>
+							</button>
 							<% } %>
-									<% for (let i=1; i <=totalPages; i++) { %>
-											<button onclick="loadPage('<%= i %>')"
-													class="btn <%= i === currentPage ? 'btn-secondary' : 'btn-light' %> mx-1">
-													<%= i %>
-											</button>
-											<% } %>
-													<% if (currentPage < totalPages) { %>
-															<button onclick="loadPage('<%= currentPage + 1 %>')"
-																	class="btn btn-primary mx-1 my-1">&raquo;</button>
-															<% } %>
-																	<% } %>
-	</div>
+								<% if (currentPage < totalPages) { %>
+									<button onclick="loadPage('<%= currentPage + 1 %>')"
+										class="btn btn-primary mx-1 my-1">&raquo;</button>
+									<% } %>
+										<% } %>
+		</div>
 
 		<!-- Footer -->
 		<%- include('../partials/user/footer') %>

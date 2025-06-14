@@ -7,15 +7,16 @@ const orderController = require('../controllers/orderController');
 const couponController = require('../controllers/couponController');
 const offerController = require('../controllers/offerController');
 const adminAuth = require('../middlewares/adminAuth');
-const upload = require('../controllers/imageUploadController');
+const upload = require('../utils/multer')
 
+const uploadMiddleware = upload.array('productImages', 5);
 
 router.get('/login', adminAuth.isLogin, adminController.loadLogin);
 router.post('/login', adminController.login);
 router.get('/dashboard', adminAuth.checkSession, adminController.loadDashboard);
 router.get('/users', adminAuth.checkSession, adminController.loadUsers);
 router.put('/blockUser', adminAuth.checkSession, adminController.blockUser);
-router.post('/logout',adminAuth.checkSession, adminController.logout);
+router.post('/logout', adminAuth.checkSession, adminController.logout);
 
 // categoryManagement
 
@@ -27,7 +28,17 @@ router.put('/categoryListing', adminAuth.checkSession, categoryController.isList
 // productManagement
 
 router.get('/products', adminAuth.checkSession, prodcutController.loadProducts);
-router.post('/addProduct', adminAuth.checkSession, upload.array('productImages', 5), prodcutController.addProduct);
+router.post('/addProduct', adminAuth.checkSession, (req, res, next) => {
+  console.log("Reached multer upload middleware");
+  uploadMiddleware(req, res, function (err) {
+    if (err) {
+      console.error("Multer error:", err);
+      return res.status(400).json({ error: err.message });
+    }
+    console.log("Multer processed files: ", req.files);
+    prodcutController.addProduct(req, res, next);
+  });
+});
 router.put('/editProduct/:id', adminAuth.checkSession, upload.array('productImages', 5), prodcutController.editProduct);
 router.put('/productListing', adminAuth.checkSession, prodcutController.isListedProduct);
 

@@ -1,27 +1,10 @@
 const categoryModel = require('../models/categoryModel');
 const productModel = require('../models/productModel');
 const wishlistModel = require('../models/wishlistModel');
-const sharp = require('sharp');
 const path = require('path');
 const offerModel = require('../models/offerModel');
-const { S3Client, GetObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3');
-const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 require('dotenv').config();
 
-// aws s3 bucket informations
-
-const bucketName = process.env.BUCKET_NAME;
-const bucketRegion = process.env.BUCKET_REGION;
-const secretAccessKey = process.env.SECRET_ACCESS_KEY;
-const accessKey = process.env.ACCESS_KEY;
-
-const s3Client = new S3Client({
-  region: bucketRegion,
-  credentials: {
-    accessKeyId: accessKey,
-    secretAccessKey: secretAccessKey,
-  },
-});
 
 // to show products in admin side 
 
@@ -64,34 +47,10 @@ const loadProducts = async (req, res) => {
 // to add new product in products collection
 
 const addProduct = async (req, res) => {
-
-
   try {
     const { name, brand, price, description, category, stock } = req.body;
     const images = req.files;
-
-    const imageUrls = await Promise.all(
-      images.map(async (file, index) => {
-        const resizedImageBuffer = await sharp(file.path)
-          .resize(500, 500, { fit: 'cover' })
-          .jpeg({ quality: 80 })
-          .toBuffer();
-
-        const s3Key = `products/${Date.now()}-${index}-${file.originalname}`;
-
-        const params = {
-          Bucket: bucketName,
-          Key: s3Key,
-          Body: resizedImageBuffer,
-          ContentType: file.mimetype,
-        };
-
-        const command = new PutObjectCommand(params);
-        await s3Client.send(command);
-        return `https://${bucketName}.s3.${bucketRegion}.amazonaws.com/${s3Key}`;
-      })
-    );
-
+    const imageUrls = images.map(file => file.path);
 
     const newProduct = new productModel({
       name,
@@ -112,6 +71,7 @@ const addProduct = async (req, res) => {
   }
 };
 
+
 // to edit an existing product in products collecion
 
 const editProduct = async (req, res) => {
@@ -127,31 +87,10 @@ const editProduct = async (req, res) => {
       stock
     } = req.body;
 
-  
     let imageUrls;
 
     if (req.files && req.files.length > 0) {
-      imageUrls = await Promise.all(
-        req.files.map(async (file, index) => {
-          const resizedImageBuffer = await sharp(file.path)
-            .resize(500, 500, { fit: 'cover' })
-            .jpeg({ quality: 80 })
-            .toBuffer();
-
-          const s3Key = `products/${Date.now()}-${index}-${file.originalname}`;
-
-          const params = {
-            Bucket: bucketName,
-            Key: s3Key,
-            Body: resizedImageBuffer,
-            ContentType: file.mimetype
-          };
-
-          const command = new PutObjectCommand(params);
-          await s3Client.send(command);
-          return `https://${bucketName}.s3.${bucketRegion}.amazonaws.com/${s3Key}`;
-        })
-      );
+      imageUrls = req.files.map(file => file.path);
     }
 
     const updateData = {
@@ -164,7 +103,7 @@ const editProduct = async (req, res) => {
     };
 
     if (imageUrls) {
-      updateData.images = imageUrls; 
+      updateData.images = imageUrls;
     }
 
     const updatedProduct = await productModel.findByIdAndUpdate(
@@ -172,7 +111,6 @@ const editProduct = async (req, res) => {
       updateData,
       { new: true }
     );
-
 
     if (!updatedProduct) {
       return res.status(404).json({ message: 'Product not found' });
@@ -187,6 +125,7 @@ const editProduct = async (req, res) => {
     res.status(500).json({ message: 'An error occurred while updating the product' });
   }
 };
+
 
 // to change the status of the products (listed/unlisted)
 
@@ -350,7 +289,7 @@ const loadSingleProductPage = async (req, res) => {
 // to filter products 
 
 const filterProduct = async (req, res) => {
-  
+
   const { category, genderType, sortBy, price, order, page = 1, limit = 10 } = req.query;
 
   try {
