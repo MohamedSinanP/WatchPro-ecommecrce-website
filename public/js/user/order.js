@@ -3,7 +3,6 @@ function loadPage(pageNumber) {
 }
 
 async function cancelOrderProduct(orderId, total) {
-  console.log(total);
 
   try {
     const response = await axios.delete(`/deleteOrderItem/${orderId}`, {
@@ -87,7 +86,6 @@ async function retryPayment(orderId, razorpayId) {
 
       const rzp = new Razorpay(options);
       rzp.on('payment.failed', function (response) {
-        console.log("Payment failed:", response.error);
         const retryUrl = `/retryPaymentPage/${orderid}`;
         window.location.href = retryUrl;
       });
@@ -105,16 +103,13 @@ async function retryPayment(orderId, razorpayId) {
       }).showToast();
     }
   } catch (error) {
-    console.log(error);
 
   }
 }
 
-
 async function downloadInvoice(orderId) {
   try {
     const response = await axios.get(`/invoice/${orderId}`, { responseType: 'blob' });
-    console.log(response)
     if (response.status === 200) {
       const blob = new Blob([response.data], { type: 'application/pdf' });
 
@@ -126,34 +121,107 @@ async function downloadInvoice(orderId) {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(link);
 
-      console.log('Invoice downloaded successfully');
     }
   } catch (error) {
     console.error('Error downloading invoice:', error);
   }
 }
 
-// order details modal 
-
+// Enhanced order details modal function
 function showProductDetails(button) {
-  const orderJson = button.getAttribute('data-order');
-  const modalContent = document.getElementById('modalContent');
-  modalContent.innerHTML = '';
-  const order = JSON.parse(orderJson);
+  const orderData = JSON.parse(button.getAttribute('data-order'));
 
-  order.products.forEach(product => {
-    modalContent.innerHTML += `
-<div class="product-detail d-flex align-items-start">
-  <img src="${product.productId.images[2]}" alt="Product Image" class="img-fluid mr-3" style="width: 150px; height: auto; border-radius: 8px;">
-  <div>
-      <h6>Product Name: ${product.productId.name}</h6>
-      <p><strong>Price:</strong> $${product.productId.price}</p>
-      <p><strong>Quantity:</strong> ${product.quantity}</p>
-      <p><strong>Description:</strong> ${product.productId.description || 'No description available.'}</p>
-  </div>
-</div>
-<hr>
-`;
+  // Populate Order Summary
+  document.getElementById('modal-order-id').textContent = orderData._id;
+  document.getElementById('modal-order-date').textContent = new Date(orderData.createdAt).toLocaleDateString('en-IN');
+
+  // Set status badge with appropriate color
+  const statusElement = document.getElementById('modal-order-status');
+  statusElement.textContent = orderData.status;
+  statusElement.className = 'badge ' + getStatusBadgeClass(orderData.status);
+
+  document.getElementById('modal-order-total').textContent = orderData.total;
+  document.getElementById('modal-order-discount').textContent = orderData.totalDiscount || '0';
+  document.getElementById('modal-payment-method').textContent = orderData.paymentMethod;
+
+  // Set payment status badge with appropriate color
+  const paymentStatusElement = document.getElementById('modal-payment-status');
+  paymentStatusElement.textContent = orderData.paymentStatus;
+  paymentStatusElement.className = 'badge ' + getPaymentStatusBadgeClass(orderData.paymentStatus);
+
+  // Show/hide delivery date if available
+  if (orderData.deliveryDate) {
+    document.getElementById('modal-delivery-date').textContent = new Date(orderData.deliveryDate).toLocaleDateString('en-IN');
+    document.getElementById('modal-delivery-date-row').style.display = 'block';
+  } else {
+    document.getElementById('modal-delivery-date-row').style.display = 'none';
+  }
+
+  // Show/hide Razorpay ID if available
+  if (orderData.razorpayId) {
+    document.getElementById('modal-razorpay-id').textContent = orderData.razorpayId;
+    document.getElementById('modal-razorpay-id-row').style.display = 'block';
+  } else {
+    document.getElementById('modal-razorpay-id-row').style.display = 'none';
+  }
+
+  // Populate Delivery Address
+  document.getElementById('modal-address-name').textContent = `${orderData.address.firstName} ${orderData.address.lastName}`;
+  document.getElementById('modal-address-phone').textContent = orderData.address.phoneNumber;
+  document.getElementById('modal-address-full').textContent = orderData.address.address;
+  document.getElementById('modal-address-city').textContent = orderData.address.city;
+  document.getElementById('modal-address-state').textContent = orderData.address.state;
+  document.getElementById('modal-address-pincode').textContent = orderData.address.pincode;
+
+  // Populate Products List
+  const productsContainer = document.getElementById('modal-products-list');
+  productsContainer.innerHTML = '';
+
+  orderData.products.forEach((product, index) => {
+    const productDiv = document.createElement('div');
+    productDiv.className = 'row border-bottom pb-3 mb-3';
+
+    // Use fallback images if the primary image is not available
+    const productImage = product.productId.images && product.productId.images.length > 0
+      ? (product.productId.images[0] || product.productId.images[2] || product.productId.images[1])
+      : '/default-image.jpg';
+
+    productDiv.innerHTML = `
+            <div class="col-md-3">
+                <img src="${productImage}" 
+                     alt="Product Image" class="img-fluid rounded" style="max-height: 100px; object-fit: cover;">
+            </div>
+            <div class="col-md-9">
+                <h6>${product.productId.name}</h6>
+                <p class="mb-1"><strong>Price:</strong> &#8377; ${product.productId.price}</p>
+                <p class="mb-1"><strong>Quantity:</strong> ${product.quantity}</p>
+                <p class="mb-1"><strong>Subtotal:</strong> &#8377; ${product.productId.price * product.quantity}</p>
+                ${product.productId.description ? `<p class="mb-0 text-muted"><small>${product.productId.description}</small></p>` : ''}
+            </div>
+        `;
+    productsContainer.appendChild(productDiv);
   });
 }
 
+// Helper function to get status badge class
+function getStatusBadgeClass(status) {
+  switch (status) {
+    case 'Pending': return 'badge-warning';
+    case 'Confirmed': return 'badge-info';
+    case 'Shipped': return 'badge-primary';
+    case 'Delivered': return 'badge-success';
+    case 'Cancelled': return 'badge-danger';
+    case 'Returned': return 'badge-secondary';
+    default: return 'badge-light';
+  }
+}
+
+// Helper function to get payment status badge class
+function getPaymentStatusBadgeClass(paymentStatus) {
+  switch (paymentStatus) {
+    case 'success': return 'badge-success';
+    case 'pending': return 'badge-warning';
+    case 'failed': return 'badge-danger';
+    default: return 'badge-light';
+  }
+}

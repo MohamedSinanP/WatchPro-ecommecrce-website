@@ -10,7 +10,7 @@ menuToggle.addEventListener('click', () => {
 function openModal(price, stock, id) {
   document.getElementById("productPrice").value = price;
   document.getElementById("productStock").value = stock;
-  document.getElementById("productId").value = id; 
+  document.getElementById("productId").value = id;
 
   document.getElementById("editModal").style.display = "block";
 }
@@ -49,10 +49,9 @@ function saveChanges(event) {
   const productId = document.getElementById('productId').value;
   const price = document.getElementById('productPrice').value;
   const stock = document.getElementById('productStock').value;
-  console.log(productId, price)
 
   if (validatePrice() && validateStock()) {
-    
+
     const data = {
       productId,
       price,
@@ -62,11 +61,10 @@ function saveChanges(event) {
 
     axios.post(`/admin/updateInventory/${productId}`, data)
       .then((response) => {
-        console.log('Product updated successfully:', response.data); 
-        closeModal(); 
+        closeModal();
         setTimeout(() => {
           window.location.reload();
-        }, 300); 
+        }, 300);
       })
       .catch((error) => {
         console.error('There was an error updating the product:', error);

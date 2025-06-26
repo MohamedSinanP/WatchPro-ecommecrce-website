@@ -46,7 +46,6 @@ async function retryPayment(orderId, razorpayId) {
 
       const rzp = new Razorpay(options);
       rzp.on('payment.failed', function (response) {
-        console.log("Payment failed:", response.error);
         const retryUrl = `/retryPaymentPage/${orderid}`;
         window.location.href = retryUrl;
       });
@@ -64,7 +63,6 @@ async function retryPayment(orderId, razorpayId) {
       }).showToast();
     }
   } catch (error) {
-    console.log(error);
 
   }
 }

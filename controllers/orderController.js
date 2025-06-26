@@ -4,11 +4,9 @@ const productModel = require('../models/productModel');
 const addressModel = require('../models/addressModel');
 const cartModel = require('../models/cartModel');
 const walletModel = require('../models/walletModel');
+const couponModel = require('../models/couponModel');
 const Razorpay = require("razorpay");
-const crypto = require('crypto');
-const fs = require('fs');
 const PDFDocument = require('pdfkit');
-const easyinvoice = require('easyinvoice');
 require('dotenv').config();
 
 
@@ -91,13 +89,14 @@ const cancelOrder = async (req, res) => {
   }
 
 }
- 
+
 // to show checkout page in user side 
 
 const loadCheckoutPage = async (req, res) => {
   try {
     const cartTotal = parseFloat(req.query.cartTotal);
     const totalDiscount = req.query.totalDiscount;
+    const couponId = req.query.couponId;
     const userId = req.session.user;
     const shippingCharge = 100;
     const cartItems = await cartModel.findOne({ userId: userId }).populate('products.productId');
@@ -105,7 +104,7 @@ const loadCheckoutPage = async (req, res) => {
     const user = await userModel.findOne({ _id: userId });
     const total = (shippingCharge + cartTotal).toFixed(2);
 
-    res.render('user/checkout', { cartItems, addresses, cartTotal, user, shippingCharge, total, totalDiscount });
+    res.render('user/checkout', { cartItems, addresses, cartTotal, user, shippingCharge, total, totalDiscount, couponId });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'internal server error' });
@@ -118,7 +117,7 @@ const createOrder = async (req, res) => {
 
   const userId = req.session.user;
   try {
-    let { totalPrice, paymentMethod, addressId, totalDiscount } = req.body;
+    let { totalPrice, paymentMethod, addressId, totalDiscount, couponId } = req.body;
 
     totalPrice = Number(totalPrice);
     const deliveryDate = new Date();
@@ -179,7 +178,9 @@ const createOrder = async (req, res) => {
       );
     }
 
-    await cartModel.findOneAndDelete({ userId: userId });
+    await cartModel.findOneAndDelete({ userId: userId })
+    await updateCouponUser(couponId, userId);
+
     res.json({
       success: true,
       message: "Order created successfully",
@@ -188,7 +189,7 @@ const createOrder = async (req, res) => {
       currency: razorpayOrder.currency,
       deliveryDate: newOrder.deliveryDate,
       Id: newOrder._id,
-      order:newOrder
+      order: newOrder
     });
   } catch (error) {
     console.error("Error creating order:", error);
@@ -199,7 +200,7 @@ const createOrder = async (req, res) => {
 // to create a order for the user with COD
 
 const addOrderDetails = async (req, res) => {
-  const { totalPrice, paymentMethod, addressId, totalDiscount } = req.body;
+  const { totalPrice, paymentMethod, addressId, totalDiscount, couponId } = req.body;
 
   const userId = req.session.user;
   const productTotal = totalPrice - 100;
@@ -251,7 +252,9 @@ const addOrderDetails = async (req, res) => {
       );
     }
 
-    const deleteUserCart = await cartModel.findOneAndDelete({ userId: userId });
+    await cartModel.findOneAndDelete({ userId: userId });
+    await updateCouponUser(couponId, userId);
+
     res.json({ success: true });
   } catch (error) {
     console.error("Error placing order:", error);
@@ -263,7 +266,7 @@ const addOrderDetails = async (req, res) => {
 // to create a order for the user using wallet payment 
 
 const walletOrder = async (req, res) => {
-  const { totalPrice, paymentMethod, addressId, totalDiscount } = req.body;
+  const { totalPrice, paymentMethod, addressId, totalDiscount, couponId } = req.body;
   const userId = req.session.user;
 
   try {
@@ -324,7 +327,8 @@ const walletOrder = async (req, res) => {
 
     userWallet.balance = walletBalance;
     await userWallet.save();
-    const deleteUserCart = await cartModel.findOneAndDelete({ userId: userId });
+    await cartModel.findOneAndDelete({ userId: userId });
+    await updateCouponUser(couponId, userId);
 
     res.json({ success: true });
   } catch (error) {
@@ -455,36 +459,34 @@ const returnOrder = async (req, res) => {
       for (const product of order.products) {
         const productToUpdate = product.productId;
         productToUpdate.stock += product.quantity;
-        console.log(productToUpdate.stock);
-
         await productToUpdate.save();
       };
 
-      if(wallet){
+      if (wallet) {
         wallet.transaction.push({
           transactionType: 'credit',
           amount: order.total,
           date: new Date()
         });
-  
+
         wallet.balance = walletBalance;
         await wallet.save();
-      }else{
+      } else {
         wallet = new walletModel({
           userId,
           transaction: [
             {
-              transactionType:'credit',
+              transactionType: 'credit',
               amount: order.total,
               date: new Date(),
             },
           ],
-          
+
         });
         wallet.balance = walletBalance;
         await wallet.save();
       }
-   
+
 
       order.save();
     }
@@ -508,7 +510,6 @@ const paymentSuccess = async (req, res) => {
     };
 
   } catch (error) {
-    console.log(error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }
@@ -538,8 +539,6 @@ const retryPayment = async (req, res) => {
     const razorpayOrder = await razorpay.orders.create(options);
 
     if (razorpayOrder && razorpayOrder.status) {
-    } else {
-      console.log('Error: razorpayOrder or razorpayOrder.status is undefined');
     }
 
     res.json({
@@ -560,11 +559,11 @@ const retryPayment = async (req, res) => {
 
 // to show retry payment page
 
-const loadRetryPaymentPage = async(req,res)=> {
+const loadRetryPaymentPage = async (req, res) => {
   try {
     const orderId = req.params.id;
     const order = await orderModel.findById(orderId);
-    res.render('user/retryPaymentPage',{order});
+    res.render('user/retryPaymentPage', { order });
   } catch (error) {
     res.status(500).send('Internal server error');
   }
@@ -717,6 +716,15 @@ const downloadInvoice = async (req, res) => {
   }
 };
 
+
+// helpler function to update the coupon userId array
+const updateCouponUser = async (couponId, userId) => {
+  if (!couponId) return;
+  await couponModel.updateOne(
+    { _id: couponId, userId: { $ne: userId } },
+    { $push: { userId: userId } }
+  );
+};
 
 module.exports = {
   loadOrders,

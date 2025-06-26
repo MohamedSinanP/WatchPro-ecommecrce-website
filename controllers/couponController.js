@@ -11,9 +11,9 @@ const loadCoupons = async (req, res) => {
     const totalCoupons = await couponModel.countDocuments();
     const coupons = await couponModel.find({});
 
-    const totalPages = Math.ceil(totalCoupons/limit);
+    const totalPages = Math.ceil(totalCoupons / limit);
     const currentPage = page;
-    res.render('admin/coupons', { coupons ,currentPage,limit,totalPages});
+    res.render('admin/coupons', { coupons, currentPage, limit, totalPages });
   } catch (error) {
     console.error('Error loading coupon', error)
     res.status(500).json({ success: false, message: 'Failed to load coupons' });
@@ -74,62 +74,77 @@ const deleteCoupon = async (req, res) => {
 
 const applyCoupon = async (req, res) => {
   const { code, cartTotal } = req.body;
-
   req.session.cartTotal = cartTotal;
-  userId = req.session.user;
+  const userId = req.session.user;
+
   try {
     const coupon = await couponModel.findOne({ code: code });
 
-    const minPurchaseLimit = coupon.minPurchaseLimit;
-
+    // Handle missing coupon
     if (!coupon) {
       return res.json({ success: false, message: 'Coupon not found' });
     }
 
+    // Expiry check
     if (new Date() > coupon.expireDate) {
       return res.json({ success: false, message: 'Coupon has expired' });
     }
 
-    if (cartTotal < minPurchaseLimit) {
-      return res.json({ success: false, message: `The coupon only get for purchase greter than ${minPurchaseLimit}` })
-    }
+    // usage check
     if (coupon.userId.includes(userId)) {
       return res.json({ success: false, message: 'Coupon can use only once' });
-    } else {
-      coupon.userId.push(userId);
-      coupon.save();
     };
 
+    // Minimum purchase limit check
+    if (cartTotal < coupon.minPurchaseLimit) {
+      return res.json({
+        success: false,
+        message: `This coupon is valid only for purchases above ₹${coupon.minPurchaseLimit}`
+      });
+    }
+
+    let discount = 0;
+
+    // Calculate discount
     if (coupon.discountType === 'percentage') {
       discount = (cartTotal * coupon.discount) / 100;
-      if(discount >= coupon.maxDiscount){
+
+      // Cap discount to maxDiscount
+      if (discount > coupon.maxDiscount) {
         discount = coupon.maxDiscount;
-        
       }
     } else if (coupon.discountType === 'amount') {
       discount = coupon.discount;
     }
 
+    // Ensure discount doesn't exceed total
     discount = Math.min(discount, cartTotal);
 
     const newTotal = cartTotal - discount;
 
-    return res.json({ success: true, newTotal: newTotal, message: 'Coupon applied successfully' });
+
+    return res.json({
+      success: true,
+      newTotal: newTotal,
+      discount,
+      couponId: coupon._id,
+      message: 'Coupon applied successfully'
+    });
+
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false })
+    res.status(500).json({ success: false, message: 'Something went wrong' });
   }
+};
 
-}
 
 // to remove coupon from cart total
 
 const removeCoupon = async (req, res) => {
-  const oldCartTotal = req.session.cartTotal;
 
   try {
+    const oldCartTotal = req.session.cartTotal;
     res.json({ success: true, oldCartTotal: oldCartTotal });
-
     req.session.cartTotal = null;
   } catch (error) {
     console.error(error);

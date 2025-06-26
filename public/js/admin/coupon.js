@@ -35,7 +35,6 @@ async function addCoupon() {
   const isActive = document.getElementById("isActive").value === "true";
 
   const discount = discountType === "percentage" ? discountPercentage : discountAmount;
-console.log(isActive);
 
   axios.post('/admin/addCoupon', {
     name: couponName,
@@ -45,12 +44,12 @@ console.log(isActive);
     minPurchaseLimit: minPurchase,
     maxDiscount: maxDiscount,
     expireDate: expirationDate,
-    isActive:isActive
+    isActive: isActive
   })
     .then(response => {
       if (response.data.success) {
         location.reload();
-      } 
+      }
     })
     .catch(error => {
       console.error('Error:', error);
@@ -68,7 +67,6 @@ async function deleteCoupon(couponId) {
       }
 
     }).catch(error => {
-      console.log(error);
 
     })
 };

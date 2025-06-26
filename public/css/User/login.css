@@ -1,6 +1,28 @@
+:root {
+  --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --primary-color: #007bff;
+  --primary-hover: #0056b3;
+  --google-color: #db4437;
+  --google-hover: #c33c2e;
+  --facebook-color: #4267b2;
+  --facebook-hover: #365899;
+  --bg-color: #f4f4f4;
+  --container-bg: #ffffff;
+  --text-color: #333;
+  --secondary-text: #555;
+  --input-border: #ddd;
+  --box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  --border-radius: 6px;
+  --font-size-base: 1rem;
+  --font-size-sm: 0.875rem;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --transition: 0.3s ease;
+}
+
 body {
-  font-family: Arial, sans-serif;
-  background-color: #f4f4f4;
+  font-family: var(--font-family);
+  background-color: var(--bg-color);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -9,104 +31,106 @@ body {
 }
 
 .container {
-  background: #ffffff;
-  border-radius: 8px; /* Reduced border radius */
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-  width: 350px; /* Reduced width */
-  max-width: 100%;
-  padding: 15px; /* Reduced padding */
+  background: var(--container-bg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  width: 100%;
+  max-width: 400px;
+  padding: var(--spacing-md);
   text-align: center;
 }
 
 h2 {
-  margin-bottom: 0.5rem; /* Reduced margin */
-  color: #333;
-  font-size: 1.3rem; /* Smaller font size */
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-color);
+  font-size: 1.4rem;
 }
 
 form {
   display: flex;
   flex-direction: column;
+  gap: var(--spacing-sm);
 }
 
-input, button {
-  padding: 8px; /* Reduced padding */
-  margin: 8px 0; /* Reduced margin */
-  border-radius: 4px; /* Reduced border radius */
-  border: 1px solid #ddd;
-  font-size: 0.9rem; /* Smaller font size */
+input,
+button {
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--input-border);
+  font-size: var(--font-size-sm);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 input:focus {
-  border-color: #007BFF;
+  border-color: var(--primary-color);
   outline: none;
 }
 
 button {
-  background-color: #007BFF;
+  background-color: var(--primary-color);
   color: #fff;
   border: none;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color var(--transition);
 }
 
 button:hover {
-  background-color: #0056b3;
+  background-color: var(--primary-hover);
 }
 
 .social-login {
-  margin-top: 0.5rem; /* Reduced margin */
+  margin-top: var(--spacing-sm);
 }
 
 .social-login p {
-  margin-bottom: 0.5rem;
-  color: #555;
-  font-size: 0.9rem; /* Smaller font size */
+  margin-bottom: var(--spacing-sm);
+  color: var(--secondary-text);
+  font-size: var(--font-size-sm);
 }
 
 .social-login button {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px; /* Reduced padding */
-  margin-top: 8px; /* Reduced margin */
-  width: 100%;
-  border-radius: 4px; /* Reduced border radius */
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius);
   border: none;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+  width: 100%;
+  font-size: var(--font-size-sm);
+  transition: background-color var(--transition);
 }
 
 .google-btn {
-  background-color: #db4437;
+  background-color: var(--google-color);
   color: #fff;
 }
 
 .google-btn:hover {
-  background-color: #c33c2e;
+  background-color: var(--google-hover);
 }
 
 .facebook-btn {
-  background-color: #4267B2;
+  background-color: var(--facebook-color);
   color: #fff;
 }
 
 .facebook-btn:hover {
-  background-color: #365899;
+  background-color: var(--facebook-hover);
 }
 
 .social-login img {
-  width: 18px; /* Reduced icon size */
-  height: 18px; /* Reduced icon size */
-  margin-right: 8px; /* Reduced margin */
+  width: 20px;
+  height: 20px;
 }
 
 a {
-  color: #007BFF;
+  color: var(--primary-color);
   text-decoration: none;
-  transition: color 0.3s ease;
+  transition: color var(--transition);
 }
 
 a:hover {
-  color: #0056b3;
+  color: var(--primary-hover);
 }

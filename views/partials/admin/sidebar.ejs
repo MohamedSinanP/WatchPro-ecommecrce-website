@@ -1,22 +1,44 @@
-<aside class="sidebar">
-  <h2>Admin Panel</h2>
-  <nav class="sidebar-nav">
-      <ul>
-          <li><a href="/admin/dashboard">Dashboard</a></li>
-          <li><a href="/admin/users">Users</a></li>
-          <li><a href="/admin/products">Products</a></li>
-          <li><a href="/admin/categories">Categories</a></li>
-          <li><a href="/admin/Inventory">Inventory</a></li>
-          <li><a href="/admin/orders">Orders</a></li>
-          <li><a href="/admin/coupons">Coupons</a></li>
-          <li><a href="/admin/offers">Offers</a></li>
-          <li><a href="/admin/salesReport">Sales Report</a></li>
-          <form id="logoutForm" action="/admin/logout" method="POST" style="display: inline;">
-            <button type="submit" style="border: none; background: none; color: inherit; cursor: pointer;  font-size: inherit;">
-              Logout
-            </button>
-          </form>
-      </ul>
+<!-- Add Bootstrap & Bootstrap Icons CDN in <head> -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+<!-- Sidebar -->
+<aside class="bg-dark text-white p-3 vh-100" style="width: 250px;">
+  <h4 class="text-center mb-4">Admin Panel</h4>
+  <nav class="nav flex-column sidebar-nav">
+    <a class="nav-link text-white d-flex align-items-center gap-2" href="/admin/dashboard">
+      <i class="bi bi-speedometer2"></i> Dashboard
+    </a>
+    <a class="nav-link text-white d-flex align-items-center gap-2" href="/admin/users">
+      <i class="bi bi-people"></i> Users
+    </a>
+    <a class="nav-link text-white d-flex align-items-center gap-2" href="/admin/products">
+      <i class="bi bi-box-seam"></i> Products
+    </a>
+    <a class="nav-link text-white d-flex align-items-center gap-2" href="/admin/categories">
+      <i class="bi bi-list-ul"></i> Categories
+    </a>
+    <a class="nav-link text-white d-flex align-items-center gap-2" href="/admin/Inventory">
+      <i class="bi bi-archive"></i> Inventory
+    </a>
+    <a class="nav-link text-white d-flex align-items-center gap-2" href="/admin/orders">
+      <i class="bi bi-cart4"></i> Orders
+    </a>
+    <a class="nav-link text-white d-flex align-items-center gap-2" href="/admin/coupons">
+      <i class="bi bi-ticket-perforated"></i> Coupons
+    </a>
+    <a class="nav-link text-white d-flex align-items-center gap-2" href="/admin/offers">
+      <i class="bi bi-gift"></i> Offers
+    </a>
+    <a class="nav-link text-white d-flex align-items-center gap-2" href="/admin/salesReport">
+      <i class="bi bi-bar-chart-line"></i> Sales Report
+    </a>
+
+    <!-- Logout -->
+    <form id="logoutForm" action="/admin/logout" method="POST" class="mt-3">
+      <button type="submit" class="btn btn-outline-light w-100 d-flex align-items-center justify-content-center gap-2">
+        <i class="bi bi-box-arrow-right"></i> Logout
+      </button>
+    </form>
   </nav>
 </aside>
-

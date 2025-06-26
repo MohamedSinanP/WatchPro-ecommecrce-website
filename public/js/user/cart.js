@@ -1,8 +1,34 @@
+// Store initial values for discount management
+let offerDiscount = 0;
+let couponDiscount = 0;
+let isCouponApplied = false;
+let appliedCouponId = null; // Store the applied coupon ID
+
+// Initialize discount values from page load
 document.addEventListener('DOMContentLoaded', () => {
+  // Get initial offer discount from the page
+  const offerDiscountElement = document.getElementById('offerDiscount');
+  if (offerDiscountElement) {
+    const offerDiscountText = offerDiscountElement.textContent;
+    offerDiscount = parseFloat(offerDiscountText.replace(/[^0-9.-]+/g, "")) || 0;
+  }
+
+  // Initialize carousel if it exists
+  initializeCarousel();
+
+  // Initialize discount display
+  updateDiscountDisplay();
+  updateCartTotal();
+  updateCheckoutButton(); // Initialize checkout button
+});
+
+function initializeCarousel() {
   const carousel = document.querySelector('.carousel');
   const items = document.querySelectorAll('.carousel-item');
   const prevButton = document.querySelector('.carousel-control.prev');
   const nextButton = document.querySelector('.carousel-control.next');
+
+  if (!carousel || !items.length || !prevButton || !nextButton) return;
 
   let currentIndex = 0;
 
@@ -22,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   showItem(currentIndex);
-});
+}
 
 function updateQuantity(cartId, productId, change) {
   const input = document.querySelector(`input[name='num-product${productId}']`);
@@ -37,21 +63,22 @@ function updateQuantity(cartId, productId, change) {
     quantity = 1;
   } else if (quantity > 8) {
     quantity = 8;
-    Swal.fire({
-      icon: 'warning',
-      title: 'Limit Exceeded',
-      text: 'You cannot exceed the maximum quantity of 8.',
-      confirmButtonText: 'OK'
-    });
+    if (typeof Swal !== 'undefined') {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Limit Exceeded',
+        text: 'You cannot exceed the maximum quantity of 8.',
+        confirmButtonText: 'OK'
+      });
+    } else {
+      toastr.warning('You cannot exceed the maximum quantity of 8.', 'Limit Exceeded');
+    }
+    return;
   }
 
-
   input.value = quantity;
-
-
   sendQuantityUpdate(cartId, productId, quantity);
 }
-
 
 function sendQuantityUpdate(cartId, productId, quantity) {
   axios.put('/updateQuantity', {
@@ -63,28 +90,27 @@ function sendQuantityUpdate(cartId, productId, quantity) {
       if (response.data.success) {
         const product = response.data.product;
         const subtotal = response.data.subtotal;
-        const totalDiscount = response.data.totalDiscount;
-        console.log(product.quantity);
+        const newOfferDiscount = response.data.totalDiscount || 0;
 
+
+        // Update individual product total
         const totalPriceElement = document.querySelector(`#total-price-${productId}`);
-
-
         const priceToUse = product.offerPrice ? parseFloat(product.offerPrice) : parseFloat(product.price);
+        const qty = parseInt(product.quantity);
 
-        const quantity = parseInt(product.quantity);
+        totalPriceElement.textContent = `₹ ${(priceToUse * qty).toFixed(2)}`;
 
-        console.log(priceToUse, quantity);
-
-        totalPriceElement.textContent = `₹ ${(priceToUse * quantity).toFixed(2)}`;
-
-
+        // Update subtotal
         const subtotalElement = document.querySelector('#subtotal');
         subtotalElement.textContent = `₹ ${subtotal}`;
 
-        const cartTotal = document.querySelector('#cartTotal');
-        cartTotal.textContent = `₹ ${subtotal}`;
-        const discount = document.querySelector('#totalDiscount');
-        discount.textContent = `₹ - ${totalDiscount}`;
+        // Update offer discount
+        offerDiscount = newOfferDiscount;
+        updateDiscountDisplay();
+
+        // Recalculate total and update checkout button
+        updateCartTotal();
+        updateCheckoutButton();
       }
     })
     .catch(error => {
@@ -93,7 +119,7 @@ function sendQuantityUpdate(cartId, productId, quantity) {
         toastr.error(error.response.data.message, 'Error', {
           closeButton: true,
           progressBar: true,
-          timeOut: 1000, 
+          timeOut: 1000,
           onHidden: function () {
             location.reload();
           }
@@ -101,103 +127,202 @@ function sendQuantityUpdate(cartId, productId, quantity) {
       }
     });
 }
-function deleteProduct(productId) {
-  console.log(productId);
 
+function deleteProduct(productId) {
   axios.delete(`/deleteProduct/${productId}`)
     .then(response => {
       if (response.data.success) {
-
-        const productElement = document.getElementById(`product-${productId}`); 
+        const productElement = document.getElementById(`product-${productId}`);
         if (productElement) {
           productElement.remove();
         }
-
-
-        location.href = location.href; 
+        // Reload the page to refresh cart totals
+        location.href = location.href;
       }
     })
     .catch(error => {
       console.error('Error deleting product:', error);
-      alert('An error occurred while trying to delete the product');
+      toastr.error('An error occurred while trying to delete the product');
     });
 }
 
-document.querySelector('.apply-coupon-btn').addEventListener('click', async () => {
-  const couponCode = document.querySelector('input[name="coupon"]').value;
-  const cartTotalText = document.getElementById('cartTotal').textContent;
-  const cartTotal = parseFloat(cartTotalText.replace(/[^0-9.-]+/g, ""));
-  console.log(couponCode, cartTotal);
+function updateDiscountDisplay() {
+  // Update offer discount display
+  const offerDiscountRow = document.getElementById('offer-discount-row');
+  const offerDiscountElement = document.getElementById('offerDiscount');
 
-  try {
-    const response = await axios.post('/applyCoupon', {
-      code: couponCode,
-      cartTotal: cartTotal
-    });
-
-    document.querySelector('input[name="coupon"]').value = '';
-
-    if (response.data.success) {
-      console.log('Coupon applied successfully');
-      const newTotal = response.data.newTotal;
-      document.getElementById('cartTotal').textContent = `₹ ${newTotal}`;
-  
-      // Toastr success notification
-      toastr.success("Your coupon was applied successfully.", "Coupon Applied!", {
-        duration: 2000, 
-        closeButton: true,
-        gravity: "top", 
-        positionClass: "toast-right", 
-        backgroundColor: "green", 
-        stopOnFocus: true,
-      });
-  
-      const applyButton = document.querySelector('.apply-coupon-btn');
-      applyButton.style.pointerEvents = 'none';
-      applyButton.classList.add('disabled');
-      document.querySelector('.remove-coupon-btn').style.display = 'inline-flex';
-    } else {
-      toastr.error(response.data.message, {
-        duration: 2000,
-        closeButton: true,
-        gravity: "top",
-        positionClass: "toast-right",
-        backgroundColor: "red",
-        stopOnFocus: true,
-      });
+  if (offerDiscount > 0) {
+    if (offerDiscountRow) {
+      offerDiscountRow.style.display = 'flex';
+      offerDiscountElement.textContent = `- ₹ ${offerDiscount.toFixed(2)}`;
     }
-  } catch (error) {
-    console.log(error);
-  }
-});
-
-document.querySelector('.remove-coupon-btn').addEventListener('click', async () => {
-  const cartTotalText = document.getElementById('cartTotal').textContent;
-  const cartTotal = parseFloat(cartTotalText.replace(/[^0-9.-]+/g, ""));
-  console.log(cartTotal);
-
-  try {
-    const response = await axios.post('/removeCoupon', {
-      cartTotal: cartTotal
-    });
-
-    if (response.data.success) {
-      console.log('Coupon removed successfully');
-      const oldCartTotal = response.data.oldCartTotal;
-      document.getElementById('cartTotal').textContent = `₹ ${oldCartTotal}`;
-
-      const applyButton = document.querySelector('.apply-coupon-btn');
-      applyButton.style.pointerEvents = 'auto';
-      applyButton.classList.remove('disabled');
-      document.querySelector('.remove-coupon-btn').style.display = 'none';
-    } else {
-      Swal.fire({
-        icon: 'error',
-        title: 'Oops...',
-        text: response.data.message,
-      });
+  } else {
+    if (offerDiscountRow) {
+      offerDiscountRow.style.display = 'none';
     }
-  } catch (error) {
-    console.log(error);
   }
+
+  // Update coupon discount display
+  const couponDiscountRow = document.getElementById('coupon-discount-row');
+  const couponDiscountElement = document.getElementById('couponDiscount');
+
+  if (couponDiscount > 0) {
+    couponDiscountRow.style.display = 'flex';
+    couponDiscountElement.textContent = `- ₹ ${couponDiscount.toFixed(2)}`;
+  } else {
+    couponDiscountRow.style.display = 'none';
+  }
+}
+
+function updateCartTotal() {
+  const subtotalText = document.getElementById('subtotal').textContent;
+  const subtotal = parseFloat(subtotalText.replace(/[^0-9.-]+/g, ""));
+
+  const totalDiscount = offerDiscount + couponDiscount;
+  const finalTotal = Math.max(0, subtotal - totalDiscount); // Ensure total doesn't go negative
+
+  document.getElementById('cartTotal').textContent = `₹ ${finalTotal.toFixed(2)}`;
+}
+
+// Function to update the checkout button URL with coupon ID
+function updateCheckoutButton() {
+  const checkoutButton = document.querySelector('button a[href*="/checkout"]');
+  if (checkoutButton) {
+    const subtotalText = document.getElementById('cartTotal').textContent;
+    const subtotal = parseFloat(subtotalText.replace(/[^0-9.-]+/g, ""));
+    const totalDiscount = offerDiscount + couponDiscount;
+
+    let checkoutUrl = `/checkout?cartTotal=${subtotal}&totalDiscount=${totalDiscount}`;
+
+    // Add coupon ID if a coupon is applied
+    if (appliedCouponId) {
+      checkoutUrl += `&couponId=${appliedCouponId}`;
+    }
+
+    checkoutButton.href = checkoutUrl;
+  }
+}
+
+// Apply coupon functionality
+document.addEventListener('DOMContentLoaded', () => {
+  const applyCouponBtn = document.querySelector('.apply-coupon-btn');
+  if (applyCouponBtn) {
+    applyCouponBtn.addEventListener('click', async () => {
+      const couponCode = document.querySelector('input[name="coupon"]').value.trim();
+
+      if (!couponCode) {
+        toastr.error('Please enter a coupon code');
+        return;
+      }
+
+      const subtotalText = document.getElementById('subtotal').textContent;
+      const cartTotal = parseFloat(subtotalText.replace(/[^0-9.-]+/g, ""));
+
+      try {
+        const response = await axios.post('/applyCoupon', {
+          code: couponCode,
+          cartTotal: cartTotal
+        });
+
+        // Clear coupon input
+        document.querySelector('input[name="coupon"]').value = '';
+
+        if (response.data.success) {
+
+          // Get coupon discount and ID from response
+          couponDiscount = response.data.discount || 0;
+          appliedCouponId = response.data.couponId; // Store the coupon ID
+          isCouponApplied = true;
+
+          // Update displays
+          updateDiscountDisplay();
+          updateCartTotal();
+          updateCheckoutButton(); // Update checkout button with coupon ID
+
+          // Toggle buttons
+          const applyButton = document.querySelector('.apply-coupon-btn');
+          applyButton.style.pointerEvents = 'none';
+          applyButton.classList.add('disabled');
+          document.querySelector('.remove-coupon-btn').style.display = 'inline-flex';
+
+          // Show success message
+          toastr.success("Your coupon was applied successfully.", "Coupon Applied!", {
+            duration: 2000,
+            closeButton: true,
+            gravity: "top",
+            positionClass: "toast-right",
+            backgroundColor: "green",
+            stopOnFocus: true,
+          });
+        } else {
+          toastr.error(response.data.message || 'Failed to apply coupon', {
+            duration: 2000,
+            closeButton: true,
+            gravity: "top",
+            positionClass: "toast-right",
+            backgroundColor: "red",
+            stopOnFocus: true,
+          });
+        }
+      } catch (error) {
+        console.error('Error applying coupon:', error);
+        toastr.error('An error occurred while applying the coupon');
+      }
+    });
+  }
+
+  // Remove coupon functionality
+  const removeCouponBtn = document.querySelector('.remove-coupon-btn');
+  if (removeCouponBtn) {
+    removeCouponBtn.addEventListener('click', async () => {
+      try {
+        const response = await axios.post('/removeCoupon');
+
+        if (response.data.success) {
+          // Reset coupon discount and ID
+          couponDiscount = 0;
+          appliedCouponId = null; // Clear the coupon ID
+          isCouponApplied = false;
+
+          // Update displays
+          updateDiscountDisplay();
+          updateCartTotal();
+          updateCheckoutButton(); // Update checkout button without coupon ID
+
+          // Toggle buttons
+          const applyButton = document.querySelector('.apply-coupon-btn');
+          applyButton.style.pointerEvents = 'auto';
+          applyButton.classList.remove('disabled');
+          document.querySelector('.remove-coupon-btn').style.display = 'none';
+
+          toastr.success('Coupon removed successfully');
+        } else {
+          if (typeof Swal !== 'undefined') {
+            Swal.fire({
+              icon: 'error',
+              title: 'Oops...',
+              text: response.data.message || 'Failed to remove coupon',
+            });
+          } else {
+            toastr.error(response.data.message || 'Failed to remove coupon');
+          }
+        }
+      } catch (error) {
+        console.error('Error removing coupon:', error);
+        toastr.error('An error occurred while removing the coupon');
+      }
+    });
+  }
+
+  // Handle coupon card buttons
+  const couponCardButtons = document.querySelectorAll('.apply-coupon-btn[data-coupon-code]');
+  couponCardButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const couponCode = button.getAttribute('data-coupon-code');
+      const couponInput = document.querySelector('input[name="coupon"]');
+      if (couponInput) {
+        couponInput.value = couponCode;
+      }
+    });
+  });
 });

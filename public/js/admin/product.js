@@ -41,7 +41,6 @@ document.getElementById('productForm').addEventListener('submit', function (even
 
     let productStock = document.getElementById('productStock');
     let stockValue = productStock.value.trim();
-    console.log(stockValue);
 
     if (stockValue === '' || Number(stockValue) < 0) {
         productStock.classList.add('is-invalid');
@@ -245,7 +244,6 @@ let croppers = [];
 let imageUpdates = [];
 
 async function openEditModal(id, name, brand, categoryid, description, price, stock, images) {
-    console.log('Opening Edit Modal');
 
     // Populate form fields
     $('#editProductId').val(id);

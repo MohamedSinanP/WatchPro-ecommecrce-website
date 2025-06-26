@@ -36,7 +36,7 @@ const login = async (req, res) => {
 
 // to logout from website
 
-const logout = async(req,res) => {
+const logout = async (req, res) => {
   try {
     req.session.admin = false;
     res.redirect('/admin/login');
@@ -230,7 +230,6 @@ const loadUsers = async (req, res) => {
     res.render('admin/users', { users, totalPages, currentPage, limit });
   } catch (error) {
     res.send(error);
-    console.log('error', error)
   }
 };
 
@@ -440,7 +439,7 @@ const downloadExcel = async (req, res) => {
 // to get the sales report of a certain timeframe
 
 const getSalesReportData = async (timeframe) => {
-  const matchStage = { status: 'Delivered' };  
+  const matchStage = { status: 'Delivered' };
 
   let groupStage = {
     _id: {
@@ -451,7 +450,7 @@ const getSalesReportData = async (timeframe) => {
     totalSalesRevenue: { $sum: '$total' },
     totalDiscount: { $sum: '$totalDiscount' },
     totalOrders: { $sum: 1 },
-    totalItemsSold: { $sum: '$products.quantity' }  
+    totalItemsSold: { $sum: '$products.quantity' }
   };
 
   if (timeframe === 'monthly') {
@@ -463,10 +462,10 @@ const getSalesReportData = async (timeframe) => {
   }
 
   return await orderModel.aggregate([
-    { $match: matchStage },  
+    { $match: matchStage },
     { $unwind: '$products' },
-    { $group: groupStage }, 
-    { $sort: { '_id.year': -1, '_id.month': -1, '_id.day': -1 } }  
+    { $group: groupStage },
+    { $sort: { '_id.year': -1, '_id.month': -1, '_id.day': -1 } }
   ]);
 };
 module.exports = {

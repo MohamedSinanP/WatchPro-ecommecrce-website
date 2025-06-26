@@ -13,8 +13,6 @@ document.addEventListener('DOMContentLoaded', function () {
       pincode: document.getElementById('pincode').value.trim(),
     };
 
-    console.log(formData); // Log the form data to verify
-
     try {
       const response = await fetch('/defaultAddress', {
         method: 'POST',
@@ -59,7 +57,6 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     } catch (error) {
       // Handle network or server errors
-      console.log('Error:', error);
       toastr.error('Something went wrong. Please try again later.', {
         duration: 2000,
         closeButton: true,
@@ -70,7 +67,6 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
   });
-
 
   function selectAddress(addressId) {
     document.querySelectorAll('.address-card').forEach(card => {
@@ -90,6 +86,9 @@ document.addEventListener('DOMContentLoaded', function () {
       .catch(error => console.error('Error:', error));
   }
 
+  // Make selectAddress function global so it can be called from HTML onclick
+  window.selectAddress = selectAddress;
+
   document.querySelectorAll('.address-card').forEach(card => {
     card.addEventListener('click', function () {
       const addressId = this.dataset.addressId;
@@ -103,6 +102,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const totalElement = document.getElementById('total');
     const totalPrice = parseFloat(totalElement ? totalElement.querySelector('span').textContent : 0);
     const totalDiscount = parseFloat(document.getElementById('totalDiscount')?.innerText || 0);
+
+    // Get couponId from the hidden element
+    const couponId = document.getElementById('couponId')?.innerText?.trim() || null;
 
     if (!addressId) {
       alert("Please select an address.");
@@ -120,7 +122,8 @@ document.addEventListener('DOMContentLoaded', function () {
           totalPrice: totalPrice,
           addressId: addressId,
           paymentMethod: paymentMethod.value,
-          totalDiscount: totalDiscount
+          totalDiscount: totalDiscount,
+          couponId: couponId // Include couponId
         });
 
         if (response.data.success) {
@@ -160,7 +163,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
           const rzp = new Razorpay(options);
           rzp.on('payment.failed', function (response) {
-            console.log("Payment failed:", response.error);
             const retryUrl = `/retryPaymentPage/${orderid}`;
             window.location.href = retryUrl;
           });
@@ -177,7 +179,6 @@ document.addEventListener('DOMContentLoaded', function () {
           }).showToast();
         }
       } catch (error) {
-        console.log('Error creating Razorpay order:', error);
       }
     } else if (paymentMethod.value === "COD") {
       try {
@@ -185,7 +186,8 @@ document.addEventListener('DOMContentLoaded', function () {
           totalPrice: totalPrice,
           paymentMethod: "COD",
           addressId: addressId,
-          totalDiscount: totalDiscount
+          totalDiscount: totalDiscount,
+          couponId: couponId // Include couponId
         });
 
         if (response.data.success) {
@@ -203,7 +205,6 @@ document.addEventListener('DOMContentLoaded', function () {
           }).showToast();
         }
       } catch (error) {
-        console.log('Error creating COD order:', error);
         alert('An error occurred. Please try again.');
       }
     } else if (paymentMethod.value === "Wallet") {
@@ -212,10 +213,10 @@ document.addEventListener('DOMContentLoaded', function () {
           totalPrice: totalPrice,
           paymentMethod: "Wallet",
           addressId: addressId,
-          totalDiscount: totalDiscount
+          totalDiscount: totalDiscount,
+          couponId: couponId // Include couponId
         });
         if (response.data.success) {
-
           window.location.href = '/greetings';
         } else {
           const message = response.data.message;
@@ -230,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function () {
           }).showToast();
         }
       } catch (error) {
-
+        alert('An error occurred. Please try again.');
       }
     }
   }
@@ -256,46 +257,10 @@ document.addEventListener('DOMContentLoaded', function () {
     } catch (error) {
       console.error('Error cancelling product:', error);
     }
-  };
+  }
+
+  // Make returnProduct function global
+  window.returnProduct = returnProduct;
+
   document.querySelector('.pay-now').addEventListener('click', handlePayment);
-
-  // const Form = document.getElementById("addAddressForm");
-  // form.addEventListener("submit", async (event) => {
-  //   event.preventDefault(); 
-
-  //   const formData = new FormData(Form);
-  //   const data = Object.fromEntries(formData.entries());
-
-  //   try {
-  //     const response = await axios.post("/defaultAddress", data);
-
-  //     if (response.status === 200) {
-  //       Toastify({
-  //         text: "Address added successfully!",
-  //         duration: 3000,
-  //         gravity: "top",
-  //         position: "right",
-  //         style: {
-  //           background: "green",
-  //         },
-  //       }).showToast();
-  //       location.reload();
-  //     } else {
-  //       throw new Error("Failed to add address.");
-  //     }
-  //   } catch (error) {
-  //     console.error(error);
-
-  //     Toastify({
-  //       text: "Error adding address. Please try again.",
-  //       duration: 3000,
-  //       gravity: "top",
-  //       position: "right",
-  //       style: {
-  //         background: "red",
-  //       },
-  //     }).showToast();
-  //   }
-  // });
 });
-

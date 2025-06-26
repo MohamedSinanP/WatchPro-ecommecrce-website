@@ -20,11 +20,11 @@ document.querySelectorAll('.filter-link').forEach(link => {
       axios.get('/products/filter', {
         params: { page, limit, sortBy, price, category, genderType, order }
       })
-      .then(response => {
-        const { products, totalPages, currentPage } = response.data;
+        .then(response => {
+          const { products, totalPages, currentPage } = response.data;
 
-        // Render products
-        document.querySelector('#product-list').innerHTML = products.map(product => `
+          // Render products
+          document.querySelector('#product-list').innerHTML = products.map(product => `
           <div class="col-sm-6 col-md-4 col-lg-3 p-b-35 isotope-item ${product.category}">
             <div class="block2">
               <div class="block2-pic hov-img0">
@@ -53,15 +53,15 @@ document.querySelectorAll('.filter-link').forEach(link => {
           </div>
         `).join('');
 
-        // Update pagination info
-        document.getElementById('page-info').innerText = `Page ${currentPage} of ${totalPages}`;
-        document.getElementById('prev-page').disabled = currentPage === 1;
-        document.getElementById('next-page').disabled = currentPage === totalPages;
+          // Update pagination info
+          document.getElementById('page-info').innerText = `Page ${currentPage} of ${totalPages}`;
+          document.getElementById('prev-page').disabled = currentPage === 1;
+          document.getElementById('next-page').disabled = currentPage === totalPages;
 
-        // Update the current page number in the hidden input (if used)
-        document.getElementById('currentPage').value = currentPage;
-      })
-      .catch(error => console.error('Error fetching products:', error));
+          // Update the current page number in the hidden input (if used)
+          document.getElementById('currentPage').value = currentPage;
+        })
+        .catch(error => console.error('Error fetching products:', error));
     }
 
     // Pagination buttons
@@ -82,7 +82,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function handleSearch() {
     const query = searchInput.value.trim();
-    console.log(query);
 
     if (query) {
       axios.get('/searchProduct', {
@@ -90,7 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
       })
         .then(response => {
           const { products } = response.data;
-          console.log(products);
 
           if (!Array.isArray(products)) {
             console.error('Expected products to be an array:', products);
@@ -145,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 $(document).ready(function () {
   $('.js-addWishlist-detail').on('click', function (e) {
-    e.preventDefault(); 
+    e.preventDefault();
 
     let productId = $(this).data('product-id');
     let productName = $(this).data('product-name');
@@ -172,14 +170,14 @@ $(document).ready(function () {
         } else if (response.success) {
           toastr.success(response.message);
         } else {
-          toastr.warning(response.message); 
+          toastr.warning(response.message);
         }
       },
       error: function (xhr) {
         if (xhr.status === 401) {
           const response = JSON.parse(xhr.responseText);
           if (response.redirect) {
-            window.location.href = response.redirect; 
+            window.location.href = response.redirect;
           } else {
             toastr.error(response.message || 'An unknown error occurred.');
           }
