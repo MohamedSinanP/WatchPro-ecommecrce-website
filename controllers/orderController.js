@@ -34,9 +34,8 @@ const loadOrders = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
-    // Check if it's an AJAX request (XHR)
     if (req.xhr) {
-      res.render('partials/admin/orderTable', { orders, currentPage: page, totalPages, limit });
+      res.render('partials/admin/orderTable', { orders, currentPage: page, totalPages, limit, currentRoute: req.path });
     } else {
       res.render('admin/order', { orders, currentPage: page, totalPages, limit });
     }
@@ -122,7 +121,6 @@ const createOrder = async (req, res) => {
     totalPrice = Number(totalPrice);
     const deliveryDate = new Date();
     deliveryDate.setDate(deliveryDate.getDate() + 7);
-
     const options = {
       amount: totalPrice * 100,
       currency: "INR",

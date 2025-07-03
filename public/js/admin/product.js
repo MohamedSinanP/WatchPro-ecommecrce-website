@@ -1,6 +1,46 @@
-function loadPage(pageNumber) {
-    window.location.href = `/admin/products?page=${pageNumber}`;
+function debounce(func, wait) {
+    let timeout;
+    return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
 }
+
+// Load a specific page with optional search query
+function loadPage(pageNumber, search = '') {
+    const url = search ? `/admin/products?page=${pageNumber}&search=${encodeURIComponent(search)}` : `/admin/products?page=${pageNumber}`;
+    window.location.href = url;
+}
+
+// Handle search form submission
+document.getElementById('searchForm')?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const searchButton = event.target.querySelector('.btn-primary');
+    searchButton.classList.add('loading');
+    searchButton.disabled = true;
+    const searchInput = document.getElementById('searchInput').value.trim();
+    loadPage(1, searchInput);
+    searchButton.classList.remove('loading');
+    searchButton.disabled = false;
+});
+
+// Handle real-time search
+document.getElementById('searchInput')?.addEventListener('input', debounce((event) => {
+    const searchInput = event.target.value.trim();
+    const clearButton = document.querySelector('.btn-clear-search');
+    clearButton.classList.toggle('d-none', !searchInput);
+    loadPage(1, searchInput);
+}, 500));
+
+// Handle reset button
+function resetSearch() {
+    document.getElementById('searchInput').value = '';
+    const clearButton = document.querySelector('.btn-clear-search');
+    clearButton.classList.add('d-none');
+    loadPage(1);
+}
+
+// Existing product form validation
 document.getElementById('productForm').addEventListener('submit', function (event) {
     event.preventDefault();
     let fields = ['productName', 'productBrand', 'productCategory', 'productDescription', 'productPrice', 'productStock', 'productImages'];
@@ -41,28 +81,56 @@ document.getElementById('productForm').addEventListener('submit', function (even
 
     let productStock = document.getElementById('productStock');
     let stockValue = productStock.value.trim();
-
     if (stockValue === '' || Number(stockValue) < 0) {
         productStock.classList.add('is-invalid');
         isValid = false;
     }
+
     let productImages = document.getElementById('productImages');
     if (productImages.files.length === 0) {
         productImages.classList.add('is-invalid');
         isValid = false;
     }
 
-
     if (isValid) {
+        // Trigger form submission handled by jQuery
+        $('#productForm').submit();
     }
 });
 
+// Existing jQuery and product-related functions
+$(document).ready(function () {
+    $('#addProductButton').click(function () {
+        $('#addProductModal').modal('show');
+        $('#imagePreview').html('');
+        $('#productForm')[0].reset();
+    });
+
+    let croppers = [];
+
+    $('#productImages').change(function (e) {
+        handleImageUpload(e.target.files, document.getElementById('imagePreview'));
+    });
+
+    $('#productForm').submit(async function (event) {
+        event.preventDefault();
+        const formData = new FormData();
+        formData.append('name', $('#productName').val());
+        formData.append('brand', $('#productBrand').val());
+        formData.append('category', $('#productCategory').val());
+        formData.append('description', $('#productDescription').val());
+        formData.append('price', $('#productPrice').val());
+        formData.append('stock', $('#productStock').val());
+        await prepareImageData(formData);
+        await uploadProduct(formData);
+    });
+});
+
+// ... (Rest of your existing functions: handleImageUpload, prepareImageData, uploadProduct, toggleListing, handleEditClick, openEditModal, handleImageChange)
+
 async function toggleListing(productId, isCurrentlyListed) {
     try {
-
         const newStatus = isCurrentlyListed === 'true' ? false : true;
-
-
         const response = await fetch('/admin/productListing', {
             method: 'PUT',
             headers: {
@@ -74,19 +142,17 @@ async function toggleListing(productId, isCurrentlyListed) {
             }),
         });
 
-
         const data = await response.json();
-
-
         if (data.success) {
             location.reload();
         } else {
+            alert('Failed to update product listing status. Please try again.');
         }
     } catch (error) {
         console.error('Error:', error);
+        alert('An error occurred while updating the product status.');
     }
 }
-
 
 
 $(document).ready(function () {

@@ -32,11 +32,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
       if (response.ok) {
-        categoryForm.reset();
+        const data = await response.json();
+        const category = data.category;
 
+        // Add new row to table
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+    <td>#</td> 
+    <td>${category.name}</td>
+    <td>${category.genderType}</td>
+    <td>
+      <button class="btn btn-sm btn-primary"
+        onclick="openEditModal('${category._id}', '${category.name}', '${category.genderType}')">Edit</button>
+      <button class="btn btn-sm btn-success"
+        onclick="toggleListing('${category._id}', 'false')">List</button>
+    </td>
+  `;
+
+        categoryTableBody.appendChild(newRow);
+
+        categoryForm.reset();
         const addCategoryModalElement = document.getElementById('addCategoryModal');
         const addCategoryModal = bootstrap.Modal.getInstance(addCategoryModalElement);
         addCategoryModal.hide();
+
       } else {
         alert('Failed to add category');
       }
@@ -75,10 +94,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
       if (response.ok) {
+        const updated = await response.json();
+
+        // Find row by data-id
+        const rowToUpdate = document.querySelector(`tr[data-id='${updated._id}']`);
+        if (rowToUpdate) {
+          rowToUpdate.children[1].textContent = updated.name;
+          rowToUpdate.children[2].textContent = updated.genderType;
+
+          // Update the edit button onclick handler with updated values
+          rowToUpdate.querySelector('.btn-primary').setAttribute(
+            'onclick',
+            `openEditModal('${updated._id}', '${updated.name}', '${updated.genderType}')`
+          );
+        }
+
+        // Close modal
         const editCategoryModalElement = document.getElementById('editCategoryModal');
         const editCategoryModal = bootstrap.Modal.getInstance(editCategoryModalElement);
-        editCategoryModal.hide();
-        location.reload();
+        if (editCategoryModal) {
+          editCategoryModal.hide();
+        }
+
       } else {
         alert('Failed to update category');
       }

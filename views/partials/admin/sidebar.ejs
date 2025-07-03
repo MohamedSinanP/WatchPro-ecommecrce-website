@@ -2,6 +2,28 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 
+<!-- Custom CSS for Active State -->
+<style>
+  .sidebar-nav .nav-link {
+    transition: all 0.3s ease;
+  }
+
+  .sidebar-nav .nav-link.active {
+    background-color: #ffffff33;
+    /* Light transparent background for active link */
+    color: #fff !important;
+    /* White text for active link */
+    border-radius: 5px;
+    /* Rounded corners */
+  }
+
+  .sidebar-nav .nav-link:hover {
+    background-color: #ffffff1a;
+    /* Subtle hover effect */
+    border-radius: 5px;
+  }
+</style>
+
 <!-- Sidebar -->
 <aside class="bg-dark text-white p-3 vh-100" style="width: 250px;">
   <h4 class="text-center mb-4">Admin Panel</h4>
@@ -42,3 +64,26 @@
     </form>
   </nav>
 </aside>
+
+<!-- Add Bootstrap JS and Custom JavaScript at the end of <body> -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // JavaScript to set active class based on current URL
+  document.addEventListener('DOMContentLoaded', function () {
+    const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
+    const currentPath = window.location.pathname;
+
+    navLinks.forEach(link => {
+      // Remove trailing slash for consistent comparison
+      const linkPath = link.getAttribute('href').replace(/\/$/, '');
+      const currentPathClean = currentPath.replace(/\/$/, '');
+
+      // Add 'active' class if the link's href matches the current URL
+      if (linkPath === currentPathClean) {
+        link.classList.add('active');
+      } else {
+        link.classList.remove('active');
+      }
+    });
+  });
+</script>

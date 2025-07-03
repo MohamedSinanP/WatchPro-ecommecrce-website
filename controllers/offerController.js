@@ -14,12 +14,20 @@ const loadOffers = async (req, res) => {
     const totalOffers = await offerModel.countDocuments();
     const products = await productModel.find();
     const categories = await categoryModel.find();
-    const offers = await offerModel.find().populate('products').populate('categories')
+    const offers = await offerModel.find()
+      .populate({
+        path: 'products',
+        select: 'name -_id'
+      })
+      .populate({
+        path: 'categories',
+        select: 'name -_id'
+      })
       .skip(skip)
       .limit(limit);
 
     const totalPages = Math.ceil(totalOffers / limit);
-    const currentPage = page
+    const currentPage = page;
     res.render('admin/offers', { offers, products, categories, currentPage, limit, totalPages });
   } catch (error) {
     console.error(error);

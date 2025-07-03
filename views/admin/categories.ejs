@@ -44,7 +44,7 @@
                   <tbody id="categoryTableBody">
                     <!-- Iterate over categories if you want to render them server-side -->
                     <% categories.forEach((category, index)=> { %>
-                      <tr>
+                      <tr data-id="<%= category._id %>">
                         <td>
                           <%= index + 1 %>
                         </td>
@@ -63,7 +63,6 @@
                             <%= category.isListed ? 'Unlist' : 'List' %>
                           </button>
                         </td>
-
                       </tr>
                       <% }) %>
                   </tbody>
@@ -72,6 +71,23 @@
             </div>
           </div>
         </section>
+        <div class="pagination-controls d-flex justify-content-center my-3">
+          <% if (totalPages> 1) { %>
+            <% if (currentPage> 1) { %>
+              <button onclick="loadPage('<%= currentPage - 1 %>')" class="btn btn-primary mx-1 my-1">&laquo;</button>
+              <% } %>
+                <% for (let i=1; i <=totalPages; i++) { %>
+                  <button onclick="loadPage('<%= i %>')"
+                    class="btn <%= i === currentPage ? 'btn-secondary' : 'btn-light' %> mx-1">
+                    <%= i %>
+                  </button>
+                  <% } %>
+                    <% if (currentPage < totalPages) { %>
+                      <button onclick="loadPage('<%= currentPage + 1 %>')"
+                        class="btn btn-primary mx-1 my-1">&raquo;</button>
+                      <% } %>
+                        <% } %>
+        </div>
       </main>
   </div>
 
@@ -130,31 +146,17 @@
                 <option value="Unisex">Unisex</option>
               </select>
             </div>
-           
+
             <input type="hidden" id="editCategoryId">
             <button type="submit" class="btn btn-primary">Update Category</button>
           </form>
         </div>
       </div>
     </div>
-  </div>
-  <div class="pagination-controls d-flex justify-content-center my-3">
-    <% if (totalPages > 1) { %>
-      <% if (currentPage > 1) { %>
-        <button onclick="loadPage('<%= currentPage - 1 %>')" class="btn btn-primary mx-1 my-1">&laquo;</button>
-      <% } %>
-      <% for (let i = 1; i <= totalPages; i++) { %>
-        <button onclick="loadPage('<%= i %>')" class="btn <%= i === currentPage ? 'btn-secondary' : 'btn-light' %> mx-1">
-          <%= i %>
-        </button>
-      <% } %>
-      <% if (currentPage < totalPages) { %>
-        <button onclick="loadPage('<%= currentPage + 1 %>')" class="btn btn-primary mx-1 my-1">&raquo;</button>
-      <% } %>
-    <% } %>
+
   </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/js/admin/category.js"></script>
+  <script src="/js/admin/category.js"></script>
 
 </body>
 

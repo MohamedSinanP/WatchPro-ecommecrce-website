@@ -47,6 +47,7 @@ router.get('/cart', userAuth.checkSession, cartController.loadCartPage);
 router.post('/cart', userAuth.checkSession, cartController.addToCart);
 router.put('/updateQuantity', cartController.updateQuantity);
 router.delete('/deleteProduct/:id', cartController.deleteCartProduct);
+router.get('/getCartTotals', cartController.getCartTotals);
 
 // coupon routes 
 

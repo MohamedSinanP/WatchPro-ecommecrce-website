@@ -204,7 +204,7 @@ const loadDashboard = async (req, res) => {
       topSellingCategories,
       topSellingBrands,
       monthlySales,
-      yearlySales
+      yearlySales,
     });
   } catch (error) {
     console.error('Error loading dashboard:', error);
@@ -217,19 +217,45 @@ const loadDashboard = async (req, res) => {
 const loadUsers = async (req, res) => {
   try {
     const page = Number.isNaN(parseInt(req.query.page)) ? 1 : parseInt(req.query.page);
+    const search = req.query.search || '';
     const limit = 6;
     const skip = (page - 1) * limit;
 
-    totalUsers = await userModel.countDocuments();
-    const users = await userModel.find({})
-      .skip(skip)
-      .limit(limit);
+    // Build query for searching users
+    const query = search
+      ? {
+        $or: [
+          { fullName: { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } },
+        ],
+      }
+      : {};
+
+    const totalUsers = await userModel.countDocuments(query);
+    const users = await userModel.find(query).skip(skip).limit(limit);
 
     const totalPages = Math.ceil(totalUsers / limit);
-    currentPage = page;
-    res.render('admin/users', { users, totalPages, currentPage, limit });
+    const currentPage = page;
+
+    // Check if the request is AJAX
+    if (req.headers['x-requested-with'] === 'XMLHttpRequest') {
+      res.json({
+        success: true,
+        users,
+        totalPages,
+        currentPage,
+        search,
+      });
+    } else {
+      res.render('admin/users', { users, totalPages, currentPage, limit, search });
+    }
   } catch (error) {
-    res.send(error);
+    console.error('Error loading users:', error);
+    if (req.headers['x-requested-with'] === 'XMLHttpRequest') {
+      res.status(500).json({ success: false, message: 'Error loading users' });
+    } else {
+      res.status(500).send('An error occurred while loading users.');
+    }
   }
 };
 

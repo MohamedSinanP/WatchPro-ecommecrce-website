@@ -75,7 +75,6 @@ const loadCartPage = async (req, res) => {
         };
       })
     );
-
     return res.render('user/cart', {
       products: productsWithImages,
       coupons: activeCoupons,
@@ -263,10 +262,70 @@ const deleteCartProduct = async (req, res) => {
 
 }
 
+const getCartTotals = async (req, res) => {
+  const userId = req.session.user;
+  try {
+    const cart = await cartModel.findOne({ userId }).lean();
+    if (!cart || !cart.products.length) {
+      return res.json({ success: true, subtotal: '0.00', totalDiscount: '0.00' });
+    }
+
+    const activeOffers = await offerModel.find({ isActive: true }).populate([
+      { path: 'products' },
+      { path: 'categories' }
+    ]);
+
+    let subtotal = 0;
+    let totalDiscount = 0;
+
+    await Promise.all(
+      cart.products.map(async (product) => {
+        const productDetails = await productModel.findById(product.productId).lean();
+        if (!productDetails) return;
+
+        let offerPrice = productDetails.price;
+        let productDiscount = 0;
+
+        const productOffers = activeOffers.filter(offer => {
+          const matchesProduct = offer.products.some(prod => prod._id.equals(product.productId));
+          const productCategoryId = productDetails.category._id || productDetails.category;
+          const matchesCategory = offer.categories.some(cat => cat._id.equals(productCategoryId));
+          return matchesProduct || matchesCategory;
+        });
+
+        if (productOffers.length > 0) {
+          let bestOffer = productOffers[0];
+          if (bestOffer.discountType === 'percentage') {
+            const discountAmount = (productDetails.price * bestOffer.discountValue) / 100;
+            offerPrice = productDetails.price - discountAmount;
+            productDiscount = discountAmount * product.quantity;
+          } else if (bestOffer.discountType === 'amount') {
+            offerPrice = productDetails.price - bestOffer.discountValue;
+            productDiscount = bestOffer.discountValue * product.quantity;
+          }
+        }
+
+        subtotal += offerPrice * product.quantity;
+        totalDiscount += productDiscount;
+      })
+    );
+
+    res.json({
+      success: true,
+      subtotal: subtotal.toFixed(2),
+      totalDiscount: totalDiscount.toFixed(2)
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Failed to retrieve cart totals' });
+  }
+};
+
 
 module.exports = {
   loadCartPage,
   addToCart,
   updateQuantity,
-  deleteCartProduct
+  deleteCartProduct,
+  getCartTotals
 }

@@ -9,11 +9,15 @@ const loadCategories = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const totalCategories = await categoryModel.countDocuments();
-    const categories = await categoryModel.find({});
+    const categories = await categoryModel
+      .find({})
+      .skip(skip)
+      .limit(limit);
 
     const totalPages = Math.ceil(totalCategories / limit);
+
     currentPage = page;
-    res.render('admin/categories', { categories ,currentPage,totalPages,limit})
+    res.render('admin/categories', { categories, currentPage, totalPages, limit })
   } catch (error) {
     res.send(error);
   }
@@ -29,10 +33,10 @@ const addCategory = async (req, res) => {
       genderType,
     });
     await newCategory.save();
-    res.status(201).json({ message: 'Category added successfully' });
+    res.status(201).json({ message: 'Category added successfully', category: newCategory });
   } catch (error) {
     console.error('Error adding category:', error);
-    res.status(500).json({ message: 'Failed to add category' }); 
+    res.status(500).json({ message: 'Failed to add category' });
   }
 
 

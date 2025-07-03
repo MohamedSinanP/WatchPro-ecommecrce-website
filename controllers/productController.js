@@ -11,38 +11,38 @@ require('dotenv').config();
 const loadProducts = async (req, res) => {
   try {
     const page = Number.isNaN(parseInt(req.query.page)) ? 1 : parseInt(req.query.page);
+    const search = req.query.search || '';
     const limit = 6;
     const skip = (page - 1) * limit;
+
+    const query = search
+      ? {
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { brand: { $regex: search, $options: 'i' } },
+          { 'category.name': { $regex: search, $options: 'i' } },
+        ],
+      }
+      : {};
+
     const categories = await categoryModel.find();
-    const totalProducts = await productModel.countDocuments();
-    const products = await productModel.find().populate('category')
+    const totalProducts = await productModel.countDocuments(query);
+    const products = await productModel
+      .find(query)
+      .populate('category')
       .skip(skip)
       .limit(limit);
 
-    // for (let product of products) {
-    //   const imageUrls = await Promise.all(
-    //     product.images.map(async (image) => {
-    //       const getObjectParams = {
-    //         Bucket: bucketName,
-    //         Key: image, 
-    //       };
-
-    //       const command = new GetObjectCommand(getObjectParams);
-    //       const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); 
-    //       return signedUrl;
-    //     })
-    //   );
-    //   product.imageUrls = imageUrls; 
-    // }
 
     const totalPages = Math.ceil(totalProducts / limit);
-    currentPage = page;
-    res.render('admin/products', { products, categories, currentPage, limit, totalPages });
+    const currentPage = page;
+    console.log(products);
+    res.render('admin/products', { products, categories, currentPage, limit, totalPages, search });
   } catch (error) {
-    console.error(error);
-    res.status(500).send('internal server error')
+    console.error('Error loading products:', error);
+    res.status(500).send('Internal server error');
   }
-}
+};
 
 // to add new product in products collection
 

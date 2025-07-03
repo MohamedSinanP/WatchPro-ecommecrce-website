@@ -9,10 +9,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-    rel="stylesheet">
   <link rel="stylesheet" href="/css/User/checkout.css">
   <!--===============================================================================================-->
   <link rel="icon" type="image/png" href="/css/User/images/icons/favicon.png" />
@@ -45,267 +41,309 @@
   <link rel="stylesheet" type="text/css" href="/css/User/css/main.css">
 </head>
 
-<body>
+<body class="checkout-body">
 
   <!-- Header -->
   <%- include('../partials/user/header') %>
-
-    <!-- Checkout Header -->
-    <div class="checkout-header">
-      <div class="container">
-        <div class="header-content">
-          <h1><i class="fas fa-shopping-cart"></i> Secure Checkout</h1>
-          <p class="header-subtitle">Complete your purchase safely and securely</p>
-        </div>
-      </div>
-    </div>
 
     <div class="checkout-wrapper">
       <div class="container">
         <div class="checkout-container">
 
-          <!-- Progress Indicator -->
-          <div class="progress-indicator">
+          <!-- Progress Steps -->
+          <div class="checkout-progress mb-5">
             <div class="progress-step active">
-              <div class="step-number">1</div>
+              <div class="step-icon">
+                <i class="fas fa-shopping-cart"></i>
+              </div>
+              <span class="step-label">Cart</span>
+            </div>
+            <div class="progress-line active"></div>
+            <div class="progress-step active">
+              <div class="step-icon">
+                <i class="fas fa-map-marker-alt"></i>
+              </div>
               <span class="step-label">Shipping</span>
             </div>
             <div class="progress-line"></div>
             <div class="progress-step">
-              <div class="step-number">2</div>
+              <div class="step-icon">
+                <i class="fas fa-credit-card"></i>
+              </div>
               <span class="step-label">Payment</span>
-            </div>
-            <div class="progress-line"></div>
-            <div class="progress-step">
-              <div class="step-number">3</div>
-              <span class="step-label">Confirmation</span>
             </div>
           </div>
 
-          <div class="checkout-content">
-
+          <div class="row g-5">
             <!-- Shipping Information Section -->
-            <div class="shipping-section">
-              <div class="section-title">
-                <i class="fas fa-truck"></i>
-                <span>Shipping Information</span>
-              </div>
-
-              <!-- Saved Addresses Section -->
-              <div class="saved-addresses">
-                <h4 class="subsection-title">Choose a Delivery Address</h4>
-                <div class="address-scroll">
-                  <% addresses.forEach(address=> { %>
-                    <div class="address-card" data-address-id="<%= address._id %>">
-                      <div class="address-name">
-                        <%= address.firstName %>
-                          <%= address.lastName %>
-                      </div>
-                      <div class="address-details">
-                        <p>
-                          <%= address.address %>
-                        </p>
-                        <p>
-                          <%= address.city %>, <%= address.state %> - <%= address.pincode %>
-                        </p>
-                        <p><i class="fas fa-phone"></i>
-                          <%= address.phoneNumber %>
-                        </p>
-                      </div>
-                      <button class="select-address-btn" onclick="selectAddress('<%= address._id %>')">
-                        <i class="fas fa-check"></i> Select Address
-                      </button>
-                    </div>
-                    <% }) %>
+            <div class="col-lg-8">
+              <div class="checkout-section">
+                <div class="section-header">
+                  <h2><i class="fas fa-shipping-fast me-3"></i>Checkout</h2>
                 </div>
-              </div>
 
-              <div class="divider"></div>
-
-              <!-- New Address Form -->
-              <div class="new-address-section">
-                <h4 class="subsection-title">
-                  <i class="fas fa-plus-circle"></i>
-                  Add New Address
-                </h4>
-
-                <form id="addAddressForm" class="address-form">
-                  <div class="form-grid">
-                    <div class="form-group">
-                      <label for="firstName" class="form-label">First Name *</label>
-                      <input type="text" class="form-control" id="firstName" name="firstName"
-                        placeholder="Enter first name">
-                      <div class="invalid-feedback">First Name is required.</div>
-                    </div>
-                    <div class="form-group">
-                      <label for="lastName" class="form-label">Last Name *</label>
-                      <input type="text" class="form-control" id="lastName" name="lastName"
-                        placeholder="Enter last name">
-                      <div class="invalid-feedback">Last Name is required.</div>
-                    </div>
+                <!-- Saved Addresses Section -->
+                <div class="addresses-section">
+                  <div class="section-title">
+                    <h3><i class="fas fa-map-marker-alt me-2"></i>Saved Addresses</h3>
                   </div>
 
-                  <div class="form-group full-width">
-                    <label for="address" class="form-label">Street Address *</label>
-                    <textarea class="form-control" id="address" name="address" placeholder="Enter your full address"
-                      rows="3"></textarea>
-                    <div class="invalid-feedback">Address is required.</div>
-                  </div>
-
-                  <div class="form-grid">
-                    <div class="form-group">
-                      <label for="phoneNumber" class="form-label">Phone Number *</label>
-                      <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber"
-                        placeholder="Enter phone number">
-                      <div class="invalid-feedback">Phone Number is required.</div>
-                    </div>
-                    <div class="form-group">
-                      <label for="city" class="form-label">City *</label>
-                      <input type="text" class="form-control" id="city" name="city" placeholder="Enter city">
-                      <div class="invalid-feedback">City is required.</div>
-                    </div>
-                  </div>
-
-                  <div class="form-grid">
-                    <div class="form-group">
-                      <label for="state" class="form-label">State *</label>
-                      <select class="form-control" id="state" name="state">
-                        <option value="">Choose state</option>
-                        <option value="Andhra Pradesh">Andhra Pradesh</option>
-                        <option value="Arunachal Pradesh">Arunachal Pradesh</option>
-                        <option value="Assam">Assam</option>
-                        <option value="Bihar">Bihar</option>
-                        <!-- Add other states here -->
-                      </select>
-                      <div class="invalid-feedback">State is required.</div>
-                    </div>
-                    <div class="form-group">
-                      <label for="pincode" class="form-label">Pincode *</label>
-                      <input type="number" class="form-control" id="pincode" name="pincode" placeholder="Enter pincode">
-                      <div class="invalid-feedback">Pincode is required.</div>
+                  <div class="addresses-scroll">
+                    <div class="addresses-grid">
+                      <% addresses.forEach(address=> { %>
+                        <div class="address-card" data-address-id="<%= address._id %>">
+                          <div class="address-header">
+                            <div class="address-icon">
+                              <i class="fas fa-home"></i>
+                            </div>
+                            <div class="address-name">
+                              <strong>
+                                <%= address.firstName %>
+                                  <%= address.lastName %>
+                              </strong>
+                            </div>
+                          </div>
+                          <div class="address-details">
+                            <p class="address-text">
+                              <i class="fas fa-map-pin me-2 text-muted"></i>
+                              <%= address.address %>
+                            </p>
+                            <p class="address-location">
+                              <%= address.city %>, <%= address.state %> - <%= address.pincode %>
+                            </p>
+                            <p class="address-phone">
+                              <i class="fas fa-phone me-2 text-muted"></i>
+                              <%= address.phoneNumber %>
+                            </p>
+                          </div>
+                          <button class="btn btn-select-address" onclick="selectAddress('<%= address._id %>')">
+                            <i class="fas fa-check me-2"></i>Select Address
+                          </button>
+                        </div>
+                        <% }) %>
                     </div>
                   </div>
+                </div>
 
-                  <button type="submit" class="add-address-btn">
-                    <i class="fas fa-plus"></i>
-                    Add New Address
-                  </button>
-                </form>
+                <!-- New Address Form -->
+
+                <!-- Updated form section with proper structure -->
+                <div class="new-address-section">
+                  <div class="section-title">
+                    <h3><i class="fas fa-plus-circle me-2"></i>Add New Address</h3>
+                  </div>
+
+                  <form id="addAddressForm" class="address-form">
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <div class="form-floating">
+                          <input type="text" class="form-control" id="firstName" name="firstName"
+                            placeholder="First Name">
+                          <label for="firstName"><i class="fas fa-user me-2"></i>First Name *</label>
+                        </div>
+                        <div class="invalid-feedback"></div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-floating">
+                          <input type="text" class="form-control" id="lastName" name="lastName" placeholder="Last Name">
+                          <label for="lastName"><i class="fas fa-user me-2"></i>Last Name *</label>
+                        </div>
+                        <div class="invalid-feedback"></div>
+                      </div>
+                    </div>
+
+                    <div class="mb-3">
+                      <div class="form-floating">
+                        <textarea class="form-control" id="address" name="address" placeholder="Address"
+                          style="height: 80px"></textarea>
+                        <label for="address"><i class="fas fa-map-marker-alt me-2"></i>Address *</label>
+                      </div>
+                      <div class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <div class="form-floating">
+                          <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber"
+                            placeholder="Phone Number">
+                          <label for="phoneNumber"><i class="fas fa-phone me-2"></i>Phone Number *</label>
+                        </div>
+                        <div class="invalid-feedback"></div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-floating">
+                          <input type="text" class="form-control" id="city" name="city" placeholder="City">
+                          <label for="city"><i class="fas fa-city me-2"></i>City *</label>
+                        </div>
+                        <div class="invalid-feedback"></div>
+                      </div>
+                    </div>
+
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <div class="form-floating">
+                          <select class="form-select" id="state" name="state">
+                            <option value="">Choose state</option>
+                            <option value="Andhra Pradesh">Andhra Pradesh</option>
+                            <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                            <option value="Assam">Assam</option>
+                            <option value="Bihar">Bihar</option>
+                            <option value="Chhattisgarh">Chhattisgarh</option>
+                            <option value="Goa">Goa</option>
+                            <option value="Gujarat">Gujarat</option>
+                            <option value="Haryana">Haryana</option>
+                            <option value="Himachal Pradesh">Himachal Pradesh</option>
+                            <option value="Jharkhand">Jharkhand</option>
+                            <option value="Karnataka">Karnataka</option>
+                            <option value="Kerala">Kerala</option>
+                            <option value="Madhya Pradesh">Madhya Pradesh</option>
+                            <option value="Maharashtra">Maharashtra</option>
+                            <option value="Manipur">Manipur</option>
+                            <option value="Meghalaya">Meghalaya</option>
+                            <option value="Mizoram">Mizoram</option>
+                            <option value="Nagaland">Nagaland</option>
+                            <option value="Odisha">Odisha</option>
+                            <option value="Punjab">Punjab</option>
+                            <option value="Rajasthan">Rajasthan</option>
+                            <option value="Sikkim">Sikkim</option>
+                            <option value="Tamil Nadu">Tamil Nadu</option>
+                            <option value="Telangana">Telangana</option>
+                            <option value="Tripura">Tripura</option>
+                            <option value="Uttar Pradesh">Uttar Pradesh</option>
+                            <option value="Uttarakhand">Uttarakhand</option>
+                            <option value="West Bengal">West Bengal</option>
+                          </select>
+                          <label for="state"><i class="fas fa-flag me-2"></i>State *</label>
+                        </div>
+                        <div class="invalid-feedback"></div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-floating">
+                          <input type="number" class="form-control" id="pincode" name="pincode" placeholder="Pincode">
+                          <label for="pincode"><i class="fas fa-mail-bulk me-2"></i>Pincode *</label>
+                        </div>
+                        <div class="invalid-feedback"></div>
+                      </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-add-address">
+                      <i class="fas fa-plus me-2"></i>Add Address
+                    </button>
+                  </form>
+                </div>
               </div>
             </div>
 
             <!-- Order Summary Section -->
-            <div class="order-summary">
-              <div class="section-title">
-                <i class="fas fa-receipt"></i>
-                <span>Order Summary</span>
-              </div>
+            <div class="col-lg-4">
+              <div class="order-summary">
+                <div class="summary-header">
+                  <h3><i class="fas fa-receipt me-2"></i>Order Summary</h3>
+                </div>
 
-              <!-- Cart Items -->
-              <div class="order-items">
-                <% cartItems.products.forEach(item=> { %>
-                  <div class="order-item">
-                    <div class="item-details">
-                      <div class="item-name">
-                        <%= item.name %>
+                <!-- Order Items -->
+                <div class="order-items">
+                  <% cartItems.products.forEach(item=> { %>
+                    <div class="order-item">
+                      <div class="item-info">
+                        <h6 class="item-name">
+                          <%= item.name %>
+                        </h6>
+                        <small class="item-quantity">Qty: <%= item.quantity %></small>
                       </div>
-                      <div class="item-quantity">Qty: <%= item.quantity %>
+                      <div class="item-price">
+                        &#8377 <%= (item.price * item.quantity).toFixed(2) %>
                       </div>
                     </div>
-                    <div class="item-price">$<%= (item.price * item.quantity).toFixed(2) %>
+                    <% }) %>
+                </div>
+
+                <!-- Price Breakdown -->
+                <div class="price-breakdown">
+                  <div class="price-row">
+                    <span>Subtotal</span>
+                    <span>
+
+                      &#8377 <%= cartTotal %>
+                    </span>
+                  </div>
+                  <div class="price-row">
+                    <span>Shipping</span>
+                    <span>
+                      &#8377 <%= shippingCharge %>
+                    </span>
+                  </div>
+                  <div class="price-divider"></div>
+                  <div class="price-row total-row">
+                    <span>Total</span>
+                    <span id="total">
+                      &#8377 <%= total %>
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Payment Methods -->
+                <div class="payment-section">
+                  <h4><i class="fas fa-credit-card me-2"></i>Payment Method</h4>
+
+                  <div class="payment-options">
+                    <div class="payment-option">
+                      <input class="form-check-input" type="radio" name="paymentMethod" id="cashOnDelivery" value="COD">
+                      <label class="payment-label" for="cashOnDelivery">
+                        <div class="payment-icon cod">
+                          <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div class="payment-info">
+                          <span class="payment-name">Cash on Delivery</span>
+                          <small class="payment-desc">Pay when you receive</small>
+                        </div>
+                      </label>
+                    </div>
+
+                    <div class="payment-option">
+                      <input class="form-check-input" type="radio" name="paymentMethod" id="razorpay" value="Razorpay">
+                      <label class="payment-label" for="razorpay">
+                        <div class="payment-icon razorpay">
+                          <i class="fab fa-cc-visa"></i>
+                        </div>
+                        <div class="payment-info">
+                          <span class="payment-name">Razorpay</span>
+                          <small class="payment-desc">Credit/Debit Cards, UPI</small>
+                        </div>
+                      </label>
+                    </div>
+
+                    <div class="payment-option">
+                      <input class="form-check-input" type="radio" name="paymentMethod" id="wallet" value="Wallet">
+                      <label class="payment-label" for="wallet">
+                        <div class="payment-icon wallet">
+                          <i class="fas fa-wallet"></i>
+                        </div>
+                        <div class="payment-info">
+                          <span class="payment-name">Wallet</span>
+                          <small class="payment-desc">Use wallet balance</small>
+                        </div>
+                      </label>
                     </div>
                   </div>
-                  <% }) %>
+                </div>
+
+                <!-- Place Order Button -->
+                <button class="btn-place-order pay-now">
+                  <i class="fas fa-lock me-2"></i>
+                  <span>Place Secure Order</span>
+                </button>
+
+                <p class="security-note">
+                  <i class="fas fa-shield-alt me-2"></i>
+                  Your payment information is secure and encrypted
+                </p>
+
+                <p class="hidden" id="totalDiscount" style="display: none;">
+                  <%= totalDiscount %>
+                </p>
               </div>
-
-              <!-- Price Summary -->
-              <div class="summary-section">
-                <div class="summary-title">
-                  <i class="fas fa-calculator"></i>
-                  Payment Details
-                </div>
-                <div class="summary-row">
-                  <span>Subtotal:</span>
-                  <span>
-                    <%= cartTotal %>
-                  </span>
-                </div>
-                <div class="summary-row">
-                  <span>Shipping:</span>
-                  <span>
-                    <%= shippingCharge %>
-                  </span>
-                </div>
-                <div class="summary-total">
-                  <span>Total:</span>
-                  <span>
-                    <%= total %>
-                  </span>
-                </div>
-              </div>
-
-              <!-- Payment Options -->
-              <div class="payment-section">
-                <div class="subsection-title">
-                  <i class="fas fa-credit-card"></i>
-                  Payment Method
-                </div>
-
-                <div class="payment-option">
-                  <input class="payment-radio" type="radio" name="paymentMethod" id="cashOnDelivery" value="COD">
-                  <label class="payment-label" for="cashOnDelivery">
-                    <i class="payment-icon fas fa-money-bill-wave"></i>
-                    <div class="payment-info">
-                      <div class="payment-name">Cash on Delivery</div>
-                      <div class="payment-desc">Pay when you receive your order</div>
-                    </div>
-                  </label>
-                </div>
-
-                <div class="payment-option">
-                  <input class="payment-radio" type="radio" name="paymentMethod" id="razorpay" value="Razorpay">
-                  <label class="payment-label" for="razorpay">
-                    <i class="payment-icon fab fa-cc-visa"></i>
-                    <div class="payment-info">
-                      <div class="payment-name">Razorpay</div>
-                      <div class="payment-desc">Credit/Debit Card, UPI, Net Banking</div>
-                    </div>
-                  </label>
-                </div>
-
-                <div class="payment-option">
-                  <input class="payment-radio" type="radio" name="paymentMethod" id="wallet" value="Wallet">
-                  <label class="payment-label" for="wallet">
-                    <i class="payment-icon fas fa-wallet"></i>
-                    <div class="payment-info">
-                      <div class="payment-name">Digital Wallet</div>
-                      <div class="payment-desc">Pay using your wallet balance</div>
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              <!-- Place Order Button -->
-              <button class="place-order-btn">
-                <i class="fas fa-lock"></i>
-                Place Order Securely
-              </button>
-
-              <!-- Security Badge -->
-              <div class="security-badge">
-                <i class="fas fa-shield-alt"></i>
-                <span>Your payment information is secure and encrypted</span>
-              </div>
-
-              <!-- Hidden elements to store data for JavaScript -->
-              <p class="hidden" id="totalDiscount" style="display: none;">
-                <%= totalDiscount %>
-              </p>
-              <p class="hidden" id="couponId" style="display: none;">
-                <%= couponId %>
-              </p>
             </div>
-
           </div>
         </div>
       </div>
@@ -314,7 +352,6 @@
     <!-- footer-->
     <%- include('../partials/user/footer') %>
 
-      <!-- Scripts -->
       <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
       <script src="/css/User/vendor/jquery/jquery-3.2.1.min.js"></script>
       <script src="/css/User/vendor/animsition/js/animsition.min.js"></script>
@@ -328,11 +365,8 @@
       <script src="/css/User/vendor/perfect-scrollbar/perfect-scrollbar.min.js"></script>
       <script src="/css/User/js/main.js"></script>
       <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-      <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-      <!-- Your external JavaScript file -->
       <script src="/js/user/checkout.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
 </body>
 

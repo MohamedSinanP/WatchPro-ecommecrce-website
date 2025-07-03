@@ -6,8 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Management</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/css/Admin/product.css">
+    <link rel="stylesheet" href="/css/Admin/users.css"> <!-- Reusing users.css for consistency -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Added for search icon -->
 </head>
 
 <body>
@@ -23,6 +25,21 @@
                 </header>
 
                 <section class="content">
+                    <!-- Search Form -->
+                    <div class="search-section mb-4">
+                        <form id="searchForm" class="d-flex position-relative">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" id="searchInput" class="form-control"
+                                    placeholder="Search by product name, brand, or category" name="search">
+                                <button type="button" class="btn btn-clear-search d-none" onclick="resetSearch()"><i
+                                        class="fas fa-times"></i></button>
+                            </div>
+                            <button type="submit" class="btn btn-primary ms-2">Search</button>
+                            <button type="button" class="btn btn-secondary ms-2" onclick="resetSearch()">Reset</button>
+                        </form>
+                    </div>
+
                     <div>
                         <button class="btn btn-primary mb-3" id="addProductButton">Add Product</button>
                     </div>
@@ -99,8 +116,7 @@
                                                 <% }); %>
                                                     <% } else { %>
                                                         <tr>
-                                                            <td colspan="9" class="text-center">No products available.
-                                                                Please add a product.</td>
+                                                            <td colspan="8" class="text-center">No products found.</td>
                                                         </tr>
                                                         <% } %>
                                     </tbody>
@@ -109,18 +125,19 @@
                             <div class="pagination-controls d-flex justify-content-center my-3">
                                 <% if (totalPages> 1) { %>
                                     <% if (currentPage> 1) { %>
-                                        <button onclick="loadPage('<%= currentPage - 1 %>')"
-                                            class="btn btn-primary mx-1 my-1">&laquo;</button>
+                                        <button onclick="loadPage('<%= currentPage - 1 %>', '<%= search %>')"
+                                            class="btn btn-primary mx-1 my-1">«</button>
                                         <% } %>
                                             <% for (let i=1; i <=totalPages; i++) { %>
-                                                <button onclick="loadPage('<%= i %>')"
+                                                <button onclick="loadPage('<%= i %>', '<%= search %>')"
                                                     class="btn <%= i === currentPage ? 'btn-secondary' : 'btn-light' %> mx-1">
                                                     <%= i %>
                                                 </button>
                                                 <% } %>
                                                     <% if (currentPage < totalPages) { %>
-                                                        <button onclick="loadPage('<%= currentPage + 1 %>')"
-                                                            class="btn btn-primary mx-1 my-1">&raquo;</button>
+                                                        <button
+                                                            onclick="loadPage('<%= currentPage + 1 %>', '<%= search %>')"
+                                                            class="btn btn-primary mx-1 my-1">»</button>
                                                         <% } %>
                                                             <% } %>
                             </div>
@@ -198,7 +215,8 @@
     </div>
 
     <!-- Edit Product Modal -->
-    <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
+    <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
@@ -217,14 +235,15 @@
                             <input type="text" class="form-control" id="editProductBrand" required>
                         </div>
                         <div class="mb-3">
-                            <label for="productCategory" class="form-label">Category</label>
+                            <label for="editProductCategory" class="form-label">Category</label>
                             <select class="form-select" id="editProductCategory" name="category" required>
                                 <option value="">Select a category</option>
-                                <% categories.forEach(category => { %>
+                                <% categories.forEach(category=> { %>
                                     <option value="<%= category._id %>">
-                                        <%= category.name %> - <%= category.genderType %>
+                                        <%= category.name %>
+                                            <%= category.genderType %>
                                     </option>
-                                <% }); %>
+                                    <% }); %>
                             </select>
                         </div>
                         <div class="mb-3">
@@ -233,7 +252,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="editProductPrice" class="form-label">Price</label>
-                            <input type="number" class="form-control" id="editProductPrice" required step="0.01">
+                            <input type to="number" class="form-control" id="editProductPrice" required step="0.01">
                         </div>
                         <div class="mb-3">
                             <label for="editProductStock" class="form-label">Stock</label>
@@ -241,7 +260,8 @@
                         </div>
                         <div class="mb-3">
                             <label for="editProductImages" class="form-label">Images</label>
-                            <input type="file" class="form-control" id="editProductImages" name="editProductImages" multiple accept="image/*">
+                            <input type="file" class="form-control" id="editProductImages" name="editProductImages"
+                                multiple accept="image/*">
                             <div class="preview mt-3" id="editImagePreview"></div>
                         </div>
                     </div>
@@ -253,13 +273,11 @@
             </div>
         </div>
     </div>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
     <script src="/js/admin/product.js"></script>
-
-
-
 </body>
 
 </html>
