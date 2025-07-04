@@ -75,7 +75,7 @@
                                     <%= order.status %>
                                 </p>
                             </div>
-                            <div class="order-card mb-3 p-3 border rounded d-flex">
+                            <div class="order-card mb-3 p-3 border rounded d-flex" data-orderid="<%= order._id %>">
                                 <div class="order-images mr-3">
                                     <% order.products.forEach(product=> { %>
                                         <div class="product-image-container">

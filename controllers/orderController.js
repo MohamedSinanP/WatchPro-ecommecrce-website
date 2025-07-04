@@ -371,7 +371,8 @@ const deleteOrderItem = async (req, res) => {
       orderId,
       { status: 'Cancelled' },
       { new: true }
-    );
+    ).populate('products.productId');
+
     if (!updatedOrder) {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
@@ -385,15 +386,12 @@ const deleteOrderItem = async (req, res) => {
       const transactionType = 'credit';
 
       if (wallet) {
-
         wallet.transaction.push({
           transactionType,
           amount: amountNumber.toString(),
           date: new Date(),
         });
-
-        wallet.balance += transactionType === 'credit' ? amountNumber : -amountNumber;
-
+        wallet.balance += amountNumber;
         await wallet.save();
       } else {
         wallet = new walletModel({
@@ -405,12 +403,12 @@ const deleteOrderItem = async (req, res) => {
               date: new Date(),
             },
           ],
-          balance: transactionType === 'credit' ? amountNumber : -amountNumber,
+          balance: amountNumber,
         });
         await wallet.save();
       }
     }
-    res.json({ success: true });
+    res.json({ success: true, order: updatedOrder });
   } catch (error) {
     console.error('Error cancelling product:', error);
     res.status(500).json({ success: false, message: 'Failed to cancel product' });

@@ -3,16 +3,43 @@ function loadPage(pageNumber) {
 }
 
 async function cancelOrderProduct(orderId, total) {
-
   try {
     const response = await axios.delete(`/deleteOrderItem/${orderId}`, {
       data: { total }
     });
     if (response.data.success) {
-      location.reload()
+      // Update the order card status
+      const orderCard = document.querySelector(`.order-card[data-orderid="${orderId}"]`);
+      if (orderCard) {
+        const statusDiv = orderCard.closest('.order-card').previousElementSibling;
+        if (statusDiv) {
+          statusDiv.querySelector('p').innerHTML = '<strong>Order Status:</strong> Cancelled';
+        }
+        // Update actions (remove cancel button)
+        const actionsDiv = orderCard.querySelector('.actions');
+        actionsDiv.innerHTML = ''; // Clear actions since order is cancelled
+      }
+      Toastify({
+        text: "Order cancelled successfully!",
+        duration: 3000,
+        close: true,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#4CAF50",
+      }).showToast();
+    } else {
+      throw new Error(response.data.message || 'Failed to cancel order');
     }
   } catch (error) {
     console.error('Error cancelling product:', error);
+    Toastify({
+      text: "Failed to cancel order. Please try again.",
+      duration: 3000,
+      close: true,
+      gravity: "top",
+      position: "right",
+      backgroundColor: "#FF0000",
+    }).showToast();
   }
 }
 
@@ -31,24 +58,51 @@ async function returnProduct(orderId) {
     if (result.isConfirmed) {
       const response = await axios.post(`/returnOrder/${orderId}`);
       if (response.data.success) {
-        location.reload();
+        // Update the order card status
+        const orderCard = document.querySelector(`.order-card[data-orderid="${orderId}"]`);
+        if (orderCard) {
+          const statusDiv = orderCard.closest('.order-card').previousElementSibling;
+          if (statusDiv) {
+            statusDiv.querySelector('p').innerHTML = '<strong>Order Status:</strong> Returned';
+          }
+          // Update actions (remove return button)
+          const actionsDiv = orderCard.querySelector('.actions');
+          actionsDiv.innerHTML = ''; // Clear actions since order is returned
+        }
+        Toastify({
+          text: "Order returned successfully!",
+          duration: 3000,
+          close: true,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "#4CAF50",
+        }).showToast();
+      } else {
+        throw new Error(response.data.message || 'Failed to return order');
       }
     }
   } catch (error) {
-    console.error('Error cancelling product:', error);
+    console.error('Error returning product:', error);
+    Toastify({
+      text: "Failed to return order. Please try again.",
+      duration: 3000,
+      close: true,
+      gravity: "top",
+      position: "right",
+      backgroundColor: "#FF0000",
+    }).showToast();
   }
-};
+}
 
 async function retryPayment(orderId, razorpayId) {
-
   try {
     const response = await axios.post('/retryPayment', {
       orderId,
       razorpayId
-    })
+    });
 
     if (response.data.success) {
-      const { orderId, amount, currency, name, email, phoneNumber, order } = response.data;
+      const { orderId: razorpayOrderId, amount, currency, name, email, phoneNumber, order } = response.data;
       const orderid = order._id;
 
       const options = {
@@ -57,21 +111,41 @@ async function retryPayment(orderId, razorpayId) {
         currency: currency,
         name: "WatchPro",
         description: "Order Payment",
-        order_id: orderId,
+        order_id: razorpayOrderId,
         handler: async function (response) {
           if (response.razorpay_payment_id && response.razorpay_order_id && response.razorpay_signature) {
-
-            const orderId = response.razorpay_order_id;
-            const result = await axios.post('/paymentSuccess', { orderid })
+            const result = await axios.post('/paymentSuccess', { orderid });
             if (result.data.success) {
-              window.location.href = result.data.redirectUrl;
+              // Update the order card
+              const orderCard = document.querySelector(`.order-card[data-orderid="${orderid}"]`);
+              if (orderCard) {
+                const statusDiv = orderCard.closest('.order-card').previousElementSibling;
+                if (statusDiv) {
+                  statusDiv.querySelector('p').innerHTML = '<strong>Order Status:</strong> Confirmed';
+                }
+                // Update actions (remove retry payment button)
+                const actionsDiv = orderCard.querySelector('.actions');
+                actionsDiv.innerHTML = `
+                  <button class="btn btn-primary view-more" data-toggle="modal" data-target="#productDetailsModal" 
+                          data-order='${JSON.stringify({ ...order, status: 'Confirmed', paymentStatus: 'success' })}' 
+                          onclick="showProductDetails(this)">
+                    View more
+                  </button>
+                `;
+              }
+              Toastify({
+                text: "Payment successful!",
+                duration: 3000,
+                close: true,
+                gravity: "top",
+                position: "right",
+                backgroundColor: "#4CAF50",
+              }).showToast();
             } else {
-              console.error("Payment success but server response indicates failure.");
-              alert("Payment verification failed on server. Please contact support.");
+              throw new Error("Payment success but server response indicates failure.");
             }
           } else {
-            console.error("Missing Razorpay response values.");
-            alert("Payment verification failed. Please try again.");
+            throw new Error("Missing Razorpay response values.");
           }
         },
         prefill: {
@@ -86,8 +160,14 @@ async function retryPayment(orderId, razorpayId) {
 
       const rzp = new Razorpay(options);
       rzp.on('payment.failed', function (response) {
-        const retryUrl = `/retryPaymentPage/${orderid}`;
-        window.location.href = retryUrl;
+        Toastify({
+          text: "Payment failed. Please try again.",
+          duration: 3000,
+          close: true,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "#FF0000",
+        }).showToast();
       });
 
       rzp.open();
@@ -99,11 +179,18 @@ async function retryPayment(orderId, razorpayId) {
         gravity: "top",
         position: "right",
         backgroundColor: "#FF0000",
-        stopOnFocus: true,
       }).showToast();
     }
   } catch (error) {
-
+    console.error('Error retrying payment:', error);
+    Toastify({
+      text: "Failed to retry payment. Please try again.",
+      duration: 3000,
+      close: true,
+      gravity: "top",
+      position: "right",
+      backgroundColor: "#FF0000",
+    }).showToast();
   }
 }
 
