@@ -343,4 +343,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
+  const checkoutAnchor = document.querySelector('button a[href*="/checkout"]');
+
+  if (checkoutAnchor) {
+    checkoutAnchor.addEventListener('click', (e) => {
+      const cartItems = document.querySelectorAll('.table_row');
+
+      if (cartItems.length === 0) {
+        e.preventDefault();
+        toastr.warning('Please add items to the cart before proceeding to checkout.', 'Cart is empty');
+      }
+    });
+  }
 });
