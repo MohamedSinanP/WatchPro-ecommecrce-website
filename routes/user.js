@@ -44,6 +44,7 @@ router.get('/orders', userAuth.checkSession, orderController.loadOrdersPage);
 // routes for cart 
 
 router.get('/cart', userAuth.checkSession, cartController.loadCartPage);
+router.get('/api/cart', userAuth.checkSession, cartController.getCart);
 router.post('/cart', userAuth.checkSession, cartController.addToCart);
 router.put('/updateQuantity', cartController.updateQuantity);
 router.delete('/deleteProduct/:id', cartController.deleteCartProduct);

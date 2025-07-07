@@ -91,6 +91,7 @@ const loadCartPage = async (req, res) => {
 
 // to add the product into user cart collection
 
+// to add the product into user cart collection
 const addToCart = async (req, res) => {
   const userId = req.session.user;
 
@@ -101,7 +102,7 @@ const addToCart = async (req, res) => {
     const productStock = product.stock;
 
     if (productStock < 1) {
-      return res.json({ success: false, message: 'prodcut is out of stock' });
+      return res.json({ success: false, message: 'Product is out of stock' });
     }
     let cart = await cartModel.findOne({ userId });
 
@@ -116,25 +117,19 @@ const addToCart = async (req, res) => {
         cart.products.push({ productId, quantity, name, price });
       }
       cart = await cart.save();
-      return res.status(201).send(cart);
+      return res.status(201).json({ success: true, message: 'Product added to cart', cart });
     } else {
-
       const newCart = await cartModel.create({
         userId,
         products: [{ productId, quantity, name, price }]
       });
-      return res.status(201).send(newCart);
+      return res.status(201).json({ success: true, message: 'Cart created and product added', cart: newCart });
     }
-
-
-
   } catch (error) {
     console.error(error);
-    res.status(500).send("Something went wrong");
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
-
-}
-
+};
 // to update the quatity of the prodcut in the user cart 
 
 const updateQuantity = async (req, res) => {
@@ -322,10 +317,34 @@ const getCartTotals = async (req, res) => {
 };
 
 
+const getCart = async (req, res) => {
+  const userId = req.session.user;
+
+  try {
+    const cart = await cartModel.findOne({ userId }).lean();
+    if (!cart || !cart.products.length) {
+      return res.json({ success: true, products: [] });
+    }
+
+    const products = cart.products.map(product => ({
+      productId: product.productId.toString(),
+      name: product.name,
+      price: product.price,
+      quantity: product.quantity
+    }));
+
+    res.json({ success: true, products });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Failed to retrieve cart' });
+  }
+};
+
 module.exports = {
   loadCartPage,
   addToCart,
   updateQuantity,
   deleteCartProduct,
-  getCartTotals
+  getCartTotals,
+  getCart
 }

@@ -36,7 +36,6 @@ const loadProducts = async (req, res) => {
 
     const totalPages = Math.ceil(totalProducts / limit);
     const currentPage = page;
-    console.log(products);
     res.render('admin/products', { products, categories, currentPage, limit, totalPages, search });
   } catch (error) {
     console.error('Error loading products:', error);

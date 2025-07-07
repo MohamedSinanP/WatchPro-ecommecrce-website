@@ -3720,3 +3720,7 @@ iframe {border: none;}
   filter: hue-rotate(180deg);  /* You can use hue-rotate to change the icon color */
   transition: all 0.3s ease-in-out;  /* Smooth transition for color change */
 } 
+
+.btn-addwish-b2.dis-block.pos-relative.js-addwish-b2.js-addWishlist-detail {
+    cursor: pointer;
+}
