@@ -1,3 +1,4 @@
+const bcrypt = require('bcrypt');
 const adminModel = require('../models/adminModel');
 const userModel = require('../models/userModel');
 const productModel = require('../models/productModel');
@@ -22,8 +23,10 @@ const login = async (req, res) => {
     if (!admin) {
       return res.render('admin/login', { message: 'invalid credintials' })
     }
-    if (admin.password !== password) return res.render('admin/login', { message: 'invalid password ' });
-
+    const isPasswordValid = await bcrypt.compare(password, admin.password);
+    if (!isPasswordValid) {
+      return res.render('admin/login', { message: 'Invalid password' });
+    }
     req.session.admin = true;
     res.redirect('/admin/dashboard');
 

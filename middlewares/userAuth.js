@@ -8,7 +8,7 @@ const checkSession = async (req, res, next) => {
       if (req.xhr || req.headers.accept.indexOf('json') > -1) {
         return res.status(401).json({ redirect: '/login' });
       } else {
-        return res.redirect('/login'); 
+        return res.redirect('/login');
       }
     }
 
@@ -23,7 +23,12 @@ const checkSession = async (req, res, next) => {
     }
 
     if (user.isBlocked) {
-      req.session.toastMessage = 'Your account is blocked.';
+      req.session.destroy(err => {
+        if (err) console.error('Error destroying session:', err);
+      });
+
+      req.session = null;
+
       if (req.xhr || req.headers.accept.indexOf('json') > -1) {
         return res.status(401).json({ redirect: '/login' });
       } else {

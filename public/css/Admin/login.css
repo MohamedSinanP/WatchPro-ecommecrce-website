@@ -78,7 +78,18 @@ body {
 .submit-box input[type="submit"]:hover {
   background-color: #0056b3;
 }
+.password-wrapper {
+            position: relative;
+        }
 
+.eye-icon {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #888;
+        }
 
 @media (max-width: 768px) {
   .login-container {

@@ -2,7 +2,7 @@ $(document).ready(function () {
 
     $('#editProfileModal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
-        var fullName = button.closest('.profile-info').find('#displayFullName').text();
+        var fullName = button.closest('.profile-info').find('#displayFullName').text().trim();
         var email = button.closest('.profile-info').find('#displayEmail').text();
 
         var modal = $(this);
@@ -122,5 +122,14 @@ $(document).ready(function () {
                 }
             }
         });
+    });
+});
+
+$(document).ready(function () {
+    $('.toggle-password').click(function () {
+        const input = $($(this).attr('toggle'));
+        const type = input.attr('type') === 'password' ? 'text' : 'password';
+        input.attr('type', type);
+        $(this).toggleClass('fa-eye fa-eye-slash');
     });
 });

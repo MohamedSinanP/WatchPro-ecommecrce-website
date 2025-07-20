@@ -163,7 +163,8 @@ const loadProductPage = async (req, res) => {
     const totalPages = Math.ceil(totalProducts / limit);
     const currentPage = page;
 
-    const offers = await offerModel.find({ isActive: true }).populate([
+    const today = new Date();
+    const offers = await offerModel.find({ isActive: true, expireDate: { $gte: today } }).populate([
       { path: 'products' },
       { path: 'categories' }
     ]);
@@ -240,9 +241,8 @@ const loadSingleProductPage = async (req, res) => {
       ...relatedProduct.toObject(),
       imageUrl: relatedProduct.images[2] || ''
     }));
-
-    // Fetch active offers
-    const offers = await offerModel.find({ isActive: true }).populate([
+    const today = new Date();
+    const offers = await offerModel.find({ isActive: true, expireDate: { $gte: today } }).populate([
       { path: 'products' },
       { path: 'categories' }
     ]);

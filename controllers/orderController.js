@@ -4,9 +4,11 @@ const productModel = require('../models/productModel');
 const addressModel = require('../models/addressModel');
 const cartModel = require('../models/cartModel');
 const walletModel = require('../models/walletModel');
+const offerModel = require('../models/offerModel');
 const couponModel = require('../models/couponModel');
 const Razorpay = require("razorpay");
 const PDFDocument = require('pdfkit');
+const getDiscountedPrice = require('../utils/getDiscount');
 require('dotenv').config();
 
 
@@ -78,9 +80,6 @@ const cancelOrder = async (req, res) => {
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
-
-
-
     res.json({ message: 'Order deleted successfully' });
   } catch (error) {
     console.error('Error deleting order:', error);
@@ -139,13 +138,40 @@ const createOrder = async (req, res) => {
     if (!cart || cart.products.length === 0) {
       return res.status(400).send("Cart is empty");
     }
+    const activeOffers = await offerModel.find({ isActive: true, expireDate: { $gt: new Date() } });
 
-    const products = cart.products.map(item => ({
-      productId: item.productId._id,
-      quantity: item.quantity,
-      name: item.productId.name,
-      price: item.productId.price,
-    }));
+    const products = cart.products.map(item => {
+      const product = item.productId;
+      const quantity = item.quantity;
+
+      const discounted = getDiscountedPrice(product, activeOffers);
+      console.log({
+        original: product.price,
+        discounted,
+        productId: product._id.toString(),
+        productCategory: product.category?.toString(),
+        matchedOffers: activeOffers.map(of => of.products.map(id => id.toString()))
+      });
+      const original = product.price;
+
+      const isOfferApplied = discounted < original;
+
+
+
+      const productEntry = {
+        productId: product._id,
+        quantity,
+        name: product.name,
+        price: original,
+        status: 'Pending'
+      };
+
+      if (isOfferApplied) {
+        productEntry.discountedPrice = discounted;
+      }
+
+      return productEntry;
+    });
 
     const newOrder = await orderModel.create({
       userId,
@@ -213,17 +239,37 @@ const addOrderDetails = async (req, res) => {
     if (!cart || cart.products.length === 0) {
       return res.status(400).send("Cart is empty");
     }
+    const activeOffers = await offerModel.find({ isActive: true, expireDate: { $gt: new Date() } });
 
 
-    const products = cart.products.map(item => ({
-      productId: item.productId._id,
-      quantity: item.quantity,
-      name: item.productId.name,
-      price: item.productId.price
-    }));
+    const products = cart.products.map(item => {
+      const product = item.productId;
+      const quantity = item.quantity;
+
+      const discounted = getDiscountedPrice(product, activeOffers);
+      const original = product.price;
+
+      const isOfferApplied = discounted < original;
 
 
-    const newOrder = await orderModel.create({
+
+      const productEntry = {
+        productId: product._id,
+        quantity,
+        name: product.name,
+        price: original,
+        status: 'Pending'
+      };
+
+      if (isOfferApplied) {
+        productEntry.discountedPrice = discounted;
+      }
+
+      return productEntry;
+    });
+
+
+    await orderModel.create({
       userId,
       products,
       address: {
@@ -279,14 +325,35 @@ const walletOrder = async (req, res) => {
     if (!cart || cart.products.length === 0) {
       return res.status(400).send("Cart is empty");
     }
+    const activeOffers = await offerModel.find({ isActive: true, expireDate: { $gt: new Date() } });
 
 
-    const products = cart.products.map(item => ({
-      productId: item.productId._id,
-      quantity: item.quantity,
-      name: item.productId.name,
-      price: item.productId.price
-    }));
+
+    const products = cart.products.map(item => {
+      const product = item.productId;
+      const quantity = item.quantity;
+
+      const discounted = getDiscountedPrice(product, activeOffers);
+      const original = product.price;
+
+      const isOfferApplied = discounted < original;
+
+
+
+      const productEntry = {
+        productId: product._id,
+        quantity,
+        name: product.name,
+        price: original,
+        status: 'Pending'
+      };
+
+      if (isOfferApplied) {
+        productEntry.discountedPrice = discounted;
+      }
+
+      return productEntry;
+    });
 
 
 
@@ -348,73 +415,140 @@ const loadGreetingsPage = async (req, res) => {
 
 const deleteOrderItem = async (req, res) => {
   const orderId = req.params.id;
-  const { total } = req.body;
+  const { productId } = req.body;
   const userId = req.session.user;
 
   try {
     const order = await orderModel.findOne({ _id: orderId });
     if (!order) {
-      return res.status(404).json({ success: false, message: 'Product or Order not found' });
-    }
-    for (const product of order.products) {
-      const productId = product.productId;
-      const productQuantity = product.quantity;
-
-      await productModel.findByIdAndUpdate(
-        productId,
-        { $inc: { stock: productQuantity } },
-        { new: true }
-      );
-    }
-
-    const updatedOrder = await orderModel.findByIdAndUpdate(
-      orderId,
-      { status: 'Cancelled' },
-      { new: true }
-    ).populate('products.productId');
-
-    if (!updatedOrder) {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
-    if (updatedOrder.paymentMethod === 'Razorpay' || updatedOrder.paymentMethod === 'Wallet') {
-      let wallet = await walletModel.findOne({ userId });
-      const amountNumber = parseFloat(total);
-      if (isNaN(amountNumber)) {
-        return res.status(400).json({ success: false, message: 'Invalid total amount' });
-      }
-      const transactionType = 'credit';
+    if (['Delivered', 'Returned', 'Cancelled'].includes(order.status)) {
+      return res.status(400).json({ success: false, message: 'Order cannot be cancelled' });
+    }
 
-      if (wallet) {
-        wallet.transaction.push({
-          transactionType,
-          amount: amountNumber.toString(),
-          date: new Date(),
-        });
-        wallet.balance += amountNumber;
-        await wallet.save();
-      } else {
-        wallet = new walletModel({
-          userId,
-          transaction: [
-            {
+    let refundAmount = 0;
+    let updatedOrder;
+
+    if (productId) {
+      const productToCancel = order.products.find(p => p.productId.toString() === productId);
+      if (!productToCancel) {
+        return res.status(404).json({ success: false, message: 'Product not found in order' });
+      }
+
+      if (productToCancel.status === 'Cancelled') {
+        return res.status(400).json({ success: false, message: 'Product is already cancelled' });
+      }
+
+      if (['Delivered', 'Returned'].includes(productToCancel.status)) {
+        return res.status(400).json({ success: false, message: 'Product cannot be cancelled' });
+      }
+
+      await productModel.findByIdAndUpdate(
+        productId,
+        { $inc: { stock: productToCancel.quantity } },
+        { new: true }
+      );
+
+      refundAmount = (productToCancel.discountedPrice ?? productToCancel.price) * productToCancel.quantity;
+
+      updatedOrder = await orderModel.findOneAndUpdate(
+        { _id: orderId, 'products.productId': productId },
+        {
+          $set: { 'products.$.status': 'Cancelled' },
+          $inc: { total: -refundAmount }
+        },
+        { new: true }
+      ).populate('products.productId');
+
+      // Check if all products are cancelled, then cancel the entire order
+      const remainingActiveProducts = updatedOrder.products.filter(p => p.status !== 'Cancelled');
+      if (remainingActiveProducts.length === 0) {
+        updatedOrder.status = 'Cancelled';
+        await updatedOrder.save();
+      }
+    } else {
+      if (order.products.every(p => p.status === 'Cancelled')) {
+        return res.status(400).json({ success: false, message: 'Order is already fully cancelled' });
+      }
+
+      for (const product of order.products) {
+        if (product.status !== 'Cancelled') {
+          await productModel.findByIdAndUpdate(
+            product.productId,
+            { $inc: { stock: product.quantity } },
+            { new: true }
+          );
+        }
+      }
+
+      refundAmount = order.products.reduce((sum, p) => {
+        return p.status !== 'Cancelled' ? sum + p.price * p.quantity : sum;
+      }, 0);
+
+      updatedOrder = await orderModel.findByIdAndUpdate(
+        orderId,
+        {
+          status: 'Cancelled',
+          $set: { 'products.$[].status': 'Cancelled' }
+        },
+        { new: true }
+      ).populate('products.productId');
+    }
+
+    if (['Razorpay', 'Wallet'].includes(updatedOrder.paymentMethod) && refundAmount > 0) {
+      let wallet = await walletModel.findOne({ userId });
+
+      if (isNaN(refundAmount)) {
+        return res.status(400).json({ success: false, message: 'Invalid refund amount' });
+      }
+
+      const transactionType = 'credit';
+      const description = productId
+        ? `Refund for cancelled product in order ${orderId}`
+        : `Refund for cancelled order ${orderId}`;
+
+      try {
+        if (wallet) {
+          wallet.transaction.push({
+            transactionType,
+            amount: refundAmount,
+            date: new Date(),
+            description
+          });
+          wallet.balance += refundAmount;
+          await wallet.save();
+        } else {
+          wallet = new walletModel({
+            userId,
+            transaction: [{
               transactionType,
-              amount: amountNumber,
+              amount: refundAmount,
               date: new Date(),
-            },
-          ],
-          balance: amountNumber,
-        });
-        await wallet.save();
+              description
+            }],
+            balance: refundAmount
+          });
+          await wallet.save();
+        }
+      } catch (walletError) {
+        console.error('Error updating wallet:', walletError);
+        return res.status(500).json({ success: false, message: 'Failed to process refund' });
       }
     }
-    res.json({ success: true, order: updatedOrder });
+
+    res.json({
+      success: true,
+      order: updatedOrder,
+      refundAmount,
+      message: productId ? 'Product cancelled successfully' : 'Order cancelled successfully'
+    });
   } catch (error) {
-    console.error('Error cancelling product:', error);
-    res.status(500).json({ success: false, message: 'Failed to cancel product' });
+    console.error('Error cancelling:', error);
+    res.status(500).json({ success: false, message: 'Failed to cancel' });
   }
 };
-
 // to show the order page in user side 
 
 const loadOrdersPage = async (req, res) => {
@@ -722,6 +856,9 @@ const updateCouponUser = async (couponId, userId) => {
     { $push: { userId: userId } }
   );
 };
+
+
+
 
 module.exports = {
   loadOrders,

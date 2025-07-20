@@ -7,6 +7,7 @@
     <title>Order History</title>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="icon" type="image/png" href="/css/User/images/icons/favicon.png" />
     <!--===============================================================================================-->
     <link rel="stylesheet" type="text/css" href="/css/User/vendor/bootstrap/css/bootstrap.min.css">
@@ -48,97 +49,100 @@
 
         <div class="user-account-container">
             <!-- Sidebar -->
-            <aside class="sidebar-1">
-                <nav>
-                    <ul>
-                        <li><a href="/profile">User Profile</a></li>
-                        <li><a href="/address">Address</a></li>
-                        <li><a href="/orders">Orders</a></li>
-                        <li><a href="/wallet">Wallet</a></li>
-                        <li>
-                            <form id="logoutForm" action="/logout" method="POST" style="display: inline;">
-                                <button type="submit"
-                                    style="border: none; background: none; color: inherit; cursor: pointer;  font-size: inherit;">
-                                    Logout
-                                </button>
-                            </form>
-                        </li>
-                    </ul>
-                </nav>
-            </aside>
-            <div class="content">
-                <div class="address-card-container">
-                    <% if (orders.length> 0) { %>
-                        <% orders.forEach(order=> { %>
-                            <div class="status-div">
-                                <p><strong>order status:</strong>
-                                    <%= order.status %>
-                                </p>
-                            </div>
-                            <div class="order-card mb-3 p-3 border rounded d-flex" data-orderid="<%= order._id %>">
-                                <div class="order-images mr-3">
-                                    <% order.products.forEach(product=> { %>
-                                        <div class="product-image-container">
-                                            <img src="<%= product.productId.images[2] %>" alt="Product Image">
-                                        </div>
-                                        <% }) %>
+            <%- include('../partials/user/accountSidebar') %>
+                <div class="content">
+                    <div class="address-card-container">
+                        <% if (orders.length> 0) { %>
+                            <% orders.forEach(order=> { %>
+                                <div class="status-div">
+                                    <p><strong>order status:</strong>
+                                        <%= order.status %>
+                                    </p>
                                 </div>
-                                <div class="order-details">
-                                    <% order.products.forEach(product=> { %>
-                                        <div class="product-detail mb-3" data-orderid="<%= order._id %>"
-                                            data-productid="<%= product.productId._id %>">
-                                            <p><strong>Product Name:</strong>
-                                                <%= product.productId.name %>
-                                            </p>
-                                            <p><strong>Price:</strong> &#8377 <%= product.productId.price %>
-                                            </p>
-                                            <p><strong>Quantity:</strong>
-                                                <%= product.quantity %>
-                                            </p>
-
-                                        </div>
-                                        <% }) %>
-                                            <div class="actions">
-                                                <button class="btn btn-primary view-more" data-toggle="modal"
-                                                    data-target="#productDetailsModal"
-                                                    data-order='<%= JSON.stringify(order) %>'
-                                                    onclick="showProductDetails(this)">
-                                                    View more
-                                                </button>
-                                                <% if (order.status==='Delivered' ) { %>
-                                                    <button class="btn btn-primary"
-                                                        onclick="returnProduct('<%= order._id %>')">
-                                                        Return Product
-                                                    </button>
-                                                    <% } else if (order.status !=='Cancelled' && order.status
-                                                        !=='Returned' && order.paymentStatus==='success' ) { %>
-                                                        <button class="btn btn-danger cancel-order"
-                                                            onclick="cancelOrderProduct('<%= order._id %>', '<%= order.total %>')">
-                                                            Cancel Product
-                                                        </button>
-                                                        <% } else if (order.paymentMethod==='Razorpay' &&
-                                                            order.paymentStatus==='failed' && order.status
-                                                            !=='Cancelled' ) {%>
-                                                            <button class="btn btn-danger retry-payment"
-                                                                onclick="retryPayment('<%= order._id %>','<%= order.razorpayId %>')">
-                                                                Retry Payment
-                                                            </button>
-                                                            <% } %>
-
+                                <div class="order-card mb-3 p-3 border rounded d-flex" data-orderid="<%= order._id %>">
+                                    <div class="order-images mr-3">
+                                        <% order.products.forEach(product=> { %>
+                                            <div class="product-image-container">
+                                                <img src="<%= product.productId.images[2] || '/default-image.jpg' %>"
+                                                    alt="Product Image">
                                             </div>
+                                            <% }) %>
+                                    </div>
+                                    <div class="order-details">
+                                        <% order.products.forEach(product=> { %>
+                                            <div class="product-detail mb-3" data-orderid="<%= order._id %>"
+                                                data-productid="<%= product.productId._id %>">
+                                                <p><strong>Product Name:</strong>
+                                                    <%= product.productId.name %>
+                                                </p>
+                                                <p><strong>Price:</strong> ₹ <%= product.productId.price %>
+                                                </p>
+                                                <p><strong>Quantity:</strong>
+                                                    <%= product.quantity %>
+                                                </p>
+                                                <p><strong>Status:</strong>
+                                                    <span
+                                                        class="badge <%= product.status === 'Cancelled' ? 'badge-danger' : 'badge-success' %>">
+                                                        <%= product.status || 'Ordered' %>
+                                                    </span>
+                                                </p>
+                                            </div>
+                                            <% }) %>
+                                                <div class="actions">
+                                                    <button class="btn btn-primary view-more" data-toggle="modal"
+                                                        data-target="#productDetailsModal"
+                                                        data-order='<%= JSON.stringify(order) %>'
+                                                        onclick="showProductDetails(this)">
+                                                        View more
+                                                    </button>
+                                                    <% if (order.status==='Delivered' ) { %>
+                                                        <button class="btn btn-primary"
+                                                            onclick="returnProduct('<%= order._id %>')">
+                                                            Return Product
+                                                        </button>
+                                                        <button class="btn btn-secondary"
+                                                            onclick="downloadInvoice('<%= order._id %>')">
+                                                            Invoice Download
+                                                        </button>
+                                                        <% } else if (order.status !=='Cancelled' && order.status
+                                                            !=='Returned' && order.paymentStatus==='success' ) { %>
+                                                            <% const activeProducts=order.products.filter(product=>
+                                                                product.status !== 'Cancelled'); %>
+                                                                <% if (activeProducts.length===1) { %>
+                                                                    <button class="btn btn-danger cancel-order"
+                                                                        onclick="cancelOrderProduct('<%= order._id %>')">
+                                                                        Cancel Order
+                                                                    </button>
+                                                                    <% } else if (activeProducts.length> 1) { %>
+                                                                        <button class="btn btn-danger cancel-order"
+                                                                            onclick="cancelOrderProduct('<%= order._id %>')">
+                                                                            Cancel Entire Order
+                                                                        </button>
+                                                                        <% } %>
+                                                                            <% } else if
+                                                                                (order.paymentMethod==='Razorpay' &&
+                                                                                order.paymentStatus==='failed' &&
+                                                                                order.status !=='Cancelled' ) { %>
+                                                                                <button
+                                                                                    class="btn btn-danger retry-payment"
+                                                                                    onclick="retryPayment('<%= order._id %>', '<%= order.razorpayId %>')">
+                                                                                    Retry Payment
+                                                                                </button>
+                                                                                <% } %>
+                                                </div>
+                                    </div>
                                 </div>
-                            </div>
-                            <% if(order.status==="Delivered" ) { %>
-                                <a href="/invoice/<%= order._id %>" class="btn btn-secondary"
-                                    style="height: 46.333334px;"> invoice download</a>
-                                <% } %>
+                                <% if(order.status==="Delivered" ) { %>
+                                    <a href="/invoice/<%= order._id %>" class="btn btn-secondary"
+                                        style="height: 46.333334px;"> invoice download</a>
+                                    <% } %>
 
-                                    <% }) %>
-                                        <% } else { %>
-                                            <p>No orders found.</p>
-                                            <% } %>
+                                        <% }) %>
+                                            <% } else { %>
+                                                <p>No orders found.</p>
+                                                <% } %>
+                    </div>
                 </div>
-            </div>
 
 
         </div>

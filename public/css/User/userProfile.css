@@ -1,4 +1,3 @@
-/* General Styles */
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   background-color: #ffffff;
@@ -14,7 +13,6 @@ body {
   margin: 20px;
 }
 
-/* Main Content Styles */
 .content {
   flex-grow: 1;
   margin-left: 20px;
@@ -50,25 +48,24 @@ body {
   background-color: #5a6c80;
 }
 
-/* Modal Styles */
    .modal {
-            display: none; /* Hidden by default */
-            position: fixed; /* Stay in place */
-            z-index: 1050; /* Sit on top of everything */
+            display: none; 
+            position: fixed;
+            z-index: 1050; 
             left: 0;
             top: 0;
-            width: 100%; /* Full width */
-            height: 100%; /* Full height */
-            overflow: auto; /* Enable scroll if needed */
-            background-color: rgba(0, 0, 0, 0.5); /* Black with transparency */
+            width: 100%; 
+            height: 100%; 
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5); 
         }
 
         .modal-content {
             background-color: #fefefe;
-            margin: 15% auto; /* 15% from the top and centered */
+            margin: 15% auto; 
             padding: 20px;
             border: 1px solid #888;
-            width: 80%; /* Could be more or less, depending on screen size */
+            width: 80%; 
         }
 
         .modal-header {
@@ -83,7 +80,6 @@ body {
             padding: 20px;
         }
 
-        /* Close button styling */
         .close {
             color: #aaa;
             float: right;
@@ -100,6 +96,7 @@ body {
 
 .form-group {
   margin-bottom: 15px;
+    position: relative; 
 }
 
 .form-control {
@@ -114,7 +111,18 @@ body {
   box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
 }
 
-/* Responsive Styles */
+.toggle-password {
+    position: absolute;
+    top: 38px;
+    right: 10px;
+    cursor: pointer;
+    color: #888;
+}
+.toggle-password:hover {
+    color: #333;
+}
+
+
 @media (max-width: 768px) {
   .user-account-container {
       flex-direction: column;

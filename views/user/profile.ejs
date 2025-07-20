@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Account</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="icon" type="image/png" href="/css/User/images/icons/favicon.png" />
     <link rel="stylesheet" type="text/css" href="/css/User/vendor/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="/css/User/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
@@ -22,7 +22,7 @@
     <link rel="stylesheet" type="text/css" href="/css/User/css/main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
 
-    
+
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/css/User/userProfile.css">
     <link rel="stylesheet" href="/css/User/accountSidebar.css">
@@ -34,39 +34,28 @@
     <%- include('../partials/user/header') %>
 
         <div class="user-account-container">
-            <aside class="sidebar-1">
-                <nav>
-                    <ul>
-                        <li><a href="/profile">User Profile</a></li>
-                        <li><a href="/address">Address</a></li>
-                        <li><a href="/orders">Orders</a></li>
-                        <li><a href="/wallet">Wallet</a></li>
-                        <li>
-                            <form id="logoutForm" action="/logout" method="POST" style="display: inline;">
-                              <button type="submit" style="border: none; background: none; color: inherit; cursor: pointer;  font-size: inherit;">
-                                Logout
-                              </button>
-                            </form>
-                          </li>
-                    </ul>
-                </nav>
-            </aside>
-            <main class="content">
-                <div class="profile-info text-center">
-                    <!-- Profile Icon -->
-                    <i class="fas fa-user-circle" style="font-size: 80px; color: #3f4144;"></i>
-                    <p>ReferralCode: <%= user.referralCode %></p>
-                    <strong>Full Name: <span id="displayFullName">
-                            <%= user.fullName %>
-                        </span></strong>
-                    <strong>Email: <span id="displayEmail">
-                            <%= user.email %>
-                        </span></strong>
-                    <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#editProfileModal">Edit Profile</a>
-                    <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#changePasswordModal">Change Password</a>
-                </div>
+            <!-- account sidebar-->
+            <%- include('../partials/user/accountSidebar') %>
+                <main class="content">
+                    <div class="profile-info text-center">
+                        <!-- Profile Icon -->
+                        <i class="fas fa-user-circle" style="font-size: 80px; color: #3f4144;"></i>
+                        <p>ReferralCode: <%= user.referralCode %>
+                        </p>
+                        <strong>Full Name: <span id="displayFullName">
+                                <%= user.fullName %>
+                            </span></strong>
+                        <strong>Email: <span id="displayEmail">
+                                <%= user.email %>
+                            </span></strong>
+                        <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#editProfileModal">Edit
+                            Profile</a>
+                        <a href="#" class="btn btn-primary" data-toggle="modal"
+                            data-target="#changePasswordModal">Change
+                            Password</a>
+                    </div>
 
-            </main>
+                </main>
         </div>
 
         <!-- Edit Profile Modal -->
@@ -112,17 +101,20 @@
                     </div>
                     <div class="modal-body">
                         <form id="changePasswordForm">
-                            <div class="form-group">
+                            <div class="form-group position-relative">
                                 <label for="oldPassword">Old Password</label>
                                 <input type="password" class="form-control" id="oldPassword" name="oldPassword">
+                                <i class="fas fa-eye toggle-password" toggle="#oldPassword"></i>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group position-relative">
                                 <label for="newPassword">New Password</label>
                                 <input type="password" class="form-control" id="newPassword" name="newPassword">
+                                <i class="fas fa-eye toggle-password" toggle="#newPassword"></i>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group position-relative">
                                 <label for="confirmPassword">Confirm New Password</label>
                                 <input type="password" class="form-control" id="confirmPassword" name="confirmPassword">
+                                <i class="fas fa-eye toggle-password" toggle="#confirmPassword"></i>
                             </div>
                             <button type="submit" class="btn btn-primary">Submit</button>
                         </form>
@@ -131,26 +123,26 @@
             </div>
         </div>
 
-		<!-- Footer -->
-		<%- include('../partials/user/footer') %>
+        <!-- Footer -->
+        <%- include('../partials/user/footer') %>
 
-        <!-- Scripts -->
-        <script src="/css/User/vendor/jquery/jquery-3.2.1.min.js"></script>
-        <script src="/css/User/vendor/animsition/js/animsition.min.js"></script>
-        <script src="/css/User/vendor/bootstrap/js/popper.js"></script>
-        <script src="/css/User/vendor/bootstrap/js/bootstrap.min.js"></script>
-        <script src="/css/User/vendor/select2/select2.min.js"></script>
-        <script src="/css/User/vendor/daterangepicker/moment.min.js"></script>
-        <script src="/css/User/vendor/daterangepicker/daterangepicker.js"></script>
-        <script src="/css/User/vendor/slick/slick.min.js"></script>
-        <script src="/css/User/vendor/MagnificPopup/jquery.magnific-popup.min.js"></script>
-        <script src="/css/User/vendor/perfect-scrollbar/perfect-scrollbar.min.js"></script>
-        <script src="/css/User/js/main.js"></script>
+            <!-- Scripts -->
+            <script src="/css/User/vendor/jquery/jquery-3.2.1.min.js"></script>
+            <script src="/css/User/vendor/animsition/js/animsition.min.js"></script>
+            <script src="/css/User/vendor/bootstrap/js/popper.js"></script>
+            <script src="/css/User/vendor/bootstrap/js/bootstrap.min.js"></script>
+            <script src="/css/User/vendor/select2/select2.min.js"></script>
+            <script src="/css/User/vendor/daterangepicker/moment.min.js"></script>
+            <script src="/css/User/vendor/daterangepicker/daterangepicker.js"></script>
+            <script src="/css/User/vendor/slick/slick.min.js"></script>
+            <script src="/css/User/vendor/MagnificPopup/jquery.magnific-popup.min.js"></script>
+            <script src="/css/User/vendor/perfect-scrollbar/perfect-scrollbar.min.js"></script>
+            <script src="/css/User/js/main.js"></script>
 
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
-<script src="/js/user/profile.js"></script>
+            <script src="/js/user/profile.js"></script>
 </body>
 
 </html>

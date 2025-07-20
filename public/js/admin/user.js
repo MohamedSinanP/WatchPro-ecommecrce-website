@@ -122,9 +122,25 @@ function resetSearch() {
 
 // Toggle user block/unblock status
 async function toggleListing(userId, isCurrentlyBlocked) {
+  const isBlocked = isCurrentlyBlocked === 'true';
+  const action = isBlocked ? 'Unblock' : 'Block';
+
+  const result = await Swal.fire({
+    title: `${action} User`,
+    text: `Are you sure you want to ${action.toLowerCase()} this user?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: isBlocked ? '#28a745' : '#d33',
+    cancelButtonColor: '#6c757d',
+    confirmButtonText: `Yes, ${action.toLowerCase()} user`,
+  });
+
+  if (!result.isConfirmed) return;
+
   try {
     toggleLoading(true);
-    const newStatus = isCurrentlyBlocked === 'true' ? false : true;
+    const newStatus = !isBlocked;
+
     const response = await fetch('/admin/blockUser', {
       method: 'PUT',
       headers: {
@@ -139,7 +155,7 @@ async function toggleListing(userId, isCurrentlyBlocked) {
     const data = await response.json();
 
     if (data.success) {
-      // Update the specific row
+      // Update the UI dynamically
       const row = document.querySelector(`tr[data-user-id="${userId}"]`);
       if (row) {
         const statusCell = row.cells[4];
@@ -156,12 +172,13 @@ async function toggleListing(userId, isCurrentlyBlocked) {
           </button>
         `;
       }
+
     } else {
-      alert('Failed to update the user status: ' + (data.message || 'Unknown error'));
+      Swal.fire('Error', data.message || 'Failed to update user status.', 'error');
     }
   } catch (error) {
     console.error('Error:', error);
-    alert('An error occurred while updating the user status.');
+    Swal.fire('Error', 'An error occurred while updating the user status.', 'error');
   } finally {
     toggleLoading(false);
   }

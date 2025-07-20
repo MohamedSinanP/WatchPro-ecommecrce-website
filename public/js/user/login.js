@@ -10,36 +10,36 @@ function formValidate(event) {
 
 
   if (!email && !password) {
-      Swal.fire('All fields are required');
-      return false;
+    Swal.fire('All fields are required');
+    return false;
   }
 
 
   const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   if (!emailPattern.test(email)) {
-      Swal.fire('Please enter a valid email address.');
-      return false;
+    Swal.fire('Please enter a valid email address.');
+    return false;
   }
 
 
   const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
   if (!passwordPattern.test(password)) {
-      Swal.fire('Password must be at least 6 characters long and include a number.');
-      return false;
+    Swal.fire('Password must be at least 6 characters long and include a number.');
+    return false;
   }
 
 
 
-  form.submit(); 
+  form.submit();
 };
 
 
-function setLoginAction(action) {
-  const form = document.getElementById('loginForm');
-  form.action = action;
 
-  if (action === '/demo-login') {
-      document.querySelector('input[name="email"]').value = "demo@example.com";
-      document.querySelector('input[name="password"]').value = "demopassword123";
-  }
+function togglePassword() {
+  const passwordInput = document.getElementById("password");
+  const eyeIcon = document.getElementById("eyeIcon");
+  const isPassword = passwordInput.type === "password";
+
+  passwordInput.type = isPassword ? "text" : "password";
+  eyeIcon.className = isPassword ? "fa fa-eye-slash" : "fa fa-eye";
 }

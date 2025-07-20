@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Wallet</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="icon" type="image/png" href="/css/User/images/icons/favicon.png" />
     <link rel="stylesheet" type="text/css" href="/css/User/vendor/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="/css/User/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
@@ -30,73 +31,57 @@
     <%- include('../partials/user/header') %>
 
         <div class="user-account-container">
-            <aside class="sidebar-1">
-                <nav>
-                    <ul>
-                        <li><a href="/profile">User Profile</a></li>
-                        <li><a href="/address">Address</a></li>
-                        <li><a href="/orders">Orders</a></li>
-                        <li><a href="/wallet">Wallet</a></li>
-                        <li>
-                            <form id="logoutForm" action="/logout" method="POST" style="display: inline;">
-                                <button type="submit"
-                                    style="border: none; background: none; color: inherit; cursor: pointer;  font-size: inherit;">
-                                    Logout
-                                </button>
-                            </form>
-                        </li>
-                    </ul>
-                </nav>
-            </aside>
-            <main class="content">
-                <h1>Your Wallet</h1>
-                <% if(wallet){ %>
-                    <% if( wallet.balance> 0) { %>
-                        <div class="wallet-info">
-                            <strong>Current Balance: &#8377 <%= wallet.balance.toFixed(2) %></strong><br>
-                        </div>
-                        <% } else { %>
+            <!-- account sidebar-->
+            <%- include('../partials/user/accountSidebar') %>
+                <main class="content">
+                    <h1>Your Wallet</h1>
+                    <% if(wallet){ %>
+                        <% if( wallet.balance> 0) { %>
                             <div class="wallet-info">
-                                <strong>Current Balance: 0 %></strong><br>
+                                <strong>Current Balance: &#8377 <%= wallet.balance.toFixed(2) %></strong><br>
                             </div>
-                            <% } %>
-                                <div class="transaction-history">
-                                    <h3>Transaction History</h3>
-                                    <table id="transactionTable" class="table table-striped">
-                                        <thead>
-                                            <tr>
-                                                <th>Date</th>
-                                                <th>Type</th>
-                                                <th>Amount (&#8377)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <% if (wallet.transaction.length> 0) { %>
-                                                <% wallet.transaction.forEach(transaction=> { %>
-                                                    <tr>
-                                                        <td>
-                                                            <%= new Date(transaction.date).toLocaleDateString() %>
-                                                        </td>
-                                                        <td>
-                                                            <%= transaction.transactionType %>
-                                                        </td>
-                                                        <td>
-                                                            <%= transaction.amount %>
-                                                        </td>
-                                                    </tr>
-                                                    <% }) %>
-                                                        <% } else { %>
-                                                            <tr>
-                                                                <td colspan="3">No transactions available</td>
-                                                            </tr>
-                                                            <% } %>
-                                        </tbody>
-                                    </table>
+                            <% } else { %>
+                                <div class="wallet-info">
+                                    <strong>Current Balance: 0 %></strong><br>
                                 </div>
-               <% } else { %>
-                <h3>wallet is not created</h3>
-               <% } %>
-            </main>
+                                <% } %>
+                                    <div class="transaction-history">
+                                        <h3>Transaction History</h3>
+                                        <table id="transactionTable" class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Type</th>
+                                                    <th>Amount (&#8377)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% if (wallet.transaction.length> 0) { %>
+                                                    <% wallet.transaction.forEach(transaction=> { %>
+                                                        <tr>
+                                                            <td>
+                                                                <%= new Date(transaction.date).toLocaleDateString() %>
+                                                            </td>
+                                                            <td>
+                                                                <%= transaction.transactionType %>
+                                                            </td>
+                                                            <td>
+                                                                <%= transaction.amount %>
+                                                            </td>
+                                                        </tr>
+                                                        <% }) %>
+                                                            <% } else { %>
+                                                                <tr>
+                                                                    <td colspan="3">No transactions available</td>
+                                                                </tr>
+                                                                <% } %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <% } else { %>
+                                        <h3>wallet is not created</h3>
+                                        <% } %>
+                </main>
         </div>
 
         <!-- footer-->

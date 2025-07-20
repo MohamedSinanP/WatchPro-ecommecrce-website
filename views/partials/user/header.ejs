@@ -15,7 +15,7 @@
           </a>
 
           <% if (isAuthenticated) { %>
-            <a href="/profile" class="flex-c-m trans-04 p-lr-25">Welcome, <%= user.fullName %>!</a>
+            <a href="/profile" class="flex-c-m trans-04 p-lr-25">Welcome, <%= userName %></a>
             <% } else { %>
               <a href="/login" class="flex-c-m trans-04 p-lr-25">log in</a>
               <% } %>
@@ -63,8 +63,14 @@
 
         <!-- Icon header -->
         <div class="wrap-icon-header flex-w flex-r-m">
-          <a href="/cart" class="icon-header-item cl2 hov-cl1 trans-04 p-l-22 p-r-11 ">
+          <a href="/cart" class="icon-header-item cl2 hov-cl1 trans-04 p-l-22 p-r-11" style="position: relative;">
             <i class="zmdi zmdi-shopping-cart"></i>
+            <% if (cartItemCount> 0) { %>
+              <span class="badge bg-warning text-white"
+                style="position: absolute; top: 0px; right: 0px; font-size: 10px; border-radius: 50%; padding: 2px 6px;">
+                <%= cartItemCount %>
+              </span>
+              <% } %>
           </a>
           <a href="/wishlist" class="icon-header-item cl2 hov-cl1 trans-04 p-l-22 p-r-11 ">
             <i class="zmdi zmdi-favorite-outline"></i>

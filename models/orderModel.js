@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const Razorpay = require('razorpay');
 
 const orderSchema = new mongoose.Schema({
 
@@ -16,7 +15,7 @@ const orderSchema = new mongoose.Schema({
     },
     quantity: {
       type: Number,
-      requried: true
+      required: true
     },
     name: {
       type: String,
@@ -25,6 +24,12 @@ const orderSchema = new mongoose.Schema({
     price: {
       type: Number,
       required: true
+    },
+    discountedPrice: { type: Number, required: false },
+    status: {
+      type: String,
+      enum: ['Pending', 'Ordered', 'Cancelled', 'Returned'],
+      default: 'Pending'
     }
   }
   ],

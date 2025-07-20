@@ -19,7 +19,8 @@ const loadCartPage = async (req, res) => {
       isActive: true
     });
 
-    const activeOffers = await offerModel.find({ isActive: true }).populate([
+    const today = new Date();
+    const activeOffers = await offerModel.find({ isActive: true, expireDate: { $gte: today } }).populate([
       { path: 'products' },
       { path: 'categories' }
     ]);

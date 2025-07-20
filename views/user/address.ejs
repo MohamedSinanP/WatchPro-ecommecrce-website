@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <title>Address Management</title>
     <link rel="icon" type="image/png" href="/css/User/images/icons/favicon.png" />
     <link rel="stylesheet" type="text/css" href="/css/User/vendor/bootstrap/css/bootstrap.min.css">
@@ -21,7 +23,7 @@
     <link rel="stylesheet" type="text/css" href="/css/User/css/util.css">
     <link rel="stylesheet" type="text/css" href="/css/User/css/main.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <link rel="stylesheet" href="/css/User/address.css"> 
+    <link rel="stylesheet" href="/css/User/address.css">
     <link rel="stylesheet" href="/css/User/accountSidebar.css">
 </head>
 
@@ -32,50 +34,34 @@
 
         <div class="user-account-container">
             <!-- Sidebar -->
-            <aside class="sidebar-1">
-                <nav>
-                    <ul>
-                        <li><a href="/profile">User Profile</a></li>
-                        <li><a href="/address">Address</a></li>
-                        <li><a href="/orders">Orders</a></li>
-                        <li><a href="/wallet">Wallet</a></li>
-                        <li>
-                            <form id="logoutForm" action="/logout" method="POST" style="display: inline;">
-                              <button type="submit" style="border: none; background: none; color: inherit; cursor: pointer;  font-size: inherit;">
-                                Logout
-                              </button>
-                            </form>
-                          </li>
-                    </ul>
-                </nav>
-            </aside>
+            <%- include('../partials/user/accountSidebar') %>
 
-            <!-- Address Management Content -->
-            <div class="content">
-                <h1 class="m-b-5">Your Addresses</h1>
-                <button class="m-b-5 btn" data-toggle="modal" data-target="#addAddressModal" >Add
-                    Address</button>
+                <!-- Address Management Content -->
+                <div class="content">
+                    <h1 class="m-b-5">Your Addresses</h1>
+                    <button class="m-b-5 btn" data-toggle="modal" data-target="#addAddressModal">Add
+                        Address</button>
 
-                <div class="address-card-container"> <!-- Add this wrapper -->
-                    <% addresses.forEach((address)=> { %>
-                        <div class="address-card mb-3 p-3 border rounded">
+                    <div class="address-card-container"> <!-- Add this wrapper -->
+                        <% addresses.forEach((address)=> { %>
+                            <div class="address-card mb-3 p-3 border rounded">
                                 <%= address.firstName %>
-                                <%= address.lastName %>
-                                <%= address.address %>
-                                <%= address.phoneNumber %>
-                                <%= address.city %>
-                                <%= address.state %>
-                                <%= address.pincode %>
-                            <div class="actions">
-                                <button class="btn btn-sm btn-secondary"
-                                    onclick="editAddress('<%= address._id %>', '<%= address.firstName %>', '<%= address.lastName %>', '<%= address.address %>', '<%= address.phoneNumber %>', '<%= address.city %>', '<%= address.state %>', '<%= address.pincode %>')">Edit</button>
-                                <button class="btn btn-sm btn-danger delete-address"
-                                    data-id="<%= address._id %>">Delete</button>
+                                    <%= address.lastName %>
+                                        <%= address.address %>
+                                            <%= address.phoneNumber %>
+                                                <%= address.city %>
+                                                    <%= address.state %>
+                                                        <%= address.pincode %>
+                                                            <div class="actions">
+                                                                <button class="btn btn-sm btn-secondary"
+                                                                    onclick="editAddress('<%= address._id %>', '<%= address.firstName %>', '<%= address.lastName %>', '<%= address.address %>', '<%= address.phoneNumber %>', '<%= address.city %>', '<%= address.state %>', '<%= address.pincode %>')">Edit</button>
+                                                                <button class="btn btn-sm btn-danger delete-address"
+                                                                    data-id="<%= address._id %>">Delete</button>
+                                                            </div>
                             </div>
-                        </div>
-                        <% }); %>
+                            <% }); %>
+                    </div>
                 </div>
-            </div>
 
         </div>
         </div>
@@ -238,41 +224,44 @@
             </div>
         </div>
         <div class="pagination-controls d-flex justify-content-center my-3">
-            <% if (totalPages > 1) { %>
-              <% if (currentPage > 1) { %>
-                <button onclick="loadPage('<%= currentPage - 1 %>')" class="btn btn-primary mx-1 my-1">&laquo;</button>
-              <% } %>
-              <% for (let i = 1; i <= totalPages; i++) { %>
-                <button onclick="loadPage('<%= i %>')" class="btn <%= i === currentPage ? 'btn-secondary' : 'btn-light' %> mx-1">
-                  <%= i %>
-                </button>
-              <% } %>
-              <% if (currentPage < totalPages) { %>
-                <button onclick="loadPage('<%= currentPage + 1 %>')" class="btn btn-primary mx-1 my-1">&raquo;</button>
-              <% } %>
-            <% } %>
-          </div>
+            <% if (totalPages> 1) { %>
+                <% if (currentPage> 1) { %>
+                    <button onclick="loadPage('<%= currentPage - 1 %>')"
+                        class="btn btn-primary mx-1 my-1">&laquo;</button>
+                    <% } %>
+                        <% for (let i=1; i <=totalPages; i++) { %>
+                            <button onclick="loadPage('<%= i %>')"
+                                class="btn <%= i === currentPage ? 'btn-secondary' : 'btn-light' %> mx-1">
+                                <%= i %>
+                            </button>
+                            <% } %>
+                                <% if (currentPage < totalPages) { %>
+                                    <button onclick="loadPage('<%= currentPage + 1 %>')"
+                                        class="btn btn-primary mx-1 my-1">&raquo;</button>
+                                    <% } %>
+                                        <% } %>
+        </div>
         <!-- footer-->
         <%- include('../partials/user/footer') %>
 
-        <script src="/css/User/vendor/jquery/jquery-3.2.1.min.js"></script>
-        <script src="/css/User/vendor/animsition/js/animsition.min.js"></script>
-        <script src="/css/User/vendor/bootstrap/js/popper.js"></script>
-        <script src="/css/User/vendor/bootstrap/js/bootstrap.min.js"></script>
-        <script src="/css/User/vendor/select2/select2.min.js"></script>
-        <script src="/css/User/vendor/daterangepicker/moment.min.js"></script>
-        <script src="/css/User/vendor/daterangepicker/daterangepicker.js"></script>
-        <script src="/css/User/vendor/slick/slick.min.js"></script>
-        <script src="/css/User/vendor/MagnificPopup/jquery.magnific-popup.min.js"></script>
-        <script src="/css/User/vendor/perfect-scrollbar/perfect-scrollbar.min.js"></script>
-        <script src="/css/User/js/main.js"></script>
+            <script src="/css/User/vendor/jquery/jquery-3.2.1.min.js"></script>
+            <script src="/css/User/vendor/animsition/js/animsition.min.js"></script>
+            <script src="/css/User/vendor/bootstrap/js/popper.js"></script>
+            <script src="/css/User/vendor/bootstrap/js/bootstrap.min.js"></script>
+            <script src="/css/User/vendor/select2/select2.min.js"></script>
+            <script src="/css/User/vendor/daterangepicker/moment.min.js"></script>
+            <script src="/css/User/vendor/daterangepicker/daterangepicker.js"></script>
+            <script src="/css/User/vendor/slick/slick.min.js"></script>
+            <script src="/css/User/vendor/MagnificPopup/jquery.magnific-popup.min.js"></script>
+            <script src="/css/User/vendor/perfect-scrollbar/perfect-scrollbar.min.js"></script>
+            <script src="/css/User/js/main.js"></script>
 
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
-        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        <script src="/js/user/address.js"></script>
-        
+            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
+            <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+            <script src="/js/user/address.js"></script>
+
 
 </body>
 

@@ -56,7 +56,7 @@ const loadHomePage = async (req, res) => {
         offerPrice,
       };
     });
-    res.render('user/home', { user ,products:modifiedProducts});
+    res.render('user/home', { user, products: modifiedProducts });
   } catch (error) {
     console.error(error);
     res.status(500).send('Failed to load home page Try again');
@@ -144,7 +144,7 @@ const signup = async (req, res) => {
 
     const findUser = await userModel.findOne({ email });
     if (findUser) {
-      return res.render('user/signup', { message: "User with this emaili already exists" })
+      return res.render('user/signup', { message: "User with this email already exists" })
     }
 
     const otp = generateOtp();
@@ -198,28 +198,33 @@ const verifyOtp = async (req, res) => {
 
       await saveUserData.save();
 
-      const referredUser = await userModel.findOne({ referralCode: referralCode });
-      const referredUserId = referredUser._id;
-      let referredUserWallet = await walletModel.findOne({ userId: referredUserId });
-      if (referredUserWallet) {
-        referredUserWallet.balance += 50;
-        referredUserWallet.transaction.push({
-          transactionType: "Referral Bonus",
-          amount: "50",
-          date: new Date()
-        });
-        await referredUserWallet.save();
-      } else {
-        referredUserWallet = new walletModel({
-          userId: referredUserId,
-          balance: 50,
-          transaction: [{
-            transactionType: "Referral Bonus",
-            amount: "50",
-            date: new Date()
-          }]
-        });
-        await referredUserWallet.save();
+      if (req.session.referralCode) {
+        const referringUser = await userModel.findOne({ referralCode: req.session.referralCode });
+
+        if (referringUser) {
+          let referredUserWallet = await walletModel.findOne({ userId: referringUser._id });
+
+          if (referredUserWallet) {
+            referredUserWallet.balance += 50;
+            referredUserWallet.transaction.push({
+              transactionType: "Referral Bonus",
+              amount: "50",
+              date: new Date()
+            });
+            await referredUserWallet.save();
+          } else {
+            referredUserWallet = new walletModel({
+              userId: referringUser._id,
+              balance: 50,
+              transaction: [{
+                transactionType: "Referral Bonus",
+                amount: "50",
+                date: new Date()
+              }]
+            });
+            await referredUserWallet.save();
+          }
+        }
       }
 
 
@@ -457,12 +462,13 @@ const addAddress = async (req, res) => {
   } catch (error) {
     console.error(error)
     res.status(500).send('Failed to add new address Try again');
-  }};
+  }
+};
 
 // to add default address from checkout page
 
 const addDefaultAddress = async (req, res) => {
-  
+
   const { firstName, lastName, email, address, phoneNumber, city, state, pincode } = req.body;
   const userId = req.session.user;
   try {
@@ -481,7 +487,7 @@ const addDefaultAddress = async (req, res) => {
     await newAddress.save();
     res.status(200).json({
       message: 'Address added successfully',
-      newAddress, 
+      newAddress,
     });
 
   } catch (error) {
@@ -552,31 +558,31 @@ const deleteAddress = async (req, res) => {
 
 // to load about page for the user
 
-const loadAboutPage = async(req,res) => {
-try {
-  res.render('user/about');
-} catch (error) {
-  res.status(500).send('Internal server error');
-}
+const loadAboutPage = async (req, res) => {
+  try {
+    res.render('user/about');
+  } catch (error) {
+    res.status(500).send('Internal server error');
+  }
 }
 
 // to load contact page for the user
 
-const loadContactPage = async(req,res) => {
-try {
-  res.render('user/contact');
-} catch (error) {
-  res.status(500).send('Internal server error');
-}
+const loadContactPage = async (req, res) => {
+  try {
+    res.render('user/contact');
+  } catch (error) {
+    res.status(500).send('Internal server error');
+  }
 
 }
 
 // to logout for users
 
-const logout = async(req,res) => {
+const logout = async (req, res) => {
   try {
     const user = req.session.user;
-    if(user){
+    if (user) {
       req.session.isAuthenticated = false;
       req.session.user = null;
     }
