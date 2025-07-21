@@ -39,11 +39,9 @@
     <link rel="stylesheet" href="/css/User/order.css">
     <link rel="stylesheet" href="/css/User/accountSidebar.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-
 </head>
 
 <body>
-
     <!-- header -->
     <%- include('../partials/user/header') %>
 
@@ -55,7 +53,7 @@
                         <% if (orders.length> 0) { %>
                             <% orders.forEach(order=> { %>
                                 <div class="status-div">
-                                    <p><strong>order status:</strong>
+                                    <p><strong>Order Status:</strong>
                                         <%= order.status %>
                                     </p>
                                 </div>
@@ -75,7 +73,9 @@
                                                 <p><strong>Product Name:</strong>
                                                     <%= product.productId.name %>
                                                 </p>
-                                                <p><strong>Price:</strong> ₹ <%= product.productId.price %>
+                                                <p><strong>Price:</strong> ₹ <%= product.discountedPrice !==undefined &&
+                                                        product.discountedPrice !==null ? product.discountedPrice :
+                                                        product.productId.price %>
                                                 </p>
                                                 <p><strong>Quantity:</strong>
                                                     <%= product.quantity %>
@@ -100,10 +100,10 @@
                                                             onclick="returnProduct('<%= order._id %>')">
                                                             Return Product
                                                         </button>
-                                                        <button class="btn btn-secondary"
-                                                            onclick="downloadInvoice('<%= order._id %>')">
-                                                            Invoice Download
-                                                        </button>
+                                                        <a class="btn btn-secondary" href="/invoice/<%= order._id %>"
+                                                            target="_blank">
+                                                            View Invoice
+                                                        </a>
                                                         <% } else if (order.status !=='Cancelled' && order.status
                                                             !=='Returned' && order.paymentStatus==='success' ) { %>
                                                             <% const activeProducts=order.products.filter(product=>
@@ -132,23 +132,14 @@
                                                 </div>
                                     </div>
                                 </div>
-                                <% if(order.status==="Delivered" ) { %>
-                                    <a href="/invoice/<%= order._id %>" class="btn btn-secondary"
-                                        style="height: 46.333334px;"> invoice download</a>
-                                    <% } %>
-
-                                        <% }) %>
-                                            <% } else { %>
-                                                <p>No orders found.</p>
-                                                <% } %>
+                                <% }) %>
+                                    <% } else { %>
+                                        <p>No orders found.</p>
+                                        <% } %>
                     </div>
                 </div>
-
-
-        </div>
         </div>
 
-        </div>
         <div class="modal fade" id="productDetailsModal" tabindex="-1" role="dialog"
             aria-labelledby="productDetailsModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-xl" role="document">
@@ -156,7 +147,7 @@
                     <div class="modal-header bg-primary text-white">
                         <h5 class="modal-title" id="productDetailsModalLabel">Complete Order Details</h5>
                         <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
+                            <span aria-hidden="true">×</span>
                         </button>
                     </div>
                     <div class="modal-body" id="modalContent">
@@ -168,25 +159,22 @@
                                         <h6 class="mb-0"><i class="fa fa-shopping-cart"></i> Order Summary</h6>
                                     </div>
                                     <div class="card-body">
-                                        <p><strong>Order ID:</strong> <span id="modal-order-id"></span></p>
                                         <p><strong>Order Date:</strong> <span id="modal-order-date"></span></p>
                                         <p><strong>Status:</strong> <span id="modal-order-status" class="badge"></span>
                                         </p>
-                                        <p><strong>Total Amount:</strong> &#8377; <span id="modal-order-total"></span>
+                                        <p><strong>Total Amount:</strong> ₹ <span id="modal-order-total"></span></p>
+                                        <p><strong>Total Discount:</strong> ₹ <span id="modal-order-discount"></span>
                                         </p>
-                                        <p><strong>Total Discount:</strong> &#8377; <span
-                                                id="modal-order-discount"></span></p>
                                         <p><strong>Payment Method:</strong> <span id="modal-payment-method"></span></p>
                                         <p><strong>Payment Status:</strong> <span id="modal-payment-status"
                                                 class="badge"></span></p>
+                                        <p id="modal-refunded-total-row" style="display: none;"><strong>Refunded
+                                                Total:</strong> ₹ <span id="modal-refunded-total"></span></p>
                                         <p id="modal-delivery-date-row" style="display: none;"><strong>Delivery
                                                 Date:</strong> <span id="modal-delivery-date"></span></p>
-                                        <p id="modal-razorpay-id-row" style="display: none;"><strong>Razorpay
-                                                ID:</strong> <span id="modal-razorpay-id"></span></p>
                                     </div>
                                 </div>
                             </div>
-
                             <!-- Delivery Address Section -->
                             <div class="col-md-6">
                                 <div class="card">
@@ -204,7 +192,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <!-- Products Section -->
                         <div class="card">
                             <div class="card-header bg-light">
@@ -227,8 +214,7 @@
         <div class="pagination-controls d-flex justify-content-center my-3">
             <% if (totalPages> 1) { %>
                 <% if (currentPage> 1) { %>
-                    <button onclick="loadPage('<%= currentPage - 1 %>')"
-                        class="btn btn-primary mx-1 my-1">&laquo;</button>
+                    <button onclick="loadPage('<%= currentPage - 1 %>')" class="btn btn-primary mx-1 my-1">«</button>
                     <% } %>
                         <% for (let i=1; i <=totalPages; i++) { %>
                             <button onclick="loadPage('<%= i %>')"
@@ -238,11 +224,11 @@
                             <% } %>
                                 <% if (currentPage < totalPages) { %>
                                     <button onclick="loadPage('<%= currentPage + 1 %>')"
-                                        class="btn btn-primary mx-1 my-1">&raquo;</button>
+                                        class="btn btn-primary mx-1 my-1">»</button>
                                     <% } %>
                                         <% } %>
         </div>
-        <!-- footer-->
+        <!-- footer -->
         <%- include('../partials/user/footer') %>
 
             <script src="/css/User/vendor/jquery/jquery-3.2.1.min.js"></script>

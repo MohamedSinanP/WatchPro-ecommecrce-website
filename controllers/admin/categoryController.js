@@ -1,4 +1,4 @@
-const categoryModel = require('../models/categoryModel');
+const categoryModel = require('../../models/categoryModel');
 
 // to show the categories page in admin side 
 

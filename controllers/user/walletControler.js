@@ -1,5 +1,5 @@
 
-const walletModel = require('../models/walletModel');
+const walletModel = require('../../models/walletModel');
 
 // to show wallet page for the user
 

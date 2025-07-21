@@ -1,26 +1,28 @@
 const express = require('express');
 const router = express.Router();
-const userController = require('../controllers/userController');
-const prodcutController = require('../controllers/productController');
-const orderController = require('../controllers/orderController');
-const couponController = require('../controllers/couponController');
-const cartController = require('../controllers/cartController');
-const wishlistController = require('../controllers/wishlistController');
-const walletController = require('../controllers/walletControler');
+const authController = require('../controllers/user/authController');
+const userController = require('../controllers/user/userController');
+const prodcutController = require('../controllers/user/productController');
+const orderController = require('../controllers/user/orderController');
+const couponController = require('../controllers/user/couponController');
+const cartController = require('../controllers/user/cartController');
+const wishlistController = require('../controllers/user/wishlistController');
+const walletController = require('../controllers/user/walletControler');
+const invoiceController = require('../controllers/user/invoiceController');
+const checkoutController = require('../controllers/user/checkoutController');
 const userAuth = require('../middlewares/userAuth');
 
 // routes for user signup , login and load home page
 
 router.get('/', userController.loadHomePage);
-router.get('/signup', userController.loadSignupPage);
-router.get('/login', userController.loadLoginPage);
-router.post('/signup', userController.signup);
-router.post('/verify-otp', userController.verifyOtp);
-router.post('/resend-otp', userController.resendOtp);
-router.post('/login', userController.login);
-router.post('/demo-login', userController.demoLogin);
+router.get('/signup', authController.loadSignupPage);
+router.get('/login', authController.loadLoginPage);
+router.post('/signup', authController.signup);
+router.post('/verify-otp', authController.verifyOtp);
+router.post('/resend-otp', authController.resendOtp);
+router.post('/login', authController.login);
+router.post('/logout', userAuth.checkSession, authController.logout);
 router.get('/home', userController.loadHomePage);
-router.post('/logout', userAuth.checkSession, userController.logout);
 
 // routes for product listing
 
@@ -74,15 +76,16 @@ router.get('/about', userController.loadAboutPage);
 
 // routes for checkout and place order
 
-router.get('/checkout', userAuth.checkSession, orderController.loadCheckoutPage);
+router.get('/checkout', userAuth.checkSession, checkoutController.loadCheckoutPage);
 router.post('/placeOrder', userAuth.checkSession, orderController.addOrderDetails);
 router.post('/createOrder', userAuth.checkSession, orderController.createOrder);
 router.delete('/deleteOrderItem/:id', userAuth.checkSession, orderController.deleteOrderItem);
+router.get('/getOrder/:id', userAuth.checkSession, orderController.getOrder);
 router.get('/greetings', orderController.loadGreetingsPage);
 router.post('/returnOrder/:id', userAuth.checkSession, orderController.returnOrder);
 router.post('/paymentSuccess', userAuth.checkSession, orderController.paymentSuccess);
 router.post('/retryPayment', userAuth.checkSession, orderController.retryPayment);
-router.get('/invoice/:id', userAuth.checkSession, orderController.downloadInvoice);
+router.get('/invoice/:id', userAuth.checkSession, invoiceController.downloadInvoice);
 router.get('/retryPaymentPage/:id', userAuth.checkSession, orderController.loadRetryPaymentPage);
 
 module.exports = router;

@@ -1,7 +1,7 @@
-const productModel = require('../models/productModel');
-const cartModel = require('../models/cartModel');
-const couponModel = require('../models/couponModel');
-const offerModel = require('../models/offerModel');
+const productModel = require('../../models/productModel');
+const cartModel = require('../../models/cartModel');
+const couponModel = require('../../models/couponModel');
+const offerModel = require('../../models/offerModel');
 
 
 const MAX_QUANTITY = 4;
@@ -89,8 +89,6 @@ const loadCartPage = async (req, res) => {
     return res.status(500).send("Something went wrong while loading the cart page");
   }
 };
-
-// to add the product into user cart collection
 
 // to add the product into user cart collection
 const addToCart = async (req, res) => {

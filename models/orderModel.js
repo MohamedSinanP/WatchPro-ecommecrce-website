@@ -28,7 +28,7 @@ const orderSchema = new mongoose.Schema({
     discountedPrice: { type: Number, required: false },
     status: {
       type: String,
-      enum: ['Pending', 'Ordered', 'Cancelled', 'Returned'],
+      enum: ['Pending', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled', 'Returned'],
       default: 'Pending'
     }
   }
@@ -88,6 +88,10 @@ const orderSchema = new mongoose.Schema({
   totalDiscount: {
     type: Number,
     required: true
+  },
+  refundedTotal: {
+    type: Number,
+    default: 0
   },
   razorpayId: {
     type: String,

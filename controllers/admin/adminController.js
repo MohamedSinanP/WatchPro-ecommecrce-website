@@ -1,8 +1,8 @@
 const bcrypt = require('bcrypt');
-const adminModel = require('../models/adminModel');
-const userModel = require('../models/userModel');
-const productModel = require('../models/productModel');
-const orderModel = require('../models/orderModel');
+const adminModel = require('../../models/adminModel');
+const userModel = require('../../models/userModel');
+const productModel = require('../../models/productModel');
+const orderModel = require('../../models/orderModel');
 const PDFDocument = require('pdfkit');
 const ExcelJS = require('exceljs')
 
@@ -274,7 +274,7 @@ const blockUser = async (req, res) => {
       { new: true }
 
     );
-    if (blockUser) {
+    if (blockedUser) {
       res.json({ success: true });
     }
   } catch (error) {

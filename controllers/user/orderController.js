@@ -1,14 +1,13 @@
-const userModel = require('../models/userModel');
-const orderModel = require('../models/orderModel');
-const productModel = require('../models/productModel');
-const addressModel = require('../models/addressModel');
-const cartModel = require('../models/cartModel');
-const walletModel = require('../models/walletModel');
-const offerModel = require('../models/offerModel');
-const couponModel = require('../models/couponModel');
+const userModel = require('../../models/userModel');
+const orderModel = require('../../models/orderModel');
+const productModel = require('../../models/productModel');
+const addressModel = require('../../models/addressModel');
+const cartModel = require('../../models/cartModel');
+const walletModel = require('../../models/walletModel');
+const offerModel = require('../../models/offerModel');
+const couponModel = require('../../models/couponModel');
 const Razorpay = require("razorpay");
-const PDFDocument = require('pdfkit');
-const getDiscountedPrice = require('../utils/getDiscount');
+const getDiscountedPrice = require('../../utils/getDiscount');
 require('dotenv').config();
 
 
@@ -18,96 +17,7 @@ const razorpay = new Razorpay({
 });
 
 
-// to show orders in admin side
 
-const loadOrders = async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1; // Default to page 1 if not provided
-    const limit = 5; // Number of orders per page
-    const skip = (page - 1) * limit;
-
-    const totalOrders = await orderModel.countDocuments();
-    const totalPages = Math.ceil(totalOrders / limit);
-
-    const orders = await orderModel.find({})
-      .populate({ path: 'userId', select: 'fullName' })
-      .populate({ path: 'address' })
-      .populate('products.productId', 'name')
-      .skip(skip)
-      .limit(limit);
-
-    if (req.xhr) {
-      res.render('partials/admin/orderTable', { orders, currentPage: page, totalPages, limit, currentRoute: req.path });
-    } else {
-      res.render('admin/order', { orders, currentPage: page, totalPages, limit });
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Server Error');
-  }
-};
-
-// to update the status of the order
-
-const updateStatus = async (req, res) => {
-  try {
-    const statusOrder = ['Pending', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled', 'Returned'];
-    const orderId = req.params.id;
-    const { status } = req.body;
-    const order = await orderModel.findById(orderId);
-    const currentStatus = order.status;
-    if (statusOrder.indexOf(status) < statusOrder.indexOf(currentStatus)) {
-      return res.json({ success: false, message: 'Invalid status update. Cannot revert to a previous status.' })
-    }
-    const updatedOrder = await orderModel.findByIdAndUpdate(
-      orderId,
-      { status: status },
-      { new: true }
-    );
-    res.json({ success: true, updatedOrder });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Server error');
-  }
-}
-
-// to delete the order document from database
-
-const cancelOrder = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const order = await orderModel.findByIdAndDelete({ _id: id });
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
-    }
-    res.json({ message: 'Order deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting order:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-
-}
-
-// to show checkout page in user side 
-
-const loadCheckoutPage = async (req, res) => {
-  try {
-    const cartTotal = parseFloat(req.query.cartTotal);
-    const totalDiscount = req.query.totalDiscount;
-    const couponId = req.query.couponId;
-    const userId = req.session.user;
-    const shippingCharge = 100;
-    const cartItems = await cartModel.findOne({ userId: userId }).populate('products.productId');
-    const addresses = await addressModel.find({ userId: userId });
-    const user = await userModel.findOne({ _id: userId });
-    const total = (shippingCharge + cartTotal).toFixed(2);
-
-    res.render('user/checkout', { cartItems, addresses, cartTotal, user, shippingCharge, total, totalDiscount, couponId });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'internal server error' });
-  }
-}
 
 // to create a order for the user with the razorpay
 
@@ -457,7 +367,7 @@ const deleteOrderItem = async (req, res) => {
         { _id: orderId, 'products.productId': productId },
         {
           $set: { 'products.$.status': 'Cancelled' },
-          $inc: { total: -refundAmount }
+          $inc: { refundedTotal: refundAmount }
         },
         { new: true }
       ).populate('products.productId');
@@ -699,150 +609,19 @@ const loadRetryPaymentPage = async (req, res) => {
   }
 }
 
-// to download the invoice of the order for user
-
-const downloadInvoice = async (req, res) => {
+const getOrder = async (req, res) => {
   const orderId = req.params.id;
+  const userId = req.session.user;
 
   try {
-    const order = await orderModel.findById(orderId)
-      .populate('userId')
-      .populate('products.productId');
-
-    const subtotal = order.products.reduce((total, product) => total + (product.quantity * product.price), 0);
-    const totalDiscount = order.totalDiscount || 0;
-    const total = subtotal - totalDiscount;
-
-    const invoice = {
-      invoice_nr: `2024.000${orderId.slice(-4)}`,
-      subtotal,
-      paid: total,
-      shipping: {
-        name: order.userId.fullName,
-        address: order.address.address,
-        city: order.address.city,
-        state: "Kerala",
-        country: "India"
-      },
-      items: order.products.map(product => ({
-        item: product.productId.name,
-        amount: product.quantity * product.price,
-        quantity: product.quantity
-      }))
-    };
-
-    const doc = new PDFDocument({ size: "A4", margin: 50 });
-
-    const fileName = `invoice_${orderId}.pdf`;
-    res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
-    res.setHeader('Content-Type', 'application/pdf');
-
-    // Helper functions for each section
-    const generateHeader = (doc) => {
-      doc
-        .fillColor("#444444")
-        .fontSize(20)
-        .text("WatchPro", 50, 45)
-        .fontSize(10)
-        .text("WatchPro", 200, 50, { align: "right" })
-        .text("Pottikkallu 123 Hyderabad", 200, 65, { align: "right" })
-        .text("Malappuram, India", 200, 80, { align: "right" })
-        .moveDown();
-    };
-
-    const generateCustomerInformation = (doc, invoice) => {
-      doc
-        .fillColor("#444444")
-        .fontSize(20)
-        .text("Invoice", 50, 160);
-
-      generateHr(doc, 185);
-
-      const customerInformationTop = 200;
-      doc
-        .fontSize(10)
-        .text("Invoice Number:", 50, customerInformationTop)
-        .font("Helvetica-Bold")
-        .text(invoice.invoice_nr, 150, customerInformationTop)
-        .font("Helvetica")
-        .text("Invoice Date:", 50, customerInformationTop + 15)
-        .text(formatDate(new Date()), 150, customerInformationTop + 15)
-        .font("Helvetica-Bold")
-        .text(invoice.shipping.name, 300, customerInformationTop)
-        .font("Helvetica")
-        .text(invoice.shipping.address, 300, customerInformationTop + 15)
-        .text(`${invoice.shipping.city}, ${invoice.shipping.state}, ${invoice.shipping.country}`, 300, customerInformationTop + 30)
-        .moveDown();
-
-      generateHr(doc, 252);
-    };
-
-    const generateInvoiceTable = (doc, invoice) => {
-      let i;
-      const invoiceTableTop = 330;
-
-      doc.font("Helvetica-Bold");
-      generateTableRow(doc, invoiceTableTop, "Item", "Unit Cost", "Quantity", "Line Total");  // Remove "Description" here
-      generateHr(doc, invoiceTableTop + 20);
-      doc.font("Helvetica");
-
-      for (i = 0; i < invoice.items.length; i++) {
-        const item = invoice.items[i];
-        const position = invoiceTableTop + (i + 1) * 30;
-        generateTableRow(
-          doc,
-          position,
-          item.item,
-          (item.amount / item.quantity).toFixed(2),
-          item.quantity,
-          (item.amount)
-        );
-        generateHr(doc, position + 20);
-      }
-
-      const subtotalPosition = invoiceTableTop + (i + 1) * 30;
-      generateTableRow(doc, subtotalPosition, "", "Subtotal", "", (invoice.subtotal));
-
-      const paidToDatePosition = subtotalPosition + 20;
-      generateTableRow(doc, paidToDatePosition, "", "Discount", "", (totalDiscount));
-
-      const duePosition = paidToDatePosition + 25;
-      doc.font("Helvetica-Bold");
-      generateTableRow(doc, duePosition, "", "Total", "", (total));
-      doc.font("Helvetica");
-    };
-
-    const generateFooter = (doc) => {
-      doc
-        .fontSize(10)
-        .text(" Thank you for your order.", 50, 650, { align: "center", width: 500 });
-    };
-
-    const generateTableRow = (doc, y, item, unitCost, quantity, lineTotal) => {
-      doc.fontSize(10)
-        .text(item, 50, y)
-        .text(unitCost, 280, y, { width: 90, align: "right" })
-        .text(quantity, 370, y, { width: 90, align: "right" })
-        .text(lineTotal, 0, y, { align: "right" });
-    };
-
-    const generateHr = (doc, y) => {
-      doc.strokeColor("#aaaaaa").lineWidth(1).moveTo(50, y).lineTo(550, y).stroke();
-    };
-
-    const formatDate = (date) => date.toISOString().split('T')[0];
-
-    generateHeader(doc);
-    generateCustomerInformation(doc, invoice);
-    generateInvoiceTable(doc, invoice);
-    generateFooter(doc);
-
-    doc.pipe(res);
-    doc.end();
-
+    const order = await orderModel.findOne({ _id: orderId, userId }).populate('products.productId');
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+    res.json({ success: true, order });
   } catch (error) {
-    console.error("Error generating invoice:", error);
-    res.status(500).json({ message: "Error generating invoice" });
+    console.error('Error fetching order:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch order' });
   }
 };
 
@@ -861,10 +640,6 @@ const updateCouponUser = async (couponId, userId) => {
 
 
 module.exports = {
-  loadOrders,
-  updateStatus,
-  cancelOrder,
-  loadCheckoutPage,
   createOrder,
   addOrderDetails,
   walletOrder,
@@ -875,5 +650,5 @@ module.exports = {
   paymentSuccess,
   retryPayment,
   loadRetryPaymentPage,
-  downloadInvoice
+  getOrder
 }

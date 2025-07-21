@@ -1,22 +1,25 @@
 const express = require('express');
 const router = express.Router();
-const adminController = require('../controllers/adminController');
-const categoryController = require('../controllers/categoryController');
-const prodcutController = require('../controllers/productController');
-const orderController = require('../controllers/orderController');
-const couponController = require('../controllers/couponController');
-const offerController = require('../controllers/offerController');
+const authController = require('../controllers/admin/authController');
+const adminController = require('../controllers/admin/adminController');
+const categoryController = require('../controllers/admin/categoryController');
+const prodcutController = require('../controllers/admin/productController');
+const orderController = require('../controllers/admin/orderController');
+const couponController = require('../controllers/admin/couponController');
+const offerController = require('../controllers/admin/offerController');
+const salesController = require('../controllers/admin/salesController');
 const adminAuth = require('../middlewares/adminAuth');
-const upload = require('../utils/multer')
+const upload = require('../utils/multer');
+
 
 const uploadMiddleware = upload.array('productImages', 5);
 
-router.get('/login', adminAuth.isLogin, adminController.loadLogin);
-router.post('/login', adminController.login);
+router.get('/login', adminAuth.isLogin, authController.loadLogin);
+router.post('/login', authController.login);
 router.get('/dashboard', adminAuth.checkSession, adminController.loadDashboard);
 router.get('/users', adminAuth.checkSession, adminController.loadUsers);
 router.put('/blockUser', adminAuth.checkSession, adminController.blockUser);
-router.post('/logout', adminAuth.checkSession, adminController.logout);
+router.post('/logout', adminAuth.checkSession, authController.logout);
 
 // categoryManagement
 
@@ -50,8 +53,11 @@ router.post('/updateInventory/:id', adminAuth.checkSession, adminController.upda
 // order management 
 
 router.get('/orders', adminAuth.checkSession, orderController.loadOrders);
-router.put('/orders/updateStatus/:id', adminAuth.checkSession, orderController.updateStatus);
-router.delete('/orders/cancelOrder/:id', adminAuth.checkSession, orderController.cancelOrder);
+router.put('/orders/updateStatus/:id', adminAuth.checkSession, orderController.updateOrderStatus);
+router.put('/orders/:orderId/products/:productId/status', adminAuth.checkSession, orderController.updateProductStatus);
+router.put('/orders/updateStatus/:id', adminAuth.checkSession, orderController.updateOrderStatus);
+router.put('/orders/:orderId/products/bulk-update', adminAuth.checkSession, orderController.bulkUpdateProductStatus);
+router.delete('/orders/cancel/:id', adminAuth.checkSession, orderController.cancelOrder);
 
 // coupon management 
 
@@ -67,8 +73,8 @@ router.delete('/deleteOffer/:id', adminAuth.checkSession, offerController.delete
 
 // sales report
 
-router.get('/salesReport', adminAuth.checkSession, adminController.loadSalesReport);
-router.get('/salesReport/downloadPdf', adminAuth.checkSession, adminController.downloadPDF);
-router.get('/salesReport/downloadExcel', adminAuth.checkSession, adminController.downloadExcel);
+router.get('/salesReport', adminAuth.checkSession, salesController.loadSalesReport);
+router.get('/salesReport/downloadPdf', adminAuth.checkSession, salesController.downloadPDF);
+router.get('/salesReport/downloadExcel', adminAuth.checkSession, salesController.downloadExcel);
 
 module.exports = router;

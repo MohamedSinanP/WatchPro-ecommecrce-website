@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Order Management</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="/css/Admin/order.css">
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 </head>
@@ -103,19 +104,22 @@
 
               <!-- Pagination Controls -->
               <div class="pagination-controls d-flex justify-content-center my-3">
-                <% if (totalPages > 1) { %>
-                  <% if (currentPage > 1) { %>
-                    <button onclick="loadPage('<%= currentPage - 1 %>')" class="btn btn-primary mx-1 my-1">&laquo;</button>
-                  <% } %>
-                  <% for (let i = 1; i <= totalPages; i++) { %>
-                    <button onclick="loadPage('<%= i %>')" class="btn <%= i === currentPage ? 'btn-secondary' : 'btn-light' %> mx-1">
-                      <%= i %>
-                    </button>
-                  <% } %>
-                  <% if (currentPage < totalPages) { %>
-                    <button onclick="loadPage('<%= currentPage + 1 %>')" class="btn btn-primary mx-1 my-1">&raquo;</button>
-                  <% } %>
-                <% } %>
+                <% if (totalPages> 1) { %>
+                  <% if (currentPage> 1) { %>
+                    <button onclick="loadPage('<%= currentPage - 1 %>')"
+                      class="btn btn-primary mx-1 my-1">&laquo;</button>
+                    <% } %>
+                      <% for (let i=1; i <=totalPages; i++) { %>
+                        <button onclick="loadPage('<%= i %>')"
+                          class="btn <%= i === currentPage ? 'btn-secondary' : 'btn-light' %> mx-1">
+                          <%= i %>
+                        </button>
+                        <% } %>
+                          <% if (currentPage < totalPages) { %>
+                            <button onclick="loadPage('<%= currentPage + 1 %>')"
+                              class="btn btn-primary mx-1 my-1">&raquo;</button>
+                            <% } %>
+                              <% } %>
               </div>
             </div>
           </div>
@@ -125,14 +129,62 @@
 
   <div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-labelledby="orderDetailsModalLabel"
     aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
       <div class="modal-content">
-        <div class="modal-header">
+        <div class="modal-header bg-primary text-white">
           <h5 class="modal-title" id="orderDetailsModalLabel">Order Details</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body" id="orderDetailsBody">
-          <!-- Order details will be dynamically inserted here -->
+          <!-- Order Summary Section -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header bg-light">
+                  <h6 class="mb-0"><i class="fa fa-shopping-cart"></i> Order Summary</h6>
+                </div>
+                <div class="card-body">
+                  <p><strong>Order Date:</strong> <span id="modal-order-date"></span></p>
+                  <p><strong>Status:</strong> <span id="modal-order-status" class="badge"></span></p>
+                  <p><strong>Total Amount:</strong> ₹ <span id="modal-order-total"></span></p>
+                  <p><strong>Total Discount:</strong> ₹ <span id="modal-order-discount"></span></p>
+                  <p><strong>Payment Method:</strong> <span id="modal-payment-method"></span></p>
+                  <p><strong>Payment Status:</strong> <span id="modal-payment-status" class="badge"></span></p>
+                  <p id="modal-refunded-total-row" style="display: none;"><strong>Refunded Total:</strong> ₹ <span
+                      id="modal-refunded-total"></span></p>
+                  <p id="modal-delivery-date-row" style="display: none;"><strong>Delivery Date:</strong> <span
+                      id="modal-delivery-date"></span></p>
+                </div>
+              </div>
+            </div>
+            <!-- Delivery Address Section -->
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header bg-light">
+                  <h6 class="mb-0"><i class="fa fa-map-marker"></i> Delivery Address</h6>
+                </div>
+                <div class="card-body">
+                  <p><strong>Name:</strong> <span id="modal-address-name"></span></p>
+                  <p><strong>Phone:</strong> <span id="modal-address-phone"></span></p>
+                  <p><strong>Address:</strong> <span id="modal-address-full"></span></p>
+                  <p><strong>City:</strong> <span id="modal-address-city"></span></p>
+                  <p><strong>State:</strong> <span id="modal-address-state"></span></p>
+                  <p><strong>Pincode:</strong> <span id="modal-address-pincode"></span></p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Products Section -->
+          <div class="card">
+            <div class="card-header bg-light">
+              <h6 class="mb-0"><i class="fa fa-list"></i> Ordered Products</h6>
+            </div>
+            <div class="card-body">
+              <div id="modal-products-list">
+                <!-- Products will be dynamically added here -->
+              </div>
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -144,8 +196,8 @@
 
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
- <script src="/js/admin/order.js"></script>
- <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <script src="/js/admin/order.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 </body>
 
 </html>

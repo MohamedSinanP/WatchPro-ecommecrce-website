@@ -1,6 +1,6 @@
-const productModel = require('../models/productModel');
-const wishlistModel = require('../models/wishlistModel');
-const couponModel = require('../models/couponModel');
+const productModel = require('../../models/productModel');
+const wishlistModel = require('../../models/wishlistModel');
+const couponModel = require('../../models/couponModel');
 
 // to load wishlist page for the user
 

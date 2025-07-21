@@ -1,6 +1,6 @@
-const categoryModel = require('../models/categoryModel');
-const productModel = require('../models/productModel');
-const offerModel = require('../models/offerModel');
+const categoryModel = require('../../models/categoryModel');
+const productModel = require('../../models/productModel');
+const offerModel = require('../../models/offerModel');
 
 // to show offers in admin side 
 
