@@ -77,9 +77,9 @@ router.get('/about', userController.loadAboutPage);
 // routes for checkout and place order
 
 router.get('/checkout', userAuth.checkSession, checkoutController.loadCheckoutPage);
-router.post('/placeOrder', userAuth.checkSession, orderController.addOrderDetails);
-router.post('/createOrder', userAuth.checkSession, orderController.createOrder);
-router.delete('/deleteOrderItem/:id', userAuth.checkSession, orderController.deleteOrderItem);
+router.post('/placeOrder', userAuth.checkSession, orderController.createOrderWithOCD);
+router.post('/createOrder', userAuth.checkSession, orderController.createOrderWithRazorpay);
+router.delete('/deleteOrderItem/:id', userAuth.checkSession, orderController.cancelOrder);
 router.get('/getOrder/:id', userAuth.checkSession, orderController.getOrder);
 router.get('/greetings', orderController.loadGreetingsPage);
 router.post('/returnOrder/:id', userAuth.checkSession, orderController.returnOrder);

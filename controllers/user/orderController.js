@@ -21,7 +21,7 @@ const razorpay = new Razorpay({
 
 // to create a order for the user with the razorpay
 
-const createOrder = async (req, res) => {
+const createOrderWithRazorpay = async (req, res) => {
 
   const userId = req.session.user;
   try {
@@ -133,7 +133,7 @@ const createOrder = async (req, res) => {
 
 // to create a order for the user with COD
 
-const addOrderDetails = async (req, res) => {
+const createOrderWithOCD = async (req, res) => {
   const { totalPrice, paymentMethod, addressId, totalDiscount, couponId } = req.body;
 
   const userId = req.session.user;
@@ -323,7 +323,7 @@ const loadGreetingsPage = async (req, res) => {
 
 // to cancel the order of the user
 
-const deleteOrderItem = async (req, res) => {
+const cancelOrder = async (req, res) => {
   const orderId = req.params.id;
   const { productId } = req.body;
   const userId = req.session.user;
@@ -640,11 +640,11 @@ const updateCouponUser = async (couponId, userId) => {
 
 
 module.exports = {
-  createOrder,
-  addOrderDetails,
+  createOrderWithRazorpay,
+  createOrderWithOCD,
   walletOrder,
   loadGreetingsPage,
-  deleteOrderItem,
+  cancelOrder,
   loadOrdersPage,
   returnOrder,
   paymentSuccess,

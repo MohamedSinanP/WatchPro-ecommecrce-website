@@ -203,70 +203,46 @@
 								<div class="size-208">
 									<span class="stext-110 cl2">Subtotal:</span>
 								</div>
-
 								<div class="size-209">
 									<% if(subtotal){ %>
-										<span id="subtotal" class="mtext-110 cl2">&#8377 <%= subtotal %></span>
-										<% }else { %>
-											<span id="subtotal" class="mtext-110 cl2">&#8377 0</span>
+										<span id="subtotal" class="mtext-110 cl2">₹ <%= subtotal %></span>
+										<% } else { %>
+											<span id="subtotal" class="mtext-110 cl2">₹ 0</span>
 											<% } %>
 								</div>
 							</div>
 
-							<!-- Offer Discount Row - Only show if totalDiscount exists and > 0 -->
-							<% if(totalDiscount && totalDiscount> 0) { %>
-								<div class="flex-w flex-t bor12 p-b-13" id="offer-discount-row">
-									<div class="size-208">
-										<span class="stext-110 cl2">Offer Discount:</span>
-									</div>
-									<div class="size-209">
-										<span id="offerDiscount" class="mtext-110 cl2 text-success">- &#8377 <%= totalDiscount %></span>
-									</div>
+							<div class="flex-w flex-t bor12 p-b-13" id="coupon-discount-row" style="display: none;">
+								<div class="size-208">
+									<span class="stext-110 cl2">Coupon Discount:</span>
 								</div>
-								<% } else { %>
-									<div class="flex-w flex-t bor12 p-b-13" id="offer-discount-row" style="display: none;">
-										<div class="size-208">
-											<span class="stext-110 cl2">Offer Discount:</span>
-										</div>
-										<div class="size-209">
-											<span id="offerDiscount" class="mtext-110 cl2 text-success">- &#8377 0</span>
-										</div>
-									</div>
-									<% } %>
+								<div class="size-209">
+									<span id="couponDiscount" class="mtext-110 cl2 text-success">- ₹ 0</span>
+								</div>
+							</div>
 
-										<div class="flex-w flex-t bor12 p-b-13" id="coupon-discount-row" style="display: none;">
-											<div class="size-208">
-												<span class="stext-110 cl2">Coupon Discount:</span>
-											</div>
-											<div class="size-209">
-												<span id="couponDiscount" class="mtext-110 cl2 text-success">- &#8377 0</span>
-											</div>
-										</div>
+							<div class="flex-w flex-t p-t-27 p-b-33">
+								<div class="size-208">
+									<span class="mtext-101 cl2">
+										Total:
+									</span>
+								</div>
+								<div class="size-209 p-t-1">
+									<% if(subtotal){ %>
+										<span class="mtext-110 cl2" id="cartTotal">
+											₹ <%= subtotal %>
+										</span>
+										<% } else { %>
+											<span class="mtext-110 cl2" id="cartTotal">
+												₹ 0
+											</span>
+											<% } %>
+								</div>
+							</div>
 
-										<div class="flex-w flex-t p-t-27 p-b-33">
-											<div class="size-208">
-												<span class="mtext-101 cl2">
-													Total:
-												</span>
-											</div>
-
-											<div class="size-209 p-t-1">
-												<% if(subtotal){ %>
-													<span class="mtext-110 cl2" id="cartTotal">
-														&#8377 <%= subtotal %>
-													</span>
-													<% }else { %>
-														<span class="mtext-110 cl2" id="cartTotal">
-															&#8377 0
-														</span>
-														<% } %>
-											</div>
-										</div>
-
-										<button class="flex-c-m stext-101 cl0 size-116 bg3 bor14 hov-btn3 p-lr-15 trans-04 pointer">
-											<a href="/checkout?cartTotal=<%= subtotal %>&totalDiscount=<%= totalDiscount %>">Proceed to
-												Checkout</a>
-										</button>
+							<button class="flex-c-m stext-101 cl0 size-116 bg3 bor14 hov-btn3 p-lr-15 trans-04 pointer">
+								<a href="/checkout?cartTotal=<%= subtotal %>">Proceed to Checkout</a>
+							</button>
 						</div>
 					</div>
 				</div>

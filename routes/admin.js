@@ -57,7 +57,7 @@ router.put('/orders/updateStatus/:id', adminAuth.checkSession, orderController.u
 router.put('/orders/:orderId/products/:productId/status', adminAuth.checkSession, orderController.updateProductStatus);
 router.put('/orders/updateStatus/:id', adminAuth.checkSession, orderController.updateOrderStatus);
 router.put('/orders/:orderId/products/bulk-update', adminAuth.checkSession, orderController.bulkUpdateProductStatus);
-router.delete('/orders/cancel/:id', adminAuth.checkSession, orderController.cancelOrder);
+router.delete('/orders/delete/:id', adminAuth.checkSession, orderController.deleteOrder);
 
 // coupon management 
 

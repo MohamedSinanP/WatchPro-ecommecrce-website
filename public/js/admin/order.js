@@ -95,7 +95,7 @@ function viewOrderDetails(orderId) {
                           onchange="updateProductStatus('${order._id}', '${product._id}', this.value)"
                           style="min-width: 120px;">
                       <option value="Pending" ${product.status === 'Pending' ? 'selected' : ''}>Pending</option>
-                      <option value="Ordered" ${product.status === 'Ordered' ? 'selected' : ''}>Ordered</option>
+                      <option value="Confirmed" ${product.status === 'Ordered' ? 'selected' : ''}>Confirmed</option>
                       <option value="Shipped" ${product.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
                       <option value="Delivered" ${product.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
                       <option value="Cancelled" ${product.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
@@ -284,3 +284,56 @@ async function cancelOrder(orderId) {
     }).showToast();
   }
 }
+
+async function deleteOrder(orderId) {
+  const result = await Swal.fire({
+    title: 'Are you sure?',
+    text: "This action will permanently delete the order.",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#6c757d',
+    confirmButtonText: 'Yes, delete it!',
+    cancelButtonText: 'Cancel'
+  });
+
+  if (!result.isConfirmed) {
+    return;
+  }
+
+  try {
+    const response = await axios.delete(`/admin/orders/delete/${orderId}`);
+    if (response.data.success) {
+      Toastify({
+        text: response.data.message,
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#28a745",
+      }).showToast();
+
+      setTimeout(() => {
+        location.reload();
+      }, 1000);
+    } else {
+      Toastify({
+        text: response.data.message || "Failed to delete order",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#FF5733",
+      }).showToast();
+    }
+  } catch (error) {
+    console.error('Error deleting order:', error);
+    Toastify({
+      text: "Error deleting order",
+      duration: 3000,
+      gravity: "top",
+      position: "right",
+      backgroundColor: "#FF5733",
+    }).showToast();
+  }
+}
+
+

@@ -62,7 +62,7 @@ const loadCartPage = async (req, res) => {
         }
 
         subtotal += offerPrice * product.quantity;
-        totalDiscount += productDiscount;  // Add the product's discount to the total discount
+        totalDiscount += productDiscount;
 
         return {
           ...product,
