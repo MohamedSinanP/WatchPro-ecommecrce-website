@@ -312,27 +312,68 @@ async function returnProduct(orderId) {
       confirmButtonText: 'Yes, return it!',
       cancelButtonText: 'No, keep it',
     });
+
     if (result.isConfirmed) {
       const response = await axios.post(`/returnOrder/${orderId}`);
       if (response.data.success) {
-        // Update the order card status
+        // Fetch updated order data to get the latest product statuses
+        const updatedOrderResponse = await axios.get(`/getOrder/${orderId}`);
+        const updatedOrder = updatedOrderResponse.data.order;
+
+        // Update the order card status and product statuses
         const orderCard = document.querySelector(`.order-card[data-orderid="${orderId}"]`);
         if (orderCard) {
-          const statusDiv = orderCard.closest('.order-card').previousElementSibling;
+          const statusDiv = orderCard.previousElementSibling;
           if (statusDiv) {
             statusDiv.querySelector('p').innerHTML = '<strong>Order Status:</strong> Returned';
           }
-          // Update actions (remove return button)
+
+          // Update each product's status in the order card
+          const productDivs = orderCard.querySelectorAll('.product-detail');
+          productDivs.forEach((div) => {
+            const productId = div.getAttribute('data-productid');
+            const product = updatedOrder.products.find(
+              (p) => p.productId._id.toString() === productId
+            );
+            if (product && product.status === 'Returned') {
+              div.style.opacity = '0.5';
+              const statusP = div.querySelector('p:last-child') || document.createElement('p');
+              statusP.innerHTML = '<strong>Status:</strong> <span class="badge badge-secondary">Returned</span>';
+              if (!div.querySelector('p:last-child')) {
+                div.appendChild(statusP);
+              }
+            }
+          });
+
+          // Clear actions since order is returned
           const actionsDiv = orderCard.querySelector('.actions');
-          actionsDiv.innerHTML = ''; // Clear actions since order is returned
+          actionsDiv.innerHTML = `
+            <button class="btn btn-primary view-more" data-toggle="modal" data-target="#productDetailsModal" 
+                    data-order='${JSON.stringify(updatedOrder)}' onclick="showProductDetails(this)">
+              View more
+            </button>
+          `;
         }
+
+        // Update modal content if it's open
+        const modal = document.getElementById('productDetailsModal');
+        if (modal.classList.contains('show')) {
+          const viewMoreButton = document.querySelector(`.order-card[data-orderid="${orderId}"] .view-more`);
+          if (viewMoreButton) {
+            viewMoreButton.setAttribute('data-order', JSON.stringify(updatedOrder));
+            showProductDetails(viewMoreButton);
+          }
+        }
+
         Toastify({
-          text: "Order returned successfully!",
+          text: response.data.refundAmount > 0
+            ? `Order returned successfully! ₹${response.data.refundAmount} refunded to your wallet.`
+            : 'Order returned successfully! No additional refund processed.',
           duration: 3000,
           close: true,
-          gravity: "top",
-          position: "right",
-          backgroundColor: "#4CAF50",
+          gravity: 'top',
+          position: 'right',
+          backgroundColor: '#4CAF50',
         }).showToast();
       } else {
         throw new Error(response.data.message || 'Failed to return order');
@@ -341,12 +382,12 @@ async function returnProduct(orderId) {
   } catch (error) {
     console.error('Error returning product:', error);
     Toastify({
-      text: "Failed to return order. Please try again.",
+      text: 'Failed to return order. Please try again.',
       duration: 3000,
       close: true,
-      gravity: "top",
-      position: "right",
-      backgroundColor: "#FF0000",
+      gravity: 'top',
+      position: 'right',
+      backgroundColor: '#FF0000',
     }).showToast();
   }
 }

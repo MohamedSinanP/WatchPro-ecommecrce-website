@@ -18,6 +18,7 @@ const loadOrders = async (req, res) => {
     const totalPages = Math.ceil(totalOrders / limit);
 
     const orders = await orderModel.find({})
+      .sort({ createdAt: -1 })
       .populate({ path: 'userId', select: 'fullName' })
       .populate({ path: 'address' })
       .populate('products.productId', 'name images')

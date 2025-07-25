@@ -1,6 +1,8 @@
 const orderModel = require('../../models/orderModel');
 const PDFDocument = require('pdfkit');
-const ExcelJS = require('exceljs')
+const ExcelJS = require('exceljs');
+const path = require('path');
+const moment = require('moment')
 
 const loadSalesReport = async (req, res) => {
   try {
@@ -53,36 +55,105 @@ const loadSalesReport = async (req, res) => {
 };
 
 // to downllad pdf
-
 const downloadPDF = async (req, res) => {
   try {
     const salesReport = await getSalesReportData(req.query.timeframe || 'yearly');
-    const doc = new PDFDocument();
+    console.log('Sales Report Data:', JSON.stringify(salesReport, null, 2)); // Debug salesReport
+
+    const doc = new PDFDocument({
+      size: 'A4',
+      margins: { top: 50, bottom: 50, left: 50, right: 50 }
+    });
 
     res.setHeader('Content-Disposition', 'attachment; filename="SalesReport.pdf"');
     res.setHeader('Content-Type', 'application/pdf');
 
     doc.pipe(res);
 
-    doc.fontSize(20).text('Sales Report', { align: 'center' });
+    // Navigate up two levels from controllers/admin to project root
+    const fontPath = path.join(__dirname, '..', '..', 'public', 'fonts', 'NotoSans-Regular.ttf');
+    console.log('Font Path:', fontPath); // Debug the path
+    doc.registerFont('NotoSans', fontPath);
+
+    // Header
+    doc.font('NotoSans').fontSize(24).fillColor('navy')
+      .text('Sales Report', 50, 50, { align: 'center' });
+    doc.fontSize(12).fillColor('gray')
+      .text(`Generated on: ${moment().format('MMMM Do YYYY')}`, 50, 80, { align: 'center' });
+    doc.moveDown(2);
+
+    // Table Header
+    const tableTop = 120;
+    const col1 = 50;
+    const colWidth = 80; // Adjusted to fit 6 columns within 495 points (50 + 80*6 + 50 = 580)
+    const rowHeight = 20;
+
+    doc.font('NotoSans').fontSize(12).fillColor('black');
+    doc.text('Date', col1, tableTop, { width: colWidth });
+    doc.text('Total Sales', col1 + colWidth, tableTop, { width: colWidth, align: 'right' });
+    doc.text('Discount', col1 + colWidth * 2, tableTop, { width: colWidth, align: 'right' });
+    doc.text('Net Sales', col1 + colWidth * 3, tableTop, { width: colWidth, align: 'right' });
+    doc.text('Orders', col1 + colWidth * 4, tableTop, { width: colWidth, align: 'right' });
+    doc.text('Items Sold', col1 + colWidth * 5, tableTop, { width: colWidth, align: 'right' });
+
+    // Draw header separator
+    doc.moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).strokeColor('gray').stroke();
     doc.moveDown();
 
-    salesReport.forEach(report => {
-      const month = report._id.month ? `-${report._id.month}` : '';
-      const day = report._id.day ? `-${report._id.day}` : '';
+    // Table Rows
+    let y = tableTop + 25;
+    salesReport.forEach((report, index) => {
+      console.log(`Processing row ${index}:`, report); // Debug each row
+      const month = report._id.month ? `-${String(report._id.month).padStart(2, '0')}` : '';
+      const day = report._id.day ? `-${String(report._id.day).padStart(2, '0')}` : '';
+      const date = `${report._id.year}${month}${day}`;
+      const totalSales = (report.totalSalesRevenue || 0).toFixed(2);
+      const discount = (report.totalDiscount || 0).toFixed(2);
+      const netSales = ((report.totalSalesRevenue || 0) - (report.totalDiscount || 0)).toFixed(2);
+      const orders = report.totalOrders || 0;
+      const itemsSold = report.totalItemsSold || 0;
 
-      doc.fontSize(12).text(`Date: ${report._id.year}${month}${day}`);
-      doc.text(`Total Sales Revenue: ${report.totalSalesRevenue || 0}`);
-      doc.text(`Discount Applied: ${report.totalDiscount || 0}`);
-      doc.text(`Net Sales: ${(report.totalSalesRevenue || 0) - (report.totalDiscount || 0)}`);
-      doc.text(`Number of Orders: ${report.totalOrders || 0}`);
-      doc.text(`Total Items Sold: ${report.totalItemsSold || 0}`);
-      doc.moveDown();
+      // Check if we need a new page
+      if (y + rowHeight > doc.page.height - 50) {
+        doc.addPage();
+        y = 50; // Reset y to top of new page
+        // Redraw table header on new page
+        doc.font('NotoSans').fontSize(12).fillColor('black');
+        doc.text('Date', col1, y, { width: colWidth });
+        doc.text('Total Sales', col1 + colWidth, y, { width: colWidth, align: 'right' });
+        doc.text('Discount', col1 + colWidth * 2, y, { width: colWidth, align: 'right' });
+        doc.text('Net Sales', col1 + colWidth * 3, y, { width: colWidth, align: 'right' });
+        doc.text('Orders', col1 + colWidth * 4, y, { width: colWidth, align: 'right' });
+        doc.text('Items Sold', col1 + colWidth * 5, y, { width: colWidth, align: 'right' });
+        doc.moveTo(50, y + 15).lineTo(550, y + 15).strokeColor('gray').stroke();
+        y += 25;
+      }
+
+      doc.fontSize(10).fillColor('black');
+      doc.text(date, col1, y, { width: colWidth });
+      doc.text(`₹${totalSales}`, col1 + colWidth, y, { width: colWidth, align: 'right' });
+      doc.text(`₹${discount}`, col1 + colWidth * 2, y, { width: colWidth, align: 'right' });
+      doc.text(`₹${netSales}`, col1 + colWidth * 3, y, { width: colWidth, align: 'right' });
+      doc.text(orders.toString(), col1 + colWidth * 4, y, { width: colWidth, align: 'right' });
+      doc.text(itemsSold.toString(), col1 + colWidth * 5, y, { width: colWidth, align: 'right' });
+
+      y += rowHeight;
+
+      // Draw row separator
+      doc.moveTo(50, y - 5).lineTo(550, y - 5).strokeColor('lightgray').dash(5, { space: 5 }).stroke();
     });
+
+    // Footer
+    const pageCount = doc.bufferedPageRange().count;
+    for (let i = 0; i < pageCount; i++) {
+      doc.switchToPage(i);
+      doc.font('NotoSans').fontSize(10).fillColor('gray')
+        .text(`Page ${i + 1} of ${pageCount}`, 50, doc.page.height - 70, { align: 'center' });
+    }
 
     doc.end();
   } catch (error) {
-    console.error(error);
+    console.error('Error generating PDF:', error);
     res.status(500).json({ message: 'Could not generate PDF' });
   }
 };

@@ -64,12 +64,16 @@ router.delete('/orders/delete/:id', adminAuth.checkSession, orderController.dele
 router.get('/coupons', adminAuth.checkSession, couponController.loadCoupons);
 router.post('/addCoupon', adminAuth.checkSession, couponController.addCoupon);
 router.delete('/deleteCoupon/:id', adminAuth.checkSession, couponController.deleteCoupon);
+router.get('/getCoupon/:id', adminAuth.checkSession, couponController.getCoupon);
+router.put('/updateCoupon/:id', adminAuth.checkSession, couponController.updateCoupon);
 
 // offer management 
 
 router.get('/offers', adminAuth.checkSession, offerController.loadOffers);
 router.post('/addOffer', adminAuth.checkSession, offerController.addOffer);
 router.delete('/deleteOffer/:id', adminAuth.checkSession, offerController.deleteOffer);
+router.get('/getOffer/:id', offerController.getOffer);
+router.put('/updateOffer/:id', offerController.updateOffer);
 
 // sales report
 

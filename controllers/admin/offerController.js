@@ -36,6 +36,73 @@ const loadOffers = async (req, res) => {
 
 };
 
+// to get offer details for editing
+const getOffer = async (req, res) => {
+  const offerId = req.params.id;
+
+  try {
+    const offer = await offerModel.findById(offerId)
+      .populate('products', 'name')
+      .populate('categories', 'name genderType');
+
+    if (!offer) {
+      return res.status(404).json({ success: false, message: 'Offer not found' });
+    }
+
+    res.json({ success: true, offer });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+
+// to update existing offer
+const updateOffer = async (req, res) => {
+  const offerId = req.params.id;
+  const { title, discountType, discountValue, products, categories, expireDate, isActive } = req.body;
+
+  if (!title || !discountType || !discountValue || !expireDate || isActive === undefined) {
+    return res.json({ success: false, message: 'Missing required fields' });
+  }
+
+  if (discountType === 'percentage' && (discountValue < 1 || discountValue > 100)) {
+    return res.json({ success: false, message: 'Percentage discount must be between 1 and 100' });
+  }
+
+  if (discountType === 'amount' && discountValue <= 0) {
+    return res.json({ success: false, message: 'Amount discount must be greater than 0' });
+  }
+
+  const parsedExpireDate = new Date(expireDate);
+  if (isNaN(parsedExpireDate.getTime()) || parsedExpireDate < new Date()) {
+    return res.json({ success: false, message: 'Invalid or past expire date' });
+  }
+
+  const updateData = {
+    title,
+    discountType,
+    discountValue,
+    products: Array.isArray(products) ? products : [],
+    categories: Array.isArray(categories) ? categories : [],
+    expireDate: parsedExpireDate,
+    isActive
+  };
+
+  try {
+    const updatedOffer = await offerModel.findByIdAndUpdate(offerId, updateData, { new: true });
+
+    if (!updatedOffer) {
+      return res.status(404).json({ success: false, message: 'Offer not found' });
+    }
+
+    res.json({ success: true, message: 'Offer updated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
 // to add new offer 
 
 const addOffer = async (req, res) => {
@@ -96,6 +163,8 @@ const deleteOffer = async (req, res) => {
 
 module.exports = {
   loadOffers,
+  getOffer,
+  updateOffer,
   addOffer,
   deleteOffer
 }

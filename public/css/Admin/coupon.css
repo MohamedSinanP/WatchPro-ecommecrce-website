@@ -104,6 +104,19 @@ body {
   cursor: pointer;
   display: none; /* Hidden by default */
 }
+.alert {
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.alert-danger {
+  border-left: 4px solid #dc3545;
+}
+
+.modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
 /* Mobile Styles */
 @media (max-width: 768px) {
   .sidebar {

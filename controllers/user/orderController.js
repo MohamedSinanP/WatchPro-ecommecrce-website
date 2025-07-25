@@ -488,54 +488,79 @@ const loadOrdersPage = async (req, res) => {
 // to return the order of the user (change status and update stock etc.)
 
 const returnOrder = async (req, res) => {
-  orderId = req.params.id;
+  const orderId = req.params.id;
   try {
     const order = await orderModel.findOne({ _id: orderId }).populate('products.productId');
-    const wallet = await walletModel.findOne({ userId: order.userId })
-    let walletBalance = wallet.balance;
-    walletBalance += order.total;
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    const wallet = await walletModel.findOne({ userId: order.userId });
+    let walletBalance = wallet ? wallet.balance : 0;
+    let refundAmount = 0;
+
     if (order.status === 'Delivered') {
       order.status = 'Returned';
+
+      // Update each product's status and calculate refund amount
       for (const product of order.products) {
-        const productToUpdate = product.productId;
-        productToUpdate.stock += product.quantity;
-        await productToUpdate.save();
-      };
+        // Update status to Returned for products that are not Cancelled or already Returned
+        if (product.status !== 'Cancelled' && product.status !== 'Returned') {
+          product.status = 'Returned'; // Update product status to Returned
+          const productToUpdate = product.productId;
+          productToUpdate.stock += product.quantity;
+          await productToUpdate.save();
 
-      if (wallet) {
-        wallet.transaction.push({
-          transactionType: 'credit',
-          amount: order.total,
-          date: new Date()
-        });
-
-        wallet.balance = walletBalance;
-        await wallet.save();
-      } else {
-        wallet = new walletModel({
-          userId,
-          transaction: [
-            {
-              transactionType: 'credit',
-              amount: order.total,
-              date: new Date(),
-            },
-          ],
-
-        });
-        wallet.balance = walletBalance;
-        await wallet.save();
+          // Only include price in refund if product was not previously Returned
+          if (product.status !== 'Returned') {
+            const productPrice = product.discountedPrice !== undefined && product.discountedPrice !== null
+              ? product.discountedPrice
+              : product.price;
+            refundAmount += productPrice * product.quantity;
+          }
+        }
       }
 
+      // Only update refundedTotal and wallet if there is a refund amount
+      if (refundAmount > 0) {
+        order.refundedTotal = (order.refundedTotal || 0) + refundAmount;
+        walletBalance += refundAmount;
 
-      order.save();
+        // Update wallet
+        if (wallet) {
+          wallet.transaction.push({
+            transactionType: 'credit',
+            amount: refundAmount,
+            date: new Date(),
+          });
+          wallet.balance = walletBalance;
+          await wallet.save();
+        } else {
+          const newWallet = new walletModel({
+            userId: order.userId,
+            transaction: [
+              {
+                transactionType: 'credit',
+                amount: refundAmount,
+                date: new Date(),
+              },
+            ],
+            balance: walletBalance,
+          });
+          await newWallet.save();
+        }
+      }
+
+      await order.save();
+      res.json({ success: true, refundAmount });
+    } else {
+      res.status(400).json({ message: 'Order is not in Delivered status' });
     }
-    res.json({ success: true });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
   }
-}
+};
 
 // to verify payment
 

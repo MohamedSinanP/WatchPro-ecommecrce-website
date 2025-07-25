@@ -35,8 +35,8 @@
                       <th>#</th>
                       <th>Offer Name</th>
                       <th>Discount</th>
-                      <th>products</th>
-                      <th>categories</th>
+                      <th>Products</th>
+                      <th>Categories</th>
                       <th>Valid Until</th>
                       <th>Status</th>
                       <th>Actions</th>
@@ -53,7 +53,8 @@
                             <%= offer.title %>
                           </td>
                           <td>
-                            <%= offer.discountValue %> %
+                            <%= offer.discountValue %>
+                              <%= offer.discountType==='percentage' ? '%' : ' ₹' %>
                           </td>
                           <td>
                             <% if (offer.products && offer.products.length> 0) { %>
@@ -70,7 +71,7 @@
                                   <% } %>
                           </td>
                           <td>
-                            <%= offer.expireDate %>
+                            <%= new Date(offer.expireDate).toLocaleDateString() %>
                           </td>
                           <td>
                             <span class="badge <%= offer.isActive ? 'bg-success' : 'bg-danger' %>">
@@ -78,14 +79,16 @@
                             </span>
                           </td>
                           <td>
-                            <button class="btn btn-sm btn-danger" style="font-size: 14px;"
+                            <button class="btn btn-sm btn-warning me-2" style="font-size: 12px;"
+                              onclick="openEditOfferModal('<%= offer._id %>')">Edit</button>
+                            <button class="btn btn-sm btn-danger" style="font-size: 12px;"
                               onclick="deleteOffer('<%= offer._id %>')">Delete</button>
                           </td>
                         </tr>
                         <% }) %>
                           <% } else{ %>
                             <tr>
-                              <td colspan="9" class="text-center">No offers available. Please add a offer.</td>
+                              <td colspan="8" class="text-center">No offers available. Please add an offer.</td>
                             </tr>
                             <% } %>
                   </tbody>
@@ -115,96 +118,119 @@
       </main>
   </div>
 
-  <!-- add offer modal-->
+  <!-- Add/Edit Offer Modal -->
   <div class="modal fade" id="addOfferModal" tabindex="-1" aria-labelledby="addOfferModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="addOfferModalLabel">Add New Offer</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <form id="addOfferForm">
-            <div class="mb-3">
-              <label for="offerTitle" class="form-label">Offer Title</label>
-              <input type="text" class="form-control" id="offerTitle" name="title">
-            </div>
-            <div class="mb-3">
-              <label for="discountType" class="form-label">Discount Type</label>
-              <select class="form-control" id="discountType" onchange="toggleDiscountFields()">
-                <option value="percentage">Percentage (%)</option>
-                <option value="amount">Amount</option>
-              </select>
-            </div>
-
-            <!-- Percentage Discount Field -->
-            <div class="mb-3" id="percentageDiscountField">
-              <label for="discountPercentage" class="form-label">Discount Percentage (%)</label>
-              <input type="number" class="form-control" id="discountPercentage" min="1" max="100">
-            </div>
-
-            <!-- Amount Discount Field -->
-            <div class="mb-3" id="amountDiscountField" style="display: none;">
-              <label for="discountAmount" class="form-label">Discount Amount</label>
-              <input type="number" class="form-control" id="discountAmount" min="1">
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label">Apply Offer To:</label>
-              <div>
-                <input type="radio" id="applyToProducts" name="applyTo" value="products" checked
-                  onchange="toggleApplyFields()">
-                <label for="applyToProducts">Products</label>
+          <form id="addOfferForm" data-mode="add">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="offerTitle" class="form-label">Offer Title</label>
+                  <input type="text" class="form-control" id="offerTitle" name="title">
+                </div>
               </div>
-              <div>
-                <input type="radio" id="applyToCategories" name="applyTo" value="categories"
-                  onchange="toggleApplyFields()">
-                <label for="applyToCategories">Categories</label>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="discountType" class="form-label">Discount Type</label>
+                  <select class="form-control" id="discountType" onchange="toggleDiscountFields()">
+                    <option value="percentage">Percentage (%)</option>
+                    <option value="amount">Amount (₹)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <!-- Percentage Discount Field -->
+              <div class="col-md-6">
+                <div class="mb-3" id="percentageDiscountField">
+                  <label for="discountPercentage" class="form-label">Discount Percentage (%)</label>
+                  <input type="number" class="form-control" id="discountPercentage" min="1" max="100">
+                </div>
+
+                <!-- Amount Discount Field -->
+                <div class="mb-3" id="amountDiscountField" style="display: none;">
+                  <label for="discountAmount" class="form-label">Discount Amount (₹)</label>
+                  <input type="number" class="form-control" id="discountAmount" min="1">
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="expireDate" class="form-label">Expire Date</label>
+                  <input type="date" class="form-control" id="expireDate" name="expireDate">
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Apply Offer To:</label>
+                  <div>
+                    <input type="radio" id="applyToProducts" name="applyTo" value="products" checked
+                      onchange="toggleApplyFields()">
+                    <label for="applyToProducts" class="ms-2">Products</label>
+                  </div>
+                  <div>
+                    <input type="radio" id="applyToCategories" name="applyTo" value="categories"
+                      onchange="toggleApplyFields()">
+                    <label for="applyToCategories" class="ms-2">Categories</label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="isActive" class="form-label">Status</label>
+                  <select class="form-control" id="isActive">
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
+                  </select>
+                </div>
               </div>
             </div>
 
             <div class="mb-3" id="productsField">
               <label for="offerProducts" class="form-label">Products</label>
-              <select class="form-select" id="offerProducts" name="products" multiple>
-                <option value="" disabled>Select products</option>
+              <select class="form-select" id="offerProducts" name="products" multiple size="5">
                 <% products.forEach(product=> { %>
                   <option value="<%= product._id %>">
                     <%= product.name %>
                   </option>
                   <% }) %>
               </select>
+              <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple products</small>
             </div>
 
             <div class="mb-3" id="categoriesField" style="display: none;">
               <label for="offerCategories" class="form-label">Categories</label>
-              <select class="form-select" id="offerCategories" name="categories" multiple>
-                <option value="" disabled>Select categories</option>
+              <select class="form-select" id="offerCategories" name="categories" multiple size="5">
                 <% categories.forEach(category=> { %>
                   <option value="<%= category._id %>">
-                    <%= category.genderType %>
-                      <%= category.name %>
+                    <%= category.genderType %> - <%= category.name %>
                   </option>
                   <% }) %>
               </select>
+              <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple categories</small>
             </div>
 
-            <div class="mb-3">
-              <label for="expireDate" class="form-label">Expire Date</label>
-              <input type="date" class="form-control" id="expireDate" name="expireDate">
+            <div class="d-flex justify-content-end">
+              <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-primary" id="submitOfferButton">Save Offer</button>
             </div>
-            <div class="mb-3">
-              <label for="isActive" class="form-label">Status</label>
-              <select class="form-control" id="isActive">
-                <option value="true">Active</option>
-                <option value="false">Inactive</option>
-              </select>
-            </div>
-            <button type="submit" class="btn btn-primary">Save Offer</button>
           </form>
         </div>
       </div>
     </div>
   </div>
+
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

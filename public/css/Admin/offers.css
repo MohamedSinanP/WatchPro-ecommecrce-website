@@ -103,6 +103,59 @@ body {
     cursor: pointer;
     display: none; /* Hidden by default */
   }
+
+  validation-error {
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.form-control.is-invalid,
+.form-select.is-invalid {
+  border-color: #dc3545;
+  padding-right: calc(1.5em + 0.75rem);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right calc(0.375em + 0.1875rem) center;
+  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+.form-control.is-invalid:focus,
+.form-select.is-invalid:focus {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+/* Loading state for submit button */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Smooth transitions for field visibility */
+#percentageDiscountField,
+#amountDiscountField,
+#productsField,
+#categoriesField {
+  transition: all 0.3s ease;
+}
+
+/* Better spacing for radio buttons */
+input[type="radio"] + label {
+  margin-left: 0.5rem;
+  cursor: pointer;
+}
+
+/* Multi-select styling */
+.form-select[multiple] {
+  min-height: 120px;
+}
+
+.form-select[multiple]:focus {
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+
   /* Mobile Styles */
   @media (max-width: 768px) {
     .sidebar {
@@ -127,3 +180,13 @@ body {
         display: block; /* Show the toggle button on smaller screens */
     }
   }
+@media (max-width: 768px) {
+  .modal-lg {
+    max-width: 95%;
+    margin: 1rem auto;
+  }
+  
+  .modal-body {
+    padding: 1rem;
+  }
+}
