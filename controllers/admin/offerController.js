@@ -15,6 +15,7 @@ const loadOffers = async (req, res) => {
     const products = await productModel.find();
     const categories = await categoryModel.find();
     const offers = await offerModel.find()
+      .sort({ updatedAt: -1 })
       .populate({
         path: 'products',
         select: 'name -_id'

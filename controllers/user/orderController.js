@@ -55,13 +55,6 @@ const createOrderWithRazorpay = async (req, res) => {
       const quantity = item.quantity;
 
       const discounted = getDiscountedPrice(product, activeOffers);
-      console.log({
-        original: product.price,
-        discounted,
-        productId: product._id.toString(),
-        productCategory: product.category?.toString(),
-        matchedOffers: activeOffers.map(of => of.products.map(id => id.toString()))
-      });
       const original = product.price;
 
       const isOfferApplied = discounted < original;
@@ -225,7 +218,20 @@ const walletOrder = async (req, res) => {
 
   try {
     const address = await addressModel.findOne({ _id: addressId });
+    if (!address) {
+      return res.status(400).json({ success: false, message: 'Address not found' });
+    }
+
     const userWallet = await walletModel.findOne({ userId: userId });
+
+    // If wallet doesn't exist, return error
+    if (!userWallet) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot pay with Wallet – wallet not found for this user"
+      });
+    }
+
     const userBalance = userWallet.balance;
     if (userBalance < totalPrice) {
       return res.json({ success: false, message: "Cannot pay with Wallet your wallet doesn't have enough money" });
@@ -489,6 +495,7 @@ const loadOrdersPage = async (req, res) => {
 
 const returnOrder = async (req, res) => {
   const orderId = req.params.id;
+
   try {
     const order = await orderModel.findOne({ _id: orderId }).populate('products.productId');
     if (!order) {
@@ -502,31 +509,27 @@ const returnOrder = async (req, res) => {
     if (order.status === 'Delivered') {
       order.status = 'Returned';
 
-      // Update each product's status and calculate refund amount
+      // Calculate refund before changing status
       for (const product of order.products) {
-        // Update status to Returned for products that are not Cancelled or already Returned
         if (product.status !== 'Cancelled' && product.status !== 'Returned') {
-          product.status = 'Returned'; // Update product status to Returned
+          const productPrice = product.discountedPrice !== undefined && product.discountedPrice !== null
+            ? product.discountedPrice
+            : product.price;
+          refundAmount += productPrice * product.quantity;
+
           const productToUpdate = product.productId;
           productToUpdate.stock += product.quantity;
           await productToUpdate.save();
 
-          // Only include price in refund if product was not previously Returned
-          if (product.status !== 'Returned') {
-            const productPrice = product.discountedPrice !== undefined && product.discountedPrice !== null
-              ? product.discountedPrice
-              : product.price;
-            refundAmount += productPrice * product.quantity;
-          }
+          product.status = 'Returned';
         }
       }
 
-      // Only update refundedTotal and wallet if there is a refund amount
+      // Refund only if there is a refund amount
       if (refundAmount > 0) {
         order.refundedTotal = (order.refundedTotal || 0) + refundAmount;
         walletBalance += refundAmount;
 
-        // Update wallet
         if (wallet) {
           wallet.transaction.push({
             transactionType: 'credit',
@@ -545,7 +548,7 @@ const returnOrder = async (req, res) => {
                 date: new Date(),
               },
             ],
-            balance: walletBalance,
+            balance: refundAmount,
           });
           await newWallet.save();
         }
@@ -561,6 +564,7 @@ const returnOrder = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
 
 // to verify payment
 
@@ -586,7 +590,8 @@ const retryPayment = async (req, res) => {
   const userId = req.session.user;
 
   try {
-    const order = await orderModel.findOne({ razorpayId: razorpayId });
+    const order = await orderModel.findOne({ razorpayId: razorpayId })
+      .populate('products.productId');
     const user = await userModel.findOne({ _id: userId })
     const userName = order.address.firstName;
     const userEmail = user.email;

@@ -1,12 +1,47 @@
-// Updated order.js frontend file
+// Updated order.js frontend file with status progression logic
 
 function loadPage(pageNumber) {
   window.location.href = `/admin/orders?page=${pageNumber}`;
 }
 
+// Function to get allowed statuses based on current status
+function getAllowedStatuses(currentStatus) {
+  switch (currentStatus) {
+    case 'Pending':
+      return ['Pending', 'Confirmed', 'Cancelled'];
+    case 'Confirmed':
+      return ['Confirmed', 'Shipped', 'Cancelled'];
+    case 'Shipped':
+      return ['Shipped', 'Delivered', 'Cancelled'];
+    case 'Delivered':
+      return ['Delivered', 'Returned'];
+    case 'Cancelled':
+      return ['Cancelled'];
+    case 'Returned':
+      return ['Returned'];
+    default:
+      return ['Pending', 'Confirmed', 'Cancelled'];
+  }
+}
+
+// Function to generate status options based on current status
+function generateStatusOptions(currentStatus, selectedStatus = null) {
+  const allowedStatuses = getAllowedStatuses(currentStatus);
+  const allStatuses = ['Pending', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled', 'Returned'];
+
+  return allStatuses.map(status => {
+    const isAllowed = allowedStatuses.includes(status);
+    const isSelected = selectedStatus ? status === selectedStatus : status === currentStatus;
+    const disabled = !isAllowed ? 'disabled' : '';
+    const selected = isSelected ? 'selected' : '';
+
+    return `<option value="${status}" ${selected} ${disabled}>${status}</option>`;
+  }).join('');
+}
+
 function viewOrderDetails(orderId) {
   const order = JSON.parse(document.getElementById(`order-data-${orderId}`).textContent);
-
+  console.log("this is the order", order)
   // Populate Order Summary
   document.getElementById('modal-order-date').textContent = order.createdAt
     ? new Date(order.createdAt).toLocaleDateString()
@@ -68,6 +103,9 @@ function viewOrderDetails(orderId) {
       ? product.discountedPrice
       : product.price;
 
+    const currentProductStatus = product.status || 'Pending';
+    const statusOptions = generateStatusOptions(currentProductStatus);
+
     productDiv.innerHTML = `
       <div class="col-md-3">
           <img src="${productImage}" 
@@ -80,8 +118,8 @@ function viewOrderDetails(orderId) {
                   <p class="mb-1"><strong>Price:</strong> ₹${displayPrice}</p>
                   <p class="mb-1"><strong>Quantity:</strong> ${product.quantity}</p>
                   <p class="mb-2"><strong>Status:</strong> 
-                      <span class="badge bg-${getProductStatusBadgeClass(product.status)}">
-                          ${product.status || 'Ordered'}
+                      <span class="badge bg-${getProductStatusBadgeClass(currentProductStatus)}">
+                          ${currentProductStatus}
                       </span>
                   </p>
                   ${product.description
@@ -94,13 +132,11 @@ function viewOrderDetails(orderId) {
                   <select class="form-select form-select-sm" 
                           onchange="updateProductStatus('${order._id}', '${product._id}', this.value)"
                           style="min-width: 120px;">
-                      <option value="Pending" ${product.status === 'Pending' ? 'selected' : ''}>Pending</option>
-                      <option value="Confirmed" ${product.status === 'Ordered' ? 'selected' : ''}>Confirmed</option>
-                      <option value="Shipped" ${product.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
-                      <option value="Delivered" ${product.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
-                      <option value="Cancelled" ${product.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
-                      <option value="Returned" ${product.status === 'Returned' ? 'selected' : ''}>Returned</option>
+                      ${statusOptions}
                   </select>
+                  <small class="text-muted d-block mt-1">
+                      ${getStatusHelpText(currentProductStatus)}
+                  </small>
               </div>
           </div>
       </div>
@@ -112,7 +148,27 @@ function viewOrderDetails(orderId) {
   orderDetailsModal.show();
 }
 
-// New function to update individual product status
+// Function to get help text for status progression
+function getStatusHelpText(currentStatus) {
+  switch (currentStatus) {
+    case 'Pending':
+      return 'Can move to: Confirmed, Cancelled';
+    case 'Confirmed':
+      return 'Can move to: Shipped, Cancelled';
+    case 'Shipped':
+      return 'Can move to: Delivered, Cancelled';
+    case 'Delivered':
+      return 'Can move to: Returned only';
+    case 'Cancelled':
+      return 'Final status - cannot change';
+    case 'Returned':
+      return 'Final status - cannot change';
+    default:
+      return '';
+  }
+}
+
+// New function to update individual product status with validation
 async function updateProductStatus(orderId, productId, newStatus) {
   try {
     const response = await axios.put(`/admin/orders/${orderId}/products/${productId}/status`, {
@@ -140,16 +196,33 @@ async function updateProductStatus(orderId, productId, newStatus) {
         position: "right",
         backgroundColor: "#FF5733",
       }).showToast();
+
+      // Reload to reset the dropdown to previous value
+      setTimeout(() => {
+        location.reload();
+      }, 1500);
     }
   } catch (error) {
     console.error('Error updating product status:', error);
+    let errorMessage = "Error updating product status";
+
+    // Check if it's a status progression error
+    if (error.response && error.response.data && error.response.data.message) {
+      errorMessage = error.response.data.message;
+    }
+
     Toastify({
-      text: "Error updating product status",
-      duration: 3000,
+      text: errorMessage,
+      duration: 4000,
       gravity: "top",
       position: "right",
       backgroundColor: "#FF5733",
     }).showToast();
+
+    // Reload to reset the dropdown to previous value
+    setTimeout(() => {
+      location.reload();
+    }, 1500);
   }
 }
 
@@ -157,7 +230,7 @@ async function updateProductStatus(orderId, productId, newStatus) {
 function getProductStatusBadgeClass(status) {
   switch (status) {
     case 'Pending': return 'warning';
-    case 'Ordered': return 'info';
+    case 'Confirmed': return 'info';
     case 'Shipped': return 'primary';
     case 'Delivered': return 'success';
     case 'Cancelled': return 'danger';
@@ -232,17 +305,36 @@ async function updateOrderStatus(orderId, newStatus) {
       console.log(message);
       Toastify({
         text: message,
-        duration: 3000,
+        duration: 4000,
         gravity: "top",
         position: "right",
         backgroundColor: "#FF5733",
       }).showToast();
       setTimeout(() => {
         location.reload();
-      }, 1000);
+      }, 1500);
     }
   } catch (error) {
     console.error('Error updating order status:', error);
+    let errorMessage = "Error updating order status";
+
+    // Check if it's a status progression error
+    if (error.response && error.response.data && error.response.data.message) {
+      errorMessage = error.response.data.message;
+    }
+
+    Toastify({
+      text: errorMessage,
+      duration: 4000,
+      gravity: "top",
+      position: "right",
+      backgroundColor: "#FF5733",
+    }).showToast();
+
+    // Reload to reset the dropdown to previous value
+    setTimeout(() => {
+      location.reload();
+    }, 1500);
   }
 }
 
@@ -267,7 +359,7 @@ async function cancelOrder(orderId) {
     } else {
       Toastify({
         text: response.data.message || "Failed to cancel order",
-        duration: 3000,
+        duration: 4000,
         gravity: "top",
         position: "right",
         backgroundColor: "#FF5733",
@@ -275,9 +367,16 @@ async function cancelOrder(orderId) {
     }
   } catch (error) {
     console.error('Error canceling order:', error);
+    let errorMessage = "Error canceling order";
+
+    // Check if it's a status progression error
+    if (error.response && error.response.data && error.response.data.message) {
+      errorMessage = error.response.data.message;
+    }
+
     Toastify({
-      text: "Error canceling order",
-      duration: 3000,
+      text: errorMessage,
+      duration: 4000,
       gravity: "top",
       position: "right",
       backgroundColor: "#FF5733",
@@ -335,5 +434,3 @@ async function deleteOrder(orderId) {
     }).showToast();
   }
 }
-
-

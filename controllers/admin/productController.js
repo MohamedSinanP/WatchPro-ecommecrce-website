@@ -26,6 +26,7 @@ const loadProducts = async (req, res) => {
     const totalProducts = await productModel.countDocuments(query);
     const products = await productModel
       .find(query)
+      .sort({ updatedAt: -1 })
       .populate('category')
       .skip(skip)
       .limit(limit);

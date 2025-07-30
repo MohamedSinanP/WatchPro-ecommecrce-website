@@ -4,10 +4,76 @@ const walletModel = require('../../models/walletModel');
 const determineOrderStatus = require('../../utils/getOrderStatus');
 require('dotenv').config();
 
+const STATUS_HIERARCHY = {
+  'Pending': 0,
+  'Confirmed': 1,
+  'Shipped': 2,
+  'Delivered': 3,
+  'Cancelled': -1,
+  'Returned': -2
+};
 
+// Function to check if status update is allowed
+const isStatusUpdateAllowed = (currentStatus, newStatus) => {
+  const currentLevel = STATUS_HIERARCHY[currentStatus] || 0;
+  const newLevel = STATUS_HIERARCHY[newStatus] || 0;
+
+  // Special cases for Cancelled and Returned
+  if (newStatus === 'Cancelled') {
+    // Can cancel only if not delivered, returned, or already cancelled
+    return !['Delivered', 'Returned', 'Cancelled'].includes(currentStatus);
+  }
+
+  if (newStatus === 'Returned') {
+    // Can return only if delivered
+    return currentStatus === 'Delivered';
+  }
+
+  // For normal progression (Pending -> Confirmed -> Shipped -> Delivered)
+  if (currentLevel >= 0 && newLevel >= 0) {
+    // Only allow forward progression or same status
+    return newLevel >= currentLevel;
+  }
+
+  // Don't allow changing from Cancelled/Returned to other states
+  if (currentLevel < 0 && newLevel >= 0) {
+    return false;
+  }
+
+  return false;
+};
+
+// Function to get allowed next statuses
+const getAllowedNextStatuses = (currentStatus) => {
+  const allowedStatuses = [];
+
+  switch (currentStatus) {
+    case 'Pending':
+      allowedStatuses.push('Pending', 'Confirmed', 'Cancelled');
+      break;
+    case 'Confirmed':
+      allowedStatuses.push('Confirmed', 'Shipped', 'Cancelled');
+      break;
+    case 'Shipped':
+      allowedStatuses.push('Shipped', 'Delivered', 'Cancelled');
+      break;
+    case 'Delivered':
+      allowedStatuses.push('Delivered', 'Returned');
+      break;
+    case 'Cancelled':
+      allowedStatuses.push('Cancelled');
+      break;
+    case 'Returned':
+      allowedStatuses.push('Returned');
+      break;
+    default:
+      allowedStatuses.push('Pending', 'Confirmed', 'Cancelled');
+  }
+
+  return allowedStatuses;
+};
 
 // to show orders in admin side
-
 const loadOrders = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -25,10 +91,35 @@ const loadOrders = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
+    // Add allowed statuses for each order
+    const ordersWithAllowedStatuses = orders.map(order => {
+      const orderObj = order.toJSON();
+      orderObj.allowedStatuses = getAllowedNextStatuses(order.status);
+
+      // Add allowed statuses for each product
+      orderObj.products = orderObj.products.map(product => ({
+        ...product,
+        allowedStatuses: getAllowedNextStatuses(product.status || 'Pending')
+      }));
+
+      return orderObj;
+    });
+
     if (req.xhr) {
-      res.render('partials/admin/orderTable', { orders, currentPage: page, totalPages, limit, currentRoute: req.path });
+      res.render('partials/admin/orderTable', {
+        orders: ordersWithAllowedStatuses,
+        currentPage: page,
+        totalPages,
+        limit,
+        currentRoute: req.path
+      });
     } else {
-      res.render('admin/order', { orders, currentPage: page, totalPages, limit });
+      res.render('admin/order', {
+        orders: ordersWithAllowedStatuses,
+        currentPage: page,
+        totalPages,
+        limit
+      });
     }
   } catch (error) {
     console.error(error);
@@ -37,7 +128,6 @@ const loadOrders = async (req, res) => {
 };
 
 // to update the status of the order
-
 const updateOrderStatus = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
@@ -46,6 +136,14 @@ const updateOrderStatus = async (req, res) => {
     const order = await orderModel.findById(id).populate('products.productId');
     if (!order) {
       return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    // Check if status update is allowed
+    if (!isStatusUpdateAllowed(order.status, status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot change order status from '${order.status}' to '${status}'. Invalid status progression.`
+      });
     }
 
     order.status = status;
@@ -59,39 +157,49 @@ const updateOrderStatus = async (req, res) => {
     if (['Confirmed', 'Shipped', 'Delivered'].includes(status)) {
       order.products.forEach(product => {
         if (!['Cancelled', 'Returned'].includes(product.status)) {
-          product.status = status === 'Delivered' ? 'Delivered' : 'Ordered';
+          product.status = status;
         }
       });
     }
 
-    if (status === 'Cancelled') {
+    if (status === 'Cancelled' || status === 'Returned') {
       for (const product of order.products) {
-        if (!['Delivered', 'Returned', 'Cancelled'].includes(product.status)) {
-          // Update stock for non-delivered, non-cancelled, non-returned products
+        const isCancelledRefund = status === 'Cancelled' && !['Delivered', 'Returned', 'Cancelled'].includes(product.status);
+        const isReturnedRefund = status === 'Returned' && product.status === 'Delivered';
+
+        if (isCancelledRefund || isReturnedRefund) {
+          // Restore product stock
           await productModel.findByIdAndUpdate(
             product.productId,
             { $inc: { stock: product.quantity } },
             { new: true }
           );
-          product.status = 'Cancelled';
+
+          product.status = status; // Set product status to Cancelled or Returned
           refundAmount += (product.discountedPrice ?? product.price) * product.quantity;
         }
       }
+
       order.refundedTotal = (order.refundedTotal || 0) + refundAmount;
     }
 
-    // Process refund to wallet for 'Razorpay' or 'Wallet' payment methods
-    if (status === 'Cancelled' && ['Razorpay', 'Wallet'].includes(order.paymentMethod) && refundAmount > 0) {
+    // Ensure single-product order reflects Returned status
+    if (order.products.length === 1 && status === 'Returned') {
+      order.products[0].status = 'Returned';
+    }
+
+    // Process refund to wallet for Razorpay
+    if ((status === 'Cancelled' || status === 'Returned') && order.paymentMethod === 'Razorpay' && refundAmount > 0) {
       let wallet = await walletModel.findOne({ userId: order.userId });
 
       const transactionType = 'credit';
-      const description = `Refund for cancelled order ${id}`;
+      const description = `Refund for ${status.toLowerCase()} order ${id}`;
 
       try {
         if (wallet) {
           wallet.transaction.push({
             transactionType,
-            amount: refundAmount,
+            amount: refundAmount.toString(),
             date: new Date(),
             description
           });
@@ -102,7 +210,7 @@ const updateOrderStatus = async (req, res) => {
             userId: order.userId,
             transaction: [{
               transactionType,
-              amount: refundAmount,
+              amount: refundAmount.toString(),
               date: new Date(),
               description
             }],
@@ -125,6 +233,7 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
+// to update the status of a specific product in an order
 const updateProductStatus = async (req, res) => {
   const { orderId, productId } = req.params;
   const { status } = req.body;
@@ -139,9 +248,13 @@ const updateProductStatus = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Product not found in order' });
     }
 
-    // Check if the product can be cancelled or returned
-    if (['Delivered', 'Returned', 'Cancelled'].includes(product.status) && ['Cancelled', 'Returned'].includes(status)) {
-      return res.status(400).json({ success: false, message: 'Product cannot be cancelled or returned' });
+    // Check if product status update is allowed
+    const currentProductStatus = product.status || 'Pending';
+    if (!isStatusUpdateAllowed(currentProductStatus, status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot change product status from '${currentProductStatus}' to '${status}'. Invalid status progression.`
+      });
     }
 
     let refundAmount = 0;
@@ -156,10 +269,16 @@ const updateProductStatus = async (req, res) => {
       order.refundedTotal = (order.refundedTotal || 0) + refundAmount;
     }
 
+    // Update product status
     product.status = status;
 
-    // Process refund to wallet for 'Razorpay' or 'Wallet' payment methods
-    if (['Cancelled', 'Returned'].includes(status) && ['Razorpay', 'Wallet'].includes(order.paymentMethod) && refundAmount > 0) {
+    // For single-product orders, ensure product status matches when returned
+    if (order.products.length === 1 && status === 'Returned') {
+      product.status = 'Returned';
+    }
+
+    // Process refund to wallet only for Razorpay payment method
+    if (['Cancelled', 'Returned'].includes(status) && order.paymentMethod === 'Razorpay' && refundAmount > 0) {
       let wallet = await walletModel.findOne({ userId: order.userId });
 
       const transactionType = 'credit';
@@ -169,7 +288,7 @@ const updateProductStatus = async (req, res) => {
         if (wallet) {
           wallet.transaction.push({
             transactionType,
-            amount: refundAmount,
+            amount: refundAmount.toString(),
             date: new Date(),
             description
           });
@@ -180,7 +299,7 @@ const updateProductStatus = async (req, res) => {
             userId: order.userId,
             transaction: [{
               transactionType,
-              amount: refundAmount,
+              amount: refundAmount.toString(),
               date: new Date(),
               description
             }],
@@ -214,7 +333,7 @@ const updateProductStatus = async (req, res) => {
   }
 };
 
-// Updated cancel order function with better logic
+// Updated cancel order function
 const cancelOrder = async (req, res) => {
   const { id } = req.params;
 
@@ -224,30 +343,67 @@ const cancelOrder = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
-    // Check if order can be cancelled
-    if (order.status === 'Delivered') {
+    // Check if order can be cancelled using the status progression logic
+    if (!isStatusUpdateAllowed(order.status, 'Cancelled')) {
       return res.status(400).json({
         success: false,
-        message: 'Cannot cancel delivered order'
+        message: `Cannot cancel order with status '${order.status}'. Order can only be cancelled if not delivered, returned, or already cancelled.`
       });
     }
 
     // Update order and all product statuses to cancelled
     order.status = 'Cancelled';
-    order.products.forEach(product => {
-      if (product.status !== 'Delivered') {
+    let refundAmount = 0;
+
+    for (const product of order.products) {
+      if (!['Delivered', 'Returned', 'Cancelled'].includes(product.status)) {
+        // Update stock for non-delivered, non-cancelled, non-returned products
+        await productModel.findByIdAndUpdate(
+          product.productId,
+          { $inc: { stock: product.quantity } },
+          { new: true }
+        );
         product.status = 'Cancelled';
+        refundAmount += (product.discountedPrice ?? product.price) * product.quantity;
       }
-    });
+    }
 
-    // Handle refunds if payment was successful
-    if (order.paymentStatus === 'success') {
-      const deliveredProducts = order.products.filter(p => p.status === 'Delivered');
-      const deliveredTotal = deliveredProducts.reduce((sum, p) =>
-        sum + (p.discountedPrice || p.price) * p.quantity, 0);
+    order.refundedTotal = (order.refundedTotal || 0) + refundAmount;
 
-      order.refundedTotal = order.total - deliveredTotal;
-      order.paymentStatus = 'failed'; // Mark as refunded
+    // Process refund to wallet only for Razorpay payment method
+    if (order.paymentMethod === 'Razorpay' && refundAmount > 0) {
+      let wallet = await walletModel.findOne({ userId: order.userId });
+
+      const transactionType = 'credit';
+      const description = `Refund for cancelled order ${id}`;
+
+      try {
+        if (wallet) {
+          wallet.transaction.push({
+            transactionType,
+            amount: refundAmount.toString(),
+            date: new Date(),
+            description
+          });
+          wallet.balance += refundAmount;
+          await wallet.save();
+        } else {
+          wallet = new walletModel({
+            userId: order.userId,
+            transaction: [{
+              transactionType,
+              amount: refundAmount.toString(),
+              date: new Date(),
+              description
+            }],
+            balance: refundAmount
+          });
+          await wallet.save();
+        }
+      } catch (walletError) {
+        console.error('Error updating wallet:', walletError);
+        return res.status(500).json({ success: false, message: 'Failed to process refund' });
+      }
     }
 
     await order.save();
@@ -271,6 +427,31 @@ const bulkUpdateProductStatus = async (req, res) => {
     }
 
     let refundAmount = 0;
+    const invalidUpdates = [];
+
+    // Validate all updates first
+    updates.forEach(update => {
+      const product = order.products.id(update.productId);
+      if (product) {
+        const currentStatus = product.status || 'Pending';
+        if (!isStatusUpdateAllowed(currentStatus, update.status)) {
+          invalidUpdates.push({
+            productId: update.productId,
+            currentStatus,
+            requestedStatus: update.status
+          });
+        }
+      }
+    });
+
+    // If any updates are invalid, return error
+    if (invalidUpdates.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Some status updates are not allowed',
+        invalidUpdates
+      });
+    }
 
     // Update multiple products
     updates.forEach(update => {
@@ -289,8 +470,8 @@ const bulkUpdateProductStatus = async (req, res) => {
       }
     });
 
-    // Process refund to wallet for 'Razorpay' or 'Wallet' payment methods
-    if (refundAmount > 0 && ['Razorpay', 'Wallet'].includes(order.paymentMethod)) {
+    // Process refund to wallet only for Razorpay payment method
+    if (refundAmount > 0 && order.paymentMethod === 'Razorpay') {
       let wallet = await walletModel.findOne({ userId: order.userId });
 
       const transactionType = 'credit';
@@ -300,7 +481,7 @@ const bulkUpdateProductStatus = async (req, res) => {
         if (wallet) {
           wallet.transaction.push({
             transactionType,
-            amount: refundAmount,
+            amount: refundAmount.toString(),
             date: new Date(),
             description
           });
@@ -311,7 +492,7 @@ const bulkUpdateProductStatus = async (req, res) => {
             userId: order.userId,
             transaction: [{
               transactionType,
-              amount: refundAmount,
+              amount: refundAmount.toString(),
               date: new Date(),
               description
             }],
@@ -365,12 +546,12 @@ const deleteOrder = async (req, res) => {
   }
 };
 
-
 module.exports = {
   loadOrders,
   updateOrderStatus,
   updateProductStatus,
   cancelOrder,
   bulkUpdateProductStatus,
-  deleteOrder
-}
+  deleteOrder,
+  getAllowedNextStatuses
+};

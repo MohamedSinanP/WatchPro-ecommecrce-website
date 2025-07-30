@@ -7,17 +7,24 @@ const loadCoupons = async (req, res) => {
     const limit = 6;
     const skip = (page - 1) * limit;
 
+    // Get the total number of coupons
     const totalCoupons = await couponModel.countDocuments();
-    const coupons = await couponModel.find({});
+
+    const coupons = await couponModel
+      .find({})
+      .sort({ updatedAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
     const totalPages = Math.ceil(totalCoupons / limit);
     const currentPage = page;
+
     res.render('admin/coupons', { coupons, currentPage, limit, totalPages });
   } catch (error) {
-    console.error('Error loading coupon', error)
+    console.error('Error loading coupon', error);
     res.status(500).json({ success: false, message: 'Failed to load coupons' });
   }
-}
+};
 
 // to add new coupon in coupon collection 
 const addCoupon = async (req, res) => {
