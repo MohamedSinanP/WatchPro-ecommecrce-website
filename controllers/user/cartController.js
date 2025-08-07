@@ -2,12 +2,11 @@ const productModel = require('../../models/productModel');
 const cartModel = require('../../models/cartModel');
 const couponModel = require('../../models/couponModel');
 const offerModel = require('../../models/offerModel');
-
+const { recalculateCouponDiscount, getCurrentCoupon } = require('./couponController');
 
 const MAX_QUANTITY = 4;
 
 // to show the cart page 
-
 const loadCartPage = async (req, res) => {
   const userId = req.session.user;
 
@@ -29,7 +28,16 @@ const loadCartPage = async (req, res) => {
     let totalDiscount = 0;
 
     if (!cart || !cart.products.length) {
-      return res.render('user/cart', { products: [], coupons: activeCoupons, subtotal, totalDiscount });
+      // Clear any applied coupon if cart is empty
+      req.session.appliedCoupon = null;
+      return res.render('user/cart', {
+        products: [],
+        coupons: activeCoupons,
+        subtotal: 0,
+        totalDiscount: 0,
+        couponDiscount: 0,
+        appliedCoupon: null
+      });
     }
 
     const productsWithImages = await Promise.all(
@@ -54,14 +62,14 @@ const loadCartPage = async (req, res) => {
           if (bestOffer.discountType === 'percentage') {
             const discountAmount = (productDetails.price * bestOffer.discountValue) / 100;
             offerPrice = (productDetails.price - discountAmount).toFixed(2);
-            productDiscount = discountAmount * product.quantity;  // Track the discount for this product
+            productDiscount = discountAmount * product.quantity;
           } else if (bestOffer.discountType === 'amount') {
             offerPrice = (productDetails.price - bestOffer.discountValue).toFixed(2);
-            productDiscount = bestOffer.discountValue * product.quantity;  // Track the discount for this product
+            productDiscount = bestOffer.discountValue * product.quantity;
           }
         }
 
-        subtotal += offerPrice * product.quantity;
+        subtotal += parseFloat(offerPrice) * product.quantity;
         totalDiscount += productDiscount;
 
         return {
@@ -76,12 +84,19 @@ const loadCartPage = async (req, res) => {
         };
       })
     );
+
+    // Recalculate coupon discount based on current subtotal
+    const couponDiscount = recalculateCouponDiscount(req, subtotal);
+    const appliedCoupon = getCurrentCoupon(req);
+
     return res.render('user/cart', {
       products: productsWithImages,
       coupons: activeCoupons,
       subtotal: subtotal.toFixed(2),
       cartId: cart._id,
-      totalDiscount: totalDiscount.toFixed(2)
+      totalDiscount: totalDiscount.toFixed(2),
+      couponDiscount: couponDiscount.toFixed(2),
+      appliedCoupon: appliedCoupon
     });
 
   } catch (error) {
@@ -93,7 +108,6 @@ const loadCartPage = async (req, res) => {
 // to add the product into user cart collection
 const addToCart = async (req, res) => {
   const userId = req.session.user;
-
   const { productId, name, price, quantity } = req.body;
 
   try {
@@ -129,26 +143,29 @@ const addToCart = async (req, res) => {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
-// to update the quatity of the prodcut in the user cart 
 
+// to update the quantity of the product in the user cart 
 const updateQuantity = async (req, res) => {
   const { cartId, id, quantity } = req.body;
-  const product = await productModel.findById(id);
-  const stock = product.stock;
-  if (quantity > stock) {
-    return res.status(400).json({
-      success: false,
-      message: `only ${stock} stocks left.`
-    });
-  }
-  if (quantity > MAX_QUANTITY) {
-    return res.status(400).json({
-      success: false,
-      message: `Quantity cannot exceed ${MAX_QUANTITY}.`
-    });
-  }
 
   try {
+    const product = await productModel.findById(id);
+    const stock = product.stock;
+
+    if (quantity > stock) {
+      return res.status(400).json({
+        success: false,
+        message: `only ${stock} stocks left.`
+      });
+    }
+
+    if (quantity > MAX_QUANTITY) {
+      return res.status(400).json({
+        success: false,
+        message: `Quantity cannot exceed ${MAX_QUANTITY}.`
+      });
+    }
+
     const cart = await cartModel.findById(cartId);
 
     if (!cart) {
@@ -170,13 +187,13 @@ const updateQuantity = async (req, res) => {
     cart.products[productIndex].quantity = quantity;
     await cart.save();
 
-    const activeOffers = await offerModel.find({ isActive: true }).populate([
+    const activeOffers = await offerModel.find({ isActive: true, expireDate: { $gt: new Date() } }).populate([
       { path: 'products' },
       { path: 'categories' }
     ]);
 
     let subtotal = 0;
-    let totalDiscount = 0;
+    let totalOfferDiscount = 0;
 
     const updatedProducts = await Promise.all(
       cart.products.map(async (product) => {
@@ -188,7 +205,6 @@ const updateQuantity = async (req, res) => {
           const matchesProduct = offer.products.some(prod => prod._id.equals(product.productId));
           const productCategoryId = productDetails.category._id || productDetails.category;
           const matchesCategory = offer.categories.some(cat => cat._id.equals(productCategoryId));
-
           return matchesProduct || matchesCategory;
         });
 
@@ -197,7 +213,7 @@ const updateQuantity = async (req, res) => {
           if (bestOffer.discountType === 'percentage') {
             const discountAmount = (productDetails.price * bestOffer.discountValue) / 100;
             offerPrice = productDetails.price - discountAmount;
-            productDiscount = discountAmount * product.quantity;  // Calculate discount for this product
+            productDiscount = discountAmount * product.quantity;
           } else if (bestOffer.discountType === 'amount') {
             offerPrice = productDetails.price - bestOffer.discountValue;
             productDiscount = bestOffer.discountValue * product.quantity;
@@ -205,7 +221,7 @@ const updateQuantity = async (req, res) => {
         }
 
         subtotal += offerPrice * product.quantity;
-        totalDiscount += productDiscount;
+        totalOfferDiscount += productDiscount;
 
         return {
           ...product,
@@ -216,23 +232,31 @@ const updateQuantity = async (req, res) => {
       })
     );
 
+    // Recalculate coupon discount based on new subtotal
+    const wasCouponApplied = !!req.session.appliedCoupon;
+    const couponDiscount = recalculateCouponDiscount(req, subtotal);
+    const appliedCoupon = getCurrentCoupon(req);
+    const couponRemoved = wasCouponApplied && !appliedCoupon;
+
     res.json({
       success: true,
       message: "Quantity updated successfully",
       product: updatedProducts[productIndex],
       updatedProducts,
       subtotal: subtotal.toFixed(2),
-      totalDiscount: totalDiscount.toFixed(2)
+      totalOfferDiscount: totalOfferDiscount.toFixed(2),
+      couponDiscount: couponDiscount.toFixed(2),
+      appliedCoupon: appliedCoupon,
+      couponRemoved: couponRemoved
     });
 
   } catch (error) {
     console.error(error);
-    res.status(500).json('Internal server error');
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
 
 // to delete the product from a specific user cart
-
 const deleteCartProduct = async (req, res) => {
   const productId = req.params.id;
   const userId = req.session.user;
@@ -244,33 +268,45 @@ const deleteCartProduct = async (req, res) => {
     );
 
     if (!deleteProduct) {
-
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
-    res.json({ success: true, deleteProduct })
+
+    // After deleting product, we need to recalculate everything
+    // This will be handled by the getCartTotals call in the frontend
+    res.json({ success: true, deleteProduct });
 
   } catch (error) {
     console.error(error);
-    res.status(500).json('Failed to delete the product from the cart');
+    res.status(500).json({ success: false, message: 'Failed to delete the product from the cart' });
   }
-
-}
+};
 
 const getCartTotals = async (req, res) => {
   const userId = req.session.user;
+
   try {
     const cart = await cartModel.findOne({ userId }).lean();
+
     if (!cart || !cart.products.length) {
-      return res.json({ success: true, subtotal: '0.00', totalDiscount: '0.00' });
+      // Clear coupon if cart is empty
+      req.session.appliedCoupon = null;
+      return res.json({
+        success: true,
+        subtotal: '0.00',
+        totalOfferDiscount: '0.00',
+        couponDiscount: '0.00',
+        appliedCoupon: null,
+        couponRemoved: false
+      });
     }
 
-    const activeOffers = await offerModel.find({ isActive: true }).populate([
+    const activeOffers = await offerModel.find({ isActive: true, expireDate: { $gt: new Date() } }).populate([
       { path: 'products' },
       { path: 'categories' }
     ]);
 
     let subtotal = 0;
-    let totalDiscount = 0;
+    let totalOfferDiscount = 0;
 
     await Promise.all(
       cart.products.map(async (product) => {
@@ -300,21 +336,32 @@ const getCartTotals = async (req, res) => {
         }
 
         subtotal += offerPrice * product.quantity;
-        totalDiscount += productDiscount;
+        totalOfferDiscount += productDiscount;
       })
     );
+
+    // Recalculate coupon discount based on current subtotal
+    const couponDiscount = recalculateCouponDiscount(req, subtotal);
+    const appliedCoupon = getCurrentCoupon(req);
+    const couponRemoved = !appliedCoupon && req.session.appliedCoupon !== null;
+
+    if (couponRemoved) {
+      req.session.appliedCoupon = null; // Ensure coupon is cleared
+    }
 
     res.json({
       success: true,
       subtotal: subtotal.toFixed(2),
-      totalDiscount: totalDiscount.toFixed(2)
+      totalOfferDiscount: totalOfferDiscount.toFixed(2),
+      couponDiscount: couponDiscount.toFixed(2),
+      appliedCoupon: appliedCoupon,
+      couponRemoved: couponRemoved
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Failed to retrieve cart totals' });
   }
 };
-
 
 const getCart = async (req, res) => {
   const userId = req.session.user;
@@ -346,4 +393,4 @@ module.exports = {
   deleteCartProduct,
   getCartTotals,
   getCart
-}
+};

@@ -22,23 +22,24 @@ const razorpay = new Razorpay({
 // to create a order for the user with the razorpay
 
 const createOrderWithRazorpay = async (req, res) => {
-
   const userId = req.session.user;
   try {
-    let { totalPrice, paymentMethod, addressId, totalDiscount, couponId } = req.body;
-
+    let { totalPrice, paymentMethod, addressId, totalDiscount, couponId, couponCode, couponDiscount } = req.body;
     totalPrice = Number(totalPrice);
     const deliveryDate = new Date();
     deliveryDate.setDate(deliveryDate.getDate() + 7);
+
     const options = {
-      amount: totalPrice * 100,
+      amount: Math.round(totalPrice * 100),
       currency: "INR",
       receipt: `order_rcptid_${Math.floor(Math.random() * 1000000)}`,
     };
+
     const razorpayOrder = await razorpay.orders.create(options);
     if (!razorpayOrder || !razorpayOrder.id) {
       throw new Error("Failed to create Razorpay order");
     }
+
     const address = await addressModel.findOne({ _id: addressId });
     if (!address) {
       return res.status(400).send("No default address found");
@@ -48,18 +49,22 @@ const createOrderWithRazorpay = async (req, res) => {
     if (!cart || cart.products.length === 0) {
       return res.status(400).send("Cart is empty");
     }
+
     const activeOffers = await offerModel.find({ isActive: true, expireDate: { $gt: new Date() } });
 
+    // Calculate original total (before coupon discount)
+    let originalTotal = 0;
     const products = cart.products.map(item => {
       const product = item.productId;
       const quantity = item.quantity;
 
       const discounted = getDiscountedPrice(product, activeOffers);
       const original = product.price;
-
       const isOfferApplied = discounted < original;
 
-
+      // Add to original total (using offer price if available)
+      const effectivePrice = isOfferApplied ? discounted : original;
+      originalTotal += effectivePrice * quantity;
 
       const productEntry = {
         productId: product._id,
@@ -76,7 +81,8 @@ const createOrderWithRazorpay = async (req, res) => {
       return productEntry;
     });
 
-    const newOrder = await orderModel.create({
+    // Prepare order data
+    const orderData = {
       userId,
       products,
       address: {
@@ -89,14 +95,25 @@ const createOrderWithRazorpay = async (req, res) => {
         pincode: address.pincode,
       },
       total: totalPrice,
+      originalTotal: originalTotal,
       status: 'Pending',
       deliveryDate: deliveryDate,
       paymentMethod: paymentMethod,
-      totalDiscount: totalDiscount,
+      totalDiscount: totalDiscount || 0,
       paymentStatus: 'failed',
       razorpayId: razorpayOrder.id
-    });
+    };
 
+    // Add coupon data if coupon was applied
+    if (couponId && couponCode) {
+      orderData.appliedCoupon = couponId;
+      orderData.couponCode = couponCode;
+      orderData.couponDiscount = couponDiscount || 0;
+    }
+
+    const newOrder = await orderModel.create(orderData);
+
+    // Update product stock
     for (const product of products) {
       const { productId, quantity } = product;
       await productModel.updateOne(
@@ -105,8 +122,11 @@ const createOrderWithRazorpay = async (req, res) => {
       );
     }
 
-    await cartModel.findOneAndDelete({ userId: userId })
-    await updateCouponUser(couponId, userId);
+    // Clear cart and update coupon usage
+    await cartModel.findOneAndDelete({ userId: userId });
+    if (couponId) {
+      await updateCouponUser(couponId, userId);
+    }
 
     res.json({
       success: true,
@@ -124,37 +144,42 @@ const createOrderWithRazorpay = async (req, res) => {
   }
 };
 
-// to create a order for the user with COD
-
+// Create order with COD
 const createOrderWithOCD = async (req, res) => {
-  const { totalPrice, paymentMethod, addressId, totalDiscount, couponId } = req.body;
-
+  const { totalPrice, paymentMethod, addressId, totalDiscount, couponId, couponCode, couponDiscount } = req.body;
   const userId = req.session.user;
   const productTotal = totalPrice - 100;
 
   try {
     if (productTotal > 1000) {
-      return res.json({ success: false, message: 'cannot get Cash on delivery above 1000 rupeees' });
+      return res.json({ success: false, message: 'Cannot get Cash on delivery above 1000 rupees' });
     }
+
     const address = await addressModel.findOne({ _id: addressId });
+    if (!address) {
+      return res.status(400).send("Address not found");
+    }
 
     const cart = await cartModel.findOne({ userId: userId }).populate('products.productId');
     if (!cart || cart.products.length === 0) {
       return res.status(400).send("Cart is empty");
     }
+
     const activeOffers = await offerModel.find({ isActive: true, expireDate: { $gt: new Date() } });
 
-
+    // Calculate original total (before coupon discount)
+    let originalTotal = 0;
     const products = cart.products.map(item => {
       const product = item.productId;
       const quantity = item.quantity;
 
       const discounted = getDiscountedPrice(product, activeOffers);
       const original = product.price;
-
       const isOfferApplied = discounted < original;
 
-
+      // Add to original total (using offer price if available)
+      const effectivePrice = isOfferApplied ? discounted : original;
+      originalTotal += effectivePrice * quantity;
 
       const productEntry = {
         productId: product._id,
@@ -171,8 +196,8 @@ const createOrderWithOCD = async (req, res) => {
       return productEntry;
     });
 
-
-    await orderModel.create({
+    // Prepare order data
+    const orderData = {
       userId,
       products,
       address: {
@@ -185,13 +210,24 @@ const createOrderWithOCD = async (req, res) => {
         pincode: address.pincode
       },
       total: totalPrice,
+      originalTotal: originalTotal, // Store original total before coupon
       status: 'Pending',
       paymentMethod: paymentMethod,
-      totalDiscount: totalDiscount
-    });
+      totalDiscount: totalDiscount || 0
+    };
+
+    // Add coupon data if coupon was applied
+    if (couponId && couponCode) {
+      orderData.appliedCoupon = couponId;
+      orderData.couponCode = couponCode;
+      orderData.couponDiscount = couponDiscount || 0;
+    }
+
+    await orderModel.create(orderData);
+
+    // Update product stock
     for (const product of products) {
       const { productId, quantity } = product;
-
       await productModel.findOneAndUpdate(
         { _id: productId },
         { $inc: { stock: -quantity } },
@@ -199,21 +235,22 @@ const createOrderWithOCD = async (req, res) => {
       );
     }
 
+    // Clear cart and update coupon usage
     await cartModel.findOneAndDelete({ userId: userId });
-    await updateCouponUser(couponId, userId);
+    if (couponId) {
+      await updateCouponUser(couponId, userId);
+    }
 
     res.json({ success: true });
   } catch (error) {
     console.error("Error placing order:", error);
     res.status(500).send("Internal Server Error");
   }
+};
 
-}
-
-// to create a order for the user using wallet payment 
-
+// Create order with wallet payment
 const walletOrder = async (req, res) => {
-  const { totalPrice, paymentMethod, addressId, totalDiscount, couponId } = req.body;
+  const { totalPrice, paymentMethod, addressId, totalDiscount, couponId, couponCode, couponDiscount } = req.body;
   const userId = req.session.user;
 
   try {
@@ -223,8 +260,6 @@ const walletOrder = async (req, res) => {
     }
 
     const userWallet = await walletModel.findOne({ userId: userId });
-
-    // If wallet doesn't exist, return error
     if (!userWallet) {
       return res.status(400).json({
         success: false,
@@ -234,27 +269,29 @@ const walletOrder = async (req, res) => {
 
     const userBalance = userWallet.balance;
     if (userBalance < totalPrice) {
-      return res.json({ success: false, message: "Cannot pay with Wallet your wallet doesn't have enough money" });
+      return res.json({ success: false, message: "Cannot pay with Wallet - your wallet doesn't have enough money" });
     }
-    const walletBalance = userBalance - totalPrice;
+
     const cart = await cartModel.findOne({ userId: userId }).populate('products.productId');
     if (!cart || cart.products.length === 0) {
       return res.status(400).send("Cart is empty");
     }
+
     const activeOffers = await offerModel.find({ isActive: true, expireDate: { $gt: new Date() } });
 
-
-
+    // Calculate original total (before coupon discount)
+    let originalTotal = 0;
     const products = cart.products.map(item => {
       const product = item.productId;
       const quantity = item.quantity;
 
       const discounted = getDiscountedPrice(product, activeOffers);
       const original = product.price;
-
       const isOfferApplied = discounted < original;
 
-
+      // Add to original total (using offer price if available)
+      const effectivePrice = isOfferApplied ? discounted : original;
+      originalTotal += effectivePrice * quantity;
 
       const productEntry = {
         productId: product._id,
@@ -271,9 +308,8 @@ const walletOrder = async (req, res) => {
       return productEntry;
     });
 
-
-
-    const newOrder = await orderModel.create({
+    // Prepare order data
+    const orderData = {
       userId,
       products,
       address: {
@@ -286,13 +322,24 @@ const walletOrder = async (req, res) => {
         pincode: address.pincode
       },
       total: totalPrice,
+      originalTotal: originalTotal, // Store original total before coupon
       status: 'Pending',
       paymentMethod: paymentMethod,
-      totalDiscount: totalDiscount
-    });
+      totalDiscount: totalDiscount || 0
+    };
+
+    // Add coupon data if coupon was applied
+    if (couponId && couponCode) {
+      orderData.appliedCoupon = couponId;
+      orderData.couponCode = couponCode;
+      orderData.couponDiscount = couponDiscount || 0;
+    }
+
+    const newOrder = await orderModel.create(orderData);
+
+    // Update product stock
     for (const product of products) {
       const { productId, quantity } = product;
-
       await productModel.findOneAndUpdate(
         { _id: productId },
         { $inc: { stock: -quantity } },
@@ -300,25 +347,29 @@ const walletOrder = async (req, res) => {
       );
     }
 
+    // Update wallet balance and add transaction
+    const walletBalance = userBalance - totalPrice;
     userWallet.transaction.push({
       transactionType: 'debit',
       amount: newOrder.total,
-      date: new Date()
+      date: new Date(),
+      description: `Payment for order ${newOrder._id}`
     });
-
     userWallet.balance = walletBalance;
     await userWallet.save();
+
+    // Clear cart and update coupon usage
     await cartModel.findOneAndDelete({ userId: userId });
-    await updateCouponUser(couponId, userId);
+    if (couponId) {
+      await updateCouponUser(couponId, userId);
+    }
 
     res.json({ success: true });
   } catch (error) {
     console.error("Error placing order:", error);
     res.status(500).send("Internal Server Error");
   }
-
-
-}
+};
 
 // to show the greetings page for the user
 
@@ -335,7 +386,7 @@ const cancelOrder = async (req, res) => {
   const userId = req.session.user;
 
   try {
-    const order = await orderModel.findOne({ _id: orderId });
+    const order = await orderModel.findOne({ _id: orderId }).populate('appliedCoupon');
     if (!order) {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
@@ -361,20 +412,79 @@ const cancelOrder = async (req, res) => {
         return res.status(400).json({ success: false, message: 'Product cannot be cancelled' });
       }
 
+      // Update product stock
       await productModel.findByIdAndUpdate(
         productId,
         { $inc: { stock: productToCancel.quantity } },
         { new: true }
       );
 
-      refundAmount = (productToCancel.discountedPrice ?? productToCancel.price) * productToCancel.quantity;
+      // Calculate remaining cart total after cancelling this product (using offer prices)
+      const remainingProducts = order.products.filter(p =>
+        p.productId.toString() !== productId && p.status !== 'Cancelled'
+      );
+
+      const remainingCartTotal = remainingProducts.reduce((sum, p) => {
+        const productPrice = p.discountedPrice ?? p.price; // Use offer price if available
+        return sum + (productPrice * p.quantity);
+      }, 0);
+
+      let couponStillValid = true;
+      let couponDiscountToRemove = 0;
+
+      // Check if coupon is still valid after product cancellation
+      if (order.appliedCoupon && remainingCartTotal < order.appliedCoupon.minPurchaseLimit) {
+        couponStillValid = false;
+
+        // Calculate the coupon discount that was applied to the cancelled product
+        const cancelledProductPrice = productToCancel.discountedPrice ?? productToCancel.price;
+        const cancelledProductTotal = cancelledProductPrice * productToCancel.quantity;
+
+        // Calculate proportional coupon discount on this product
+        const currentOrderTotal = order.products.reduce((sum, p) => {
+          if (p.status !== 'Cancelled') {
+            const productPrice = p.discountedPrice ?? p.price;
+            return sum + (productPrice * p.quantity);
+          }
+          return sum;
+        }, 0);
+
+        if (order.couponDiscount && currentOrderTotal > 0) {
+          couponDiscountToRemove = (cancelledProductTotal / currentOrderTotal) * order.couponDiscount;
+        }
+      }
+
+      // Calculate refund amount
+      const productOfferPrice = productToCancel.discountedPrice ?? productToCancel.price;
+      const productSubtotal = productOfferPrice * productToCancel.quantity;
+
+      if (couponStillValid) {
+        // Coupon still valid - refund offer price minus proportional coupon discount
+        const proportionalCouponDiscount = order.couponDiscount ?
+          (productSubtotal / (order.originalTotal || order.total + order.totalDiscount)) * order.couponDiscount : 0;
+        refundAmount = productSubtotal - proportionalCouponDiscount;
+      } else {
+        // Coupon no longer valid - refund full offer price (no coupon discount)
+        refundAmount = productSubtotal;
+      }
+
+      // Prepare update query
+      const updateQuery = {
+        $set: { 'products.$.status': 'Cancelled' },
+        $inc: { refundedTotal: refundAmount }
+      };
+
+      // If coupon is no longer valid, remove coupon discount and update totals
+      if (!couponStillValid && order.appliedCoupon) {
+        updateQuery.$unset = { appliedCoupon: 1 };
+        updateQuery.$set.couponCode = null;
+        updateQuery.$set.couponDiscount = 0;
+        updateQuery.$set.totalDiscount = Math.max(0, order.totalDiscount - order.couponDiscount);
+      }
 
       updatedOrder = await orderModel.findOneAndUpdate(
         { _id: orderId, 'products.productId': productId },
-        {
-          $set: { 'products.$.status': 'Cancelled' },
-          $inc: { refundedTotal: refundAmount }
-        },
+        updateQuery,
         { new: true }
       ).populate('products.productId');
 
@@ -384,7 +494,9 @@ const cancelOrder = async (req, res) => {
         updatedOrder.status = 'Cancelled';
         await updatedOrder.save();
       }
+
     } else {
+      // Cancel entire order logic
       if (order.products.every(p => p.status === 'Cancelled')) {
         return res.status(400).json({ success: false, message: 'Order is already fully cancelled' });
       }
@@ -399,20 +511,21 @@ const cancelOrder = async (req, res) => {
         }
       }
 
-      refundAmount = order.products.reduce((sum, p) => {
-        return p.status !== 'Cancelled' ? sum + p.price * p.quantity : sum;
-      }, 0);
+      // For full order cancellation, refund the actual total paid (including all discounts)
+      refundAmount = order.total - order.refundedTotal;
 
       updatedOrder = await orderModel.findByIdAndUpdate(
         orderId,
         {
           status: 'Cancelled',
-          $set: { 'products.$[].status': 'Cancelled' }
+          $set: { 'products.$[].status': 'Cancelled' },
+          $inc: { refundedTotal: refundAmount }
         },
         { new: true }
       ).populate('products.productId');
     }
 
+    // Process refund to wallet if applicable
     if (['Razorpay', 'Wallet'].includes(updatedOrder.paymentMethod) && refundAmount > 0) {
       let wallet = await walletModel.findOne({ userId });
 
@@ -422,7 +535,7 @@ const cancelOrder = async (req, res) => {
 
       const transactionType = 'credit';
       const description = productId
-        ? `Refund for cancelled product in order ${orderId}`
+        ? `Refund for cancelled product in order ${orderId}${!couponStillValid ? ' (coupon removed)' : ''}`
         : `Refund for cancelled order ${orderId}`;
 
       try {
@@ -458,8 +571,12 @@ const cancelOrder = async (req, res) => {
       success: true,
       order: updatedOrder,
       refundAmount,
-      message: productId ? 'Product cancelled successfully' : 'Order cancelled successfully'
+      couponRemoved: productId ? !couponStillValid : false,
+      message: productId ?
+        `Product cancelled successfully${!couponStillValid ? ' (coupon discount removed due to minimum purchase limit)' : ''}` :
+        'Order cancelled successfully'
     });
+
   } catch (error) {
     console.error('Error cancelling:', error);
     res.status(500).json({ success: false, message: 'Failed to cancel' });

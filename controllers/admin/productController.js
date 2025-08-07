@@ -46,35 +46,56 @@ const loadProducts = async (req, res) => {
 const addProduct = async (req, res) => {
   try {
     const { name, brand, price, description, category, stock } = req.body;
+
+    if (!name || !brand || !price || !description || !category || !stock) {
+      return res.status(400).json({
+        success: false,
+        message: 'All fields are required'
+      });
+    }
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'At least one image is required'
+      });
+    }
+
     const images = req.files;
     const imageUrls = images.map(file => file.path);
 
     const newProduct = new productModel({
-      name,
-      brand,
-      price,
-      description,
+      name: name.trim(),
+      brand: brand.trim(),
+      price: parseFloat(price),
+      description: description.trim(),
       category,
-      stock,
+      stock: parseInt(stock),
       images: imageUrls
     });
 
     await newProduct.save();
 
-    res.status(201).json({ message: 'Product added successfully!', product: newProduct });
+    res.status(201).json({
+      success: true,
+      message: 'Product added successfully!',
+      product: newProduct
+    });
   } catch (error) {
     console.error('Error adding product:', error);
-    res.status(500).json({ message: 'Error adding product', error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Error adding product',
+      error: error.message
+    });
   }
 };
 
-
-// to edit an existing product in products collecion
+// edit existing product in products collection
 
 const editProduct = async (req, res) => {
   try {
     const productId = req.params.id;
-
     const {
       name,
       brand,
@@ -84,22 +105,24 @@ const editProduct = async (req, res) => {
       stock
     } = req.body;
 
-    let imageUrls;
-
-    if (req.files && req.files.length > 0) {
-      imageUrls = req.files.map(file => file.path);
+    if (!name || !brand || !category || !description || !price || !stock) {
+      return res.status(400).json({
+        success: false,
+        message: 'All fields are required'
+      });
     }
 
     const updateData = {
-      name,
-      brand,
+      name: name.trim(),
+      brand: brand.trim(),
       category,
-      description,
-      price,
-      stock
+      description: description.trim(),
+      price: parseFloat(price),
+      stock: parseInt(stock)
     };
 
-    if (imageUrls) {
+    if (req.files && req.files.length > 0) {
+      const imageUrls = req.files.map(file => file.path);
       updateData.images = imageUrls;
     }
 
@@ -110,16 +133,24 @@ const editProduct = async (req, res) => {
     );
 
     if (!updatedProduct) {
-      return res.status(404).json({ message: 'Product not found' });
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
     }
 
     res.status(200).json({
+      success: true,
       message: 'Product updated successfully',
       product: updatedProduct,
     });
   } catch (error) {
     console.error('Error updating product:', error);
-    res.status(500).json({ message: 'An error occurred while updating the product' });
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while updating the product',
+      error: error.message
+    });
   }
 };
 

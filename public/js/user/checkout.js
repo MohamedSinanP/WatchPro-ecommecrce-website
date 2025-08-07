@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', function () {
         headers: {
           'Content-Type': 'application/json', // Set Content-Type header for JSON
         },
-        body: JSON.stringify(formData), // Convert form data to JSON string
+        body: JSON.stringify(formData),
       });
 
       const data = await response.json();
@@ -313,6 +313,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const totalDiscount = parseFloat(document.getElementById('totalDiscount')?.textContent) || 0;
     const urlParams = new URLSearchParams(window.location.search);
     const couponId = urlParams.get('couponId') || null;
+    const couponDiscount = urlParams.get('couponDiscount') || null;;
+    const couponCode = document.getElementById('couponCode')?.value || null;
 
 
     if (!addressId) {
@@ -349,6 +351,8 @@ document.addEventListener('DOMContentLoaded', function () {
           paymentMethod: paymentMethod.value,
           totalDiscount,
           couponId,
+          couponCode,
+          couponDiscount
         });
 
         if (response.data.success) {
@@ -438,6 +442,8 @@ document.addEventListener('DOMContentLoaded', function () {
           addressId,
           totalDiscount,
           couponId,
+          couponCode,
+          couponDiscount
         });
 
         if (response.data.success) {

@@ -142,7 +142,7 @@ async function toggleListing(userId, isCurrentlyBlocked) {
     const newStatus = !isBlocked;
 
     const response = await fetch('/admin/blockUser', {
-      method: 'PUT',
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
       },

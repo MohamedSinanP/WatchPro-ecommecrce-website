@@ -8,6 +8,76 @@ menuToggle.addEventListener('click', () => {
   sidebar.classList.toggle('active');
 });
 
+// Toast notification utility function
+function showToast(message, type = 'info', duration = 5000) {
+  // Create toast container if it doesn't exist
+  let toastContainer = document.getElementById('toast-container');
+  if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.id = 'toast-container';
+    toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+    toastContainer.style.zIndex = '1060';
+    document.body.appendChild(toastContainer);
+  }
+
+  // Create toast element
+  const toastId = 'toast-' + Date.now();
+  const toastElement = document.createElement('div');
+  toastElement.id = toastId;
+  toastElement.className = `toast align-items-center text-bg-${type} border-0`;
+  toastElement.setAttribute('role', 'alert');
+  toastElement.setAttribute('aria-live', 'assertive');
+  toastElement.setAttribute('aria-atomic', 'true');
+
+  // Set icon based on type
+  let icon = '';
+  switch (type) {
+    case 'success':
+      icon = '<i class="fas fa-check-circle me-2"></i>';
+      break;
+    case 'danger':
+    case 'error':
+      icon = '<i class="fas fa-exclamation-triangle me-2"></i>';
+      break;
+    case 'warning':
+      icon = '<i class="fas fa-exclamation-circle me-2"></i>';
+      break;
+    case 'info':
+      icon = '<i class="fas fa-info-circle me-2"></i>';
+      break;
+    default:
+      icon = '<i class="fas fa-bell me-2"></i>';
+  }
+
+  toastElement.innerHTML = `
+    <div class="d-flex">
+      <div class="toast-body">
+        ${icon}${message}
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  `;
+
+  // Add toast to container
+  toastContainer.appendChild(toastElement);
+
+  // Initialize Bootstrap toast
+  const bsToast = new bootstrap.Toast(toastElement, {
+    autohide: duration > 0,
+    delay: duration
+  });
+
+  // Show toast
+  bsToast.show();
+
+  // Remove toast element after it's hidden
+  toastElement.addEventListener('hidden.bs.toast', function () {
+    toastElement.remove();
+  });
+
+  return bsToast;
+}
+
 // Utility function to display error messages
 function showError(message, isEdit = false) {
   const alertClass = 'alert alert-danger mt-2';
@@ -302,7 +372,14 @@ async function addCoupon() {
     const response = await axios.post('/admin/addCoupon', formData);
 
     if (response.data.success) {
-      location.reload();
+      showToast('Coupon added successfully!', 'success');
+      // Close the modal
+      const modal = bootstrap.Modal.getInstance(document.getElementById('addCouponModal'));
+      modal.hide();
+      // Reload after a short delay to show the toast
+      setTimeout(() => {
+        location.reload();
+      }, 1500);
     } else {
       showError(response.data.message || 'Failed to add coupon', false);
     }
@@ -317,6 +394,7 @@ async function addCoupon() {
     }
 
     showError(errorMessage, false);
+    showToast(errorMessage, 'danger');
   } finally {
     // Re-enable submit button
     submitBtn.disabled = false;
@@ -363,7 +441,7 @@ async function editCoupon(couponId) {
 
   } catch (error) {
     console.error('Error fetching coupon:', error);
-    alert('Error loading coupon data');
+    showToast('Error loading coupon data', 'danger');
   }
 }
 
@@ -411,7 +489,14 @@ async function updateCoupon() {
     const response = await axios.put(`/admin/updateCoupon/${couponId}`, formData);
 
     if (response.data.success) {
-      location.reload();
+      showToast('Coupon updated successfully!', 'success');
+      // Close the modal
+      const modal = bootstrap.Modal.getInstance(document.getElementById('editCouponModal'));
+      modal.hide();
+      // Reload after a short delay to show the toast
+      setTimeout(() => {
+        location.reload();
+      }, 1500);
     } else {
       showError(response.data.message || 'Failed to update coupon', true);
     }
@@ -426,6 +511,7 @@ async function updateCoupon() {
     }
 
     showError(errorMessage, true);
+    showToast(errorMessage, 'danger');
   } finally {
     // Re-enable submit button
     submitBtn.disabled = false;
@@ -433,29 +519,101 @@ async function updateCoupon() {
   }
 }
 
+// Custom confirmation toast function
+function showConfirmationToast(message, onConfirm, onCancel = null) {
+  // Create toast container if it doesn't exist
+  let toastContainer = document.getElementById('toast-container');
+  if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.id = 'toast-container';
+    toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+    toastContainer.style.zIndex = '1060';
+    document.body.appendChild(toastContainer);
+  }
+
+  const toastId = 'confirm-toast-' + Date.now();
+  const toastElement = document.createElement('div');
+  toastElement.id = toastId;
+  toastElement.className = 'toast align-items-center text-bg-warning border-0';
+  toastElement.setAttribute('role', 'alert');
+  toastElement.setAttribute('aria-live', 'assertive');
+  toastElement.setAttribute('aria-atomic', 'true');
+
+  toastElement.innerHTML = `
+    <div class="toast-body">
+      <div class="d-flex align-items-center">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <div class="flex-grow-1">${message}</div>
+      </div>
+      <div class="mt-2 pt-2 border-top">
+        <button type="button" class="btn btn-outline-light btn-sm me-2" id="${toastId}-confirm">
+          <i class="fas fa-check me-1"></i>Yes, Delete
+        </button>
+        <button type="button" class="btn btn-outline-light btn-sm" id="${toastId}-cancel">
+          <i class="fas fa-times me-1"></i>Cancel
+        </button>
+      </div>
+    </div>
+  `;
+
+  toastContainer.appendChild(toastElement);
+
+  // Initialize Bootstrap toast (don't auto-hide)
+  const bsToast = new bootstrap.Toast(toastElement, {
+    autohide: false
+  });
+
+  // Add event listeners for buttons
+  document.getElementById(`${toastId}-confirm`).addEventListener('click', function () {
+    bsToast.hide();
+    if (onConfirm) onConfirm();
+  });
+
+  document.getElementById(`${toastId}-cancel`).addEventListener('click', function () {
+    bsToast.hide();
+    if (onCancel) onCancel();
+  });
+
+  // Remove toast element after it's hidden
+  toastElement.addEventListener('hidden.bs.toast', function () {
+    toastElement.remove();
+  });
+
+  bsToast.show();
+}
+
 async function deleteCoupon(couponId) {
-  // Add confirmation dialog
-  if (!confirm('Are you sure you want to delete this coupon? This action cannot be undone.')) {
-    return;
-  }
+  // Show confirmation toast instead of browser confirm
+  showConfirmationToast(
+    'Are you sure you want to delete this coupon? This action cannot be undone.',
+    async function () {
+      // User confirmed deletion
+      try {
+        const response = await axios.delete(`/admin/deleteCoupon/${couponId}`);
+        if (response.data.success) {
+          showToast('Coupon deleted successfully!', 'success');
+          setTimeout(() => {
+            location.reload();
+          }, 1500);
+        } else {
+          showToast(response.data.message || "Can't delete coupon", 'danger');
+        }
+      } catch (error) {
+        console.error('Error deleting coupon:', error);
+        let errorMessage = 'Error deleting coupon';
 
-  try {
-    const response = await axios.delete(`/admin/deleteCoupon/${couponId}`);
-    if (response.data.success) {
-      location.reload();
-    } else {
-      alert(response.data.message || "Can't delete coupon");
+        if (error.response && error.response.data && error.response.data.message) {
+          errorMessage = error.response.data.message;
+        }
+
+        showToast(errorMessage, 'danger');
+      }
+    },
+    function () {
+      // User cancelled deletion
+      showToast('Deletion cancelled', 'info', 2000);
     }
-  } catch (error) {
-    console.error('Error deleting coupon:', error);
-    let errorMessage = 'Error deleting coupon';
-
-    if (error.response && error.response.data && error.response.data.message) {
-      errorMessage = error.response.data.message;
-    }
-
-    alert(errorMessage);
-  }
+  );
 }
 
 // Add real-time validation listeners when the DOM is loaded

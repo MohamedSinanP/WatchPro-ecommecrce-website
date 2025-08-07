@@ -171,7 +171,7 @@ function getStatusHelpText(currentStatus) {
 // New function to update individual product status with validation
 async function updateProductStatus(orderId, productId, newStatus) {
   try {
-    const response = await axios.put(`/admin/orders/${orderId}/products/${productId}/status`, {
+    const response = await axios.patch(`/admin/orders/${orderId}/products/${productId}/status`, {
       status: newStatus
     });
 
@@ -272,7 +272,7 @@ async function toggleOrderStatus(orderId, isCurrentlyCompleted) {
   const newStatus = isCurrentlyCompleted === 'true' ? false : true;
   try {
     const response = await fetch('/admin/updateOrderStatus', {
-      method: 'PUT',
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ orderId, isCompleted: newStatus }),
     });
@@ -288,7 +288,7 @@ async function toggleOrderStatus(orderId, isCurrentlyCompleted) {
 
 async function updateOrderStatus(orderId, newStatus) {
   try {
-    const response = await axios.put(`/admin/orders/updateStatus/${orderId}`, { status: newStatus });
+    const response = await axios.patch(`/admin/orders/updateStatus/${orderId}`, { status: newStatus });
     if (response.data.success) {
       Toastify({
         text: `Order status updated to ${newStatus}`,
@@ -344,7 +344,7 @@ async function cancelOrder(orderId) {
   }
 
   try {
-    const response = await axios.put(`/admin/orders/cancel/${orderId}`);
+    const response = await axios.patch(`/admin/orders/cancel/${orderId}`);
     if (response.data.success) {
       Toastify({
         text: response.data.message,

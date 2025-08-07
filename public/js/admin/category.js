@@ -129,7 +129,7 @@ async function toggleListing(categoryId, isCurrentlyListed) {
   try {
     const newStatus = isCurrentlyListed === 'true' ? false : true;
     const response = await fetch('/admin/categoryListing', {
-      method: 'PUT',
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
       },

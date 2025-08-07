@@ -11,7 +11,48 @@ const storage = new CloudinaryStorage({
   },
 });
 
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+    files: 5
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept only image files
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'), false);
+    }
+  }
+});
 
-module.exports = upload;
+// Middleware with error handling
+const uploadMiddleware = (req, res, next) => {
+  const uploadHandler = upload.array('productImages', 5);
 
+  uploadHandler(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      console.error('Multer Error:', err);
+      if (err.code === 'UNEXPECTED_FIELD') {
+        return res.status(400).json({
+          success: false,
+          message: 'Unexpected field name. Please use "productImages" as field name.'
+        });
+      }
+      return res.status(400).json({
+        success: false,
+        message: err.message
+      });
+    } else if (err) {
+      console.error('Upload Error:', err);
+      return res.status(400).json({
+        success: false,
+        message: err.message
+      });
+    }
+    next();
+  });
+};
+
+module.exports = uploadMiddleware;

@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
-
   userId: {
     type: mongoose.Schema.ObjectId,
     ref: 'users',
@@ -25,14 +24,16 @@ const orderSchema = new mongoose.Schema({
       type: Number,
       required: true
     },
-    discountedPrice: { type: Number, required: false },
+    discountedPrice: {
+      type: Number,
+      required: false
+    },
     status: {
       type: String,
       enum: ['Pending', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled', 'Returned'],
       default: 'Pending'
     }
-  }
-  ],
+  }],
   address: {
     firstName: {
       type: String,
@@ -95,6 +96,24 @@ const orderSchema = new mongoose.Schema({
   },
   razorpayId: {
     type: String,
+    required: false
+  },
+  // New fields for coupon tracking
+  appliedCoupon: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'coupon',
+    required: false
+  },
+  couponCode: {
+    type: String,
+    required: false
+  },
+  couponDiscount: {
+    type: Number,
+    default: 0
+  },
+  originalTotal: {
+    type: Number,
     required: false
   }
 }, { timestamps: true });

@@ -39,6 +39,35 @@
   <!--===============================================================================================-->
   <link rel="stylesheet" type="text/css" href="/css/User/css/util.css">
   <link rel="stylesheet" type="text/css" href="/css/User/css/main.css">
+
+  <style>
+    .back-to-cart-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .back-to-cart-btn:hover {
+      background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      color: white;
+      text-decoration: none;
+    }
+
+    .back-to-cart-btn:active {
+      transform: translateY(0);
+    }
+  </style>
 </head>
 
 <body class="checkout-body">
@@ -49,6 +78,14 @@
     <div class="checkout-wrapper">
       <div class="container">
         <div class="checkout-container">
+
+          <!-- Back to Cart Button -->
+          <div class="d-flex justify-content-start mb-4">
+            <a href="/cart" class="back-to-cart-btn">
+              <i class="fas fa-arrow-left"></i>
+              Back to Cart
+            </a>
+          </div>
 
           <!-- Progress Steps -->
           <div class="checkout-progress mb-5">
@@ -281,7 +318,7 @@
                     </span>
                   </div>
                 </div>
-
+                <input type="hidden" id="couponCode" value="<%= couponCode %>">
                 <!-- Payment Methods -->
                 <div class="payment-section">
                   <h4><i class="fas fa-credit-card me-2"></i>Payment Method</h4>

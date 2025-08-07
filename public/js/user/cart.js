@@ -1,17 +1,16 @@
 // Store initial values for discount management
 let couponDiscount = 0;
 let isCouponApplied = false;
-let appliedCouponId = null; // Store the applied coupon ID
+let appliedCouponId = null;
 
 // Initialize discount values from page load
 document.addEventListener('DOMContentLoaded', () => {
   // Initialize carousel if it exists
   initializeCarousel();
 
-  // Initialize discount display
   updateDiscountDisplay();
   updateCartTotal();
-  updateCheckoutButton(); // Initialize checkout button
+  updateCheckoutButton();
 });
 
 function initializeCarousel() {
@@ -40,6 +39,90 @@ function initializeCarousel() {
   });
 
   showItem(currentIndex);
+}
+
+// Function to calculate offer discount from cart items
+function calculateOfferDiscount() {
+  let offerDiscount = 0;
+  const productRows = document.querySelectorAll('.table_row');
+
+  productRows.forEach(row => {
+    const priceCell = row.querySelector('.column-3');
+    const quantityInput = row.querySelector('input[name*="num-product"]');
+
+    if (priceCell && quantityInput) {
+      const priceSpans = priceCell.querySelectorAll('span');
+      const quantity = parseInt(quantityInput.value);
+
+      // If there are two price spans, it means there's an offer
+      if (priceSpans.length === 2) {
+        const originalPriceText = priceSpans[0].textContent;
+        const offerPriceText = priceSpans[1].textContent;
+
+        const originalPrice = parseFloat(originalPriceText.replace(/[^0-9.-]+/g, ""));
+        const offerPrice = parseFloat(offerPriceText.replace(/[^0-9.-]+/g, ""));
+
+        if (originalPrice > offerPrice) {
+          offerDiscount += (originalPrice - offerPrice) * quantity;
+        }
+      }
+    }
+  });
+
+  return offerDiscount;
+}
+
+// Function to calculate total discount
+function calculateTotalDiscount() {
+  const offerDiscount = calculateOfferDiscount();
+  const totalDiscount = couponDiscount + offerDiscount;
+  return { offerDiscount, totalDiscount };
+}
+
+// Function to fetch and update cart totals (subtotal, discounts, coupon status)
+function fetchAndUpdateCartTotals() {
+  axios.get('/getCartTotals')
+    .then(response => {
+      if (response.data.success) {
+        // Update subtotal
+        const subtotalElement = document.querySelector('#subtotal');
+        subtotalElement.textContent = `₹ ${response.data.subtotal}`;
+
+        // Update coupon discount and status
+        couponDiscount = parseFloat(response.data.couponDiscount) || 0;
+        isCouponApplied = !!response.data.appliedCoupon;
+        appliedCouponId = response.data.appliedCoupon ? response.data.appliedCoupon.id : null;
+
+        // Show toast if coupon was removed
+        if (response.data.couponRemoved) {
+          toastr.warning('Coupon removed due to cart total below minimum purchase limit', 'Coupon Invalid');
+        }
+
+        // Update UI elements
+        updateDiscountDisplay();
+        updateCartTotal();
+        updateCheckoutButton();
+
+        // Update coupon button states
+        const applyButton = document.querySelector('.apply-coupon-btn');
+        const removeButton = document.querySelector('.remove-coupon-btn');
+        if (isCouponApplied) {
+          applyButton.style.pointerEvents = 'none';
+          applyButton.classList.add('disabled');
+          removeButton.style.display = 'inline-flex';
+        } else {
+          applyButton.style.pointerEvents = 'auto';
+          applyButton.classList.remove('disabled');
+          removeButton.style.display = 'none';
+        }
+      } else {
+        toastr.error(response.data.message || 'Failed to fetch cart totals', 'Error');
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching cart totals:', error);
+      toastr.error('An error occurred while fetching cart totals', 'Error');
+    });
 }
 
 function updateQuantity(cartId, productId, change) {
@@ -72,7 +155,7 @@ function updateQuantity(cartId, productId, change) {
 }
 
 function sendQuantityUpdate(cartId, productId, quantity) {
-  axios.put('/updateQuantity', {
+  axios.patch('/updateQuantity', {
     cartId: cartId,
     id: productId,
     quantity: quantity
@@ -81,6 +164,10 @@ function sendQuantityUpdate(cartId, productId, quantity) {
       if (response.data.success) {
         const product = response.data.product;
         const subtotal = response.data.subtotal;
+        const wasCouponApplied = isCouponApplied; // Store previous state
+        couponDiscount = parseFloat(response.data.couponDiscount) || 0;
+        isCouponApplied = !!response.data.appliedCoupon;
+        appliedCouponId = response.data.appliedCoupon ? response.data.appliedCoupon.id : null;
 
         // Update individual product total
         const totalPriceElement = document.querySelector(`#total-price-${productId}`);
@@ -92,10 +179,41 @@ function sendQuantityUpdate(cartId, productId, quantity) {
         const subtotalElement = document.querySelector('#subtotal');
         subtotalElement.textContent = `₹ ${subtotal}`;
 
-        // Recalculate total and update checkout button
+        // Show toast only if coupon was just removed
+        if (response.data.couponRemoved) {
+          toastr.warning('Coupon removed due to cart total below minimum purchase limit', 'Coupon Invalid', {
+            closeButton: true,
+            progressBar: true,
+            timeOut: 2000
+          });
+        }
+
+        // Update UI elements
         updateDiscountDisplay();
         updateCartTotal();
         updateCheckoutButton();
+
+        // Update coupon button states
+        const applyButton = document.querySelector('.apply-coupon-btn');
+        const removeButton = document.querySelector('.remove-coupon-btn');
+        if (isCouponApplied) {
+          applyButton.style.pointerEvents = 'none';
+          applyButton.classList.add('disabled');
+          removeButton.style.display = 'inline-flex';
+        } else {
+          applyButton.style.pointerEvents = 'auto';
+          applyButton.classList.remove('disabled');
+          removeButton.style.display = 'none';
+        }
+      } else {
+        toastr.error(response.data.message || 'Failed to update quantity', 'Error', {
+          closeButton: true,
+          progressBar: true,
+          timeOut: 1000,
+          onHidden: function () {
+            location.reload();
+          }
+        });
       }
     })
     .catch(error => {
@@ -123,27 +241,20 @@ function deleteProduct(productId) {
         }
 
         // Fetch updated cart totals
-        axios.get('/getCartTotals')
-          .then(cartResponse => {
-            if (cartResponse.data.success) {
-              document.querySelector('#subtotal').textContent = `₹ ${cartResponse.data.subtotal}`;
-              updateDiscountDisplay();
-              updateCartTotal();
-              updateCheckoutButton();
-              toastr.success('Product removed from cart', 'Success');
+        fetchAndUpdateCartTotals();
 
-              // Check if cart is empty
-              if (!document.querySelectorAll('.table_row').length) {
-                document.querySelector('.wrap-table-shopping-cart').innerHTML = '<p>No cart items found for user</p>';
-              }
-            } else {
-              toastr.error(cartResponse.data.message || 'Failed to update cart totals', 'Error');
-            }
-          })
-          .catch(cartError => {
-            console.error('Error fetching cart totals:', cartError);
-            toastr.error('An error occurred while updating cart totals', 'Error');
-          });
+        toastr.success('Product removed from cart', 'Success');
+
+        // Check if cart is empty
+        if (!document.querySelectorAll('.table_row').length) {
+          document.querySelector('.wrap-table-shopping-cart').innerHTML = '<p>No cart items found for user</p>';
+          couponDiscount = 0;
+          isCouponApplied = false;
+          appliedCouponId = null;
+          updateDiscountDisplay();
+          updateCartTotal();
+          updateCheckoutButton();
+        }
       }
     })
     .catch(error => {
@@ -153,15 +264,28 @@ function deleteProduct(productId) {
 }
 
 function updateDiscountDisplay() {
-  // Update coupon discount display
   const couponDiscountRow = document.getElementById('coupon-discount-row');
   const couponDiscountElement = document.getElementById('couponDiscount');
 
-  if (couponDiscount > 0) {
-    couponDiscountRow.style.display = 'flex';
-    couponDiscountElement.textContent = `- ₹ ${couponDiscount.toFixed(2)}`;
-  } else {
-    couponDiscountRow.style.display = 'none';
+  if (couponDiscountRow && couponDiscountElement) {
+    if (couponDiscount > 0 && isCouponApplied) {
+      couponDiscountRow.style.display = 'flex';
+      couponDiscountElement.textContent = `- ₹ ${couponDiscount.toFixed(2)}`;
+    } else {
+      couponDiscountRow.style.display = 'none';
+    }
+  }
+
+  // Hide offer discount row (since it's already applied in subtotal)
+  const offerDiscountRow = document.getElementById('offer-discount-row');
+  if (offerDiscountRow) {
+    offerDiscountRow.style.display = 'none';
+  }
+
+  // Hide total discount row
+  const totalDiscountRow = document.getElementById('total-discount-row');
+  if (totalDiscountRow) {
+    totalDiscountRow.style.display = 'none';
   }
 }
 
@@ -177,11 +301,24 @@ function updateCheckoutButton() {
   if (checkoutButton) {
     const subtotalText = document.getElementById('cartTotal').textContent;
     const subtotal = parseFloat(subtotalText.replace(/[^0-9.-]+/g, ""));
+    const { offerDiscount, totalDiscount } = calculateTotalDiscount();
+
     let checkoutUrl = `/checkout?cartTotal=${subtotal}`;
 
-    // Add coupon ID if a coupon is applied
-    if (appliedCouponId) {
+    // Add total discount to URL
+    if (totalDiscount > 0) {
+      checkoutUrl += `&totalDiscount=${totalDiscount}`;
+    }
+
+    // Add coupon details if a coupon is applied
+    if (appliedCouponId && isCouponApplied) {
       checkoutUrl += `&couponId=${appliedCouponId}`;
+      checkoutUrl += `&couponDiscount=${couponDiscount}`;
+    }
+
+    // Add offer discount if present
+    if (offerDiscount > 0) {
+      checkoutUrl += `&offerDiscount=${offerDiscount.toFixed(2)}`;
     }
 
     checkoutButton.href = checkoutUrl;
