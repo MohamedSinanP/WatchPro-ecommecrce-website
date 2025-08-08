@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const productModel = require('../../models/productModel');
 const cartModel = require('../../models/cartModel');
 const couponModel = require('../../models/couponModel');
@@ -28,7 +29,6 @@ const loadCartPage = async (req, res) => {
     let totalDiscount = 0;
 
     if (!cart || !cart.products.length) {
-      // Clear any applied coupon if cart is empty
       req.session.appliedCoupon = null;
       return res.render('user/cart', {
         products: [],
@@ -78,6 +78,7 @@ const loadCartPage = async (req, res) => {
           name: productDetails.name,
           price: productDetails.price,
           quantity: product.quantity,
+          variantSize: product.variantSize,
           imageUrl: productDetails.images[productDetails.images.length - 1] || '',
           offerPrice,
           productDiscount
@@ -108,33 +109,43 @@ const loadCartPage = async (req, res) => {
 // to add the product into user cart collection
 const addToCart = async (req, res) => {
   const userId = req.session.user;
-  const { productId, name, price, quantity } = req.body;
+  const { productId, name, price, quantity, variantSize } = req.body;
 
   try {
     const product = await productModel.findById(productId);
-    const productStock = product.stock;
-
-    if (productStock < 1) {
-      return res.json({ success: false, message: 'Product is out of stock' });
+    if (!product) {
+      return res.json({ success: false, message: 'Product not found' });
     }
+
+    // Find the matching variant
+    const variant = product.variants.find(v => v.size.toLowerCase() === variantSize.toLowerCase());
+    if (!variant) {
+      return res.json({ success: false, message: 'Selected size not available' });
+    }
+
+    // Check stock
+    if (variant.stock < quantity) {
+      return res.json({ success: false, message: 'Not enough stock for this size' });
+    }
+
     let cart = await cartModel.findOne({ userId });
 
     if (cart) {
-      let itemIndex = cart.products.findIndex(p => p.productId == productId);
+      let itemIndex = cart.products.findIndex(
+        p => p.productId.equals(productId) && p.variantSize.toLowerCase() === variantSize.toLowerCase()
+      );
 
       if (itemIndex > -1) {
-        let productItem = cart.products[itemIndex];
-        productItem.quantity = quantity;
-        cart.products[itemIndex] = productItem;
+        cart.products[itemIndex].quantity = quantity;
       } else {
-        cart.products.push({ productId, quantity, name, price });
+        cart.products.push({ productId, variantSize, quantity, name, price });
       }
       cart = await cart.save();
       return res.status(201).json({ success: true, message: 'Product added to cart', cart });
     } else {
       const newCart = await cartModel.create({
         userId,
-        products: [{ productId, quantity, name, price }]
+        products: [{ productId, variantSize, quantity, name, price }]
       });
       return res.status(201).json({ success: true, message: 'Cart created and product added', cart: newCart });
     }
@@ -144,18 +155,27 @@ const addToCart = async (req, res) => {
   }
 };
 
+
 // to update the quantity of the product in the user cart 
 const updateQuantity = async (req, res) => {
-  const { cartId, id, quantity } = req.body;
-
+  const { cartId, id, quantity, variantSize } = req.body;
   try {
     const product = await productModel.findById(id);
-    const stock = product.stock;
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
 
-    if (quantity > stock) {
+    // Find the matching variant
+    const variant = product.variants.find(v => v.size.toLowerCase() === variantSize.toLowerCase());
+    if (!variant) {
+      return res.status(400).json({ success: false, message: 'Selected size not available' });
+    }
+
+    // Check variant stock
+    if (quantity > variant.stock) {
       return res.status(400).json({
         success: false,
-        message: `only ${stock} stocks left.`
+        message: `Only ${variant.stock} items left for size ${variantSize}.`
       });
     }
 
@@ -167,30 +187,24 @@ const updateQuantity = async (req, res) => {
     }
 
     const cart = await cartModel.findById(cartId);
-
     if (!cart) {
-      return res.status(404).json({
-        success: false,
-        message: "Cart not found"
-      });
+      return res.status(404).json({ success: false, message: 'Cart not found' });
     }
 
-    const productIndex = cart.products.findIndex(product => product.productId.toString() === id);
+    const productIndex = cart.products.findIndex(
+      p => p.productId.toString() === id && p.variantSize.toLowerCase() === variantSize.toLowerCase()
+    );
 
     if (productIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found in cart"
-      });
+      return res.status(404).json({ success: false, message: 'Product with specified size not found in cart' });
     }
 
     cart.products[productIndex].quantity = quantity;
     await cart.save();
 
-    const activeOffers = await offerModel.find({ isActive: true, expireDate: { $gt: new Date() } }).populate([
-      { path: 'products' },
-      { path: 'categories' }
-    ]);
+    const activeOffers = await offerModel
+      .find({ isActive: true, expireDate: { $gt: new Date() } })
+      .populate([{ path: 'products' }, { path: 'categories' }]);
 
     let subtotal = 0;
     let totalOfferDiscount = 0;
@@ -198,6 +212,175 @@ const updateQuantity = async (req, res) => {
     const updatedProducts = await Promise.all(
       cart.products.map(async (product) => {
         const productDetails = await productModel.findById(product.productId).lean();
+        if (!productDetails) return product;
+
+        let offerPrice = productDetails.price;
+        let productDiscount = 0;
+
+        const productOffers = activeOffers.filter(offer => {
+          const matchesProduct = offer.products.some(prod => prod._id.equals(product.productId));
+          const productCategoryId = productDetails.category._id || productDetails.category;
+          const matchesCategory = offer.categories.some(cat => cat._id.equals(productCategoryId));
+          return matchesProduct || matchesCategory;
+        });
+
+        if (productOffers.length > 0) {
+          let bestOffer = productOffers[0];
+          if (bestOffer.discountType === 'percentage') {
+            const discountAmount = (productDetails.price * bestOffer.discountValue) / 100;
+            offerPrice = productDetails.price - discountAmount;
+            productDiscount = discountAmount * product.quantity;
+          } else if (bestOffer.discountType === 'amount') {
+            offerPrice = productDetails.price - bestOffer.discountValue;
+            productDiscount = bestOffer.discountValue * product.quantity;
+          }
+        }
+
+        subtotal += offerPrice * product.quantity;
+        totalOfferDiscount += productDiscount;
+
+        return {
+          ...product.toObject(),
+          offerPrice: offerPrice.toFixed(2),
+          quantity: product.quantity,
+          productDiscount: productDiscount.toFixed(2),
+          variantSize: product.variantSize // Include variantSize in response
+        };
+      })
+    );
+
+    // Recalculate coupon discount based on new subtotal
+    const wasCouponApplied = !!req.session.appliedCoupon;
+    const couponDiscount = recalculateCouponDiscount(req, subtotal);
+    const appliedCoupon = getCurrentCoupon(req);
+    const couponRemoved = wasCouponApplied && !appliedCoupon;
+
+    res.json({
+      success: true,
+      message: 'Quantity updated successfully',
+      product: updatedProducts[productIndex],
+      updatedProducts,
+      subtotal: subtotal.toFixed(2),
+      totalOfferDiscount: totalOfferDiscount.toFixed(2),
+      couponDiscount: couponDiscount.toFixed(2),
+      appliedCoupon,
+      couponRemoved
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+// to delete the product from a specific user cart
+const deleteCartProduct = async (req, res) => {
+  const { id, size } = req.params;
+  const userId = req.session.user;
+
+  try {
+    const deleteProduct = await cartModel.updateOne(
+      { userId },
+      { $pull: { products: { productId: new mongoose.Types.ObjectId(id), variantSize: size } } }
+    );
+    if (deleteProduct.modifiedCount === 0) {
+      return res.status(404).json({ success: false, message: 'Product with specified size not found in cart' });
+    }
+
+    // Fetch updated cart totals
+    const cart = await cartModel.findOne({ userId }).lean();
+    let subtotal = 0;
+    let totalOfferDiscount = 0;
+
+    if (cart && cart.products.length) {
+      const activeOffers = await offerModel
+        .find({ isActive: true, expireDate: { $gt: new Date() } })
+        .populate([{ path: 'products' }, { path: 'categories' }]);
+
+      await Promise.all(
+        cart.products.map(async (product) => {
+          const productDetails = await productModel.findById(product.productId).lean();
+          if (!productDetails) return;
+
+          let offerPrice = productDetails.price;
+          let productDiscount = 0;
+
+          const productOffers = activeOffers.filter(offer => {
+            const matchesProduct = offer.products.some(prod => prod._id.equals(product.productId));
+            const productCategoryId = productDetails.category._id || productDetails.category;
+            const matchesCategory = offer.categories.some(cat => cat._id.equals(productCategoryId));
+            return matchesProduct || matchesCategory;
+          });
+
+          if (productOffers.length > 0) {
+            let bestOffer = productOffers[0];
+            if (bestOffer.discountType === 'percentage') {
+              const discountAmount = (productDetails.price * bestOffer.discountValue) / 100;
+              offerPrice = productDetails.price - discountAmount;
+              productDiscount = discountAmount * product.quantity;
+            } else if (bestOffer.discountType === 'amount') {
+              offerPrice = productDetails.price - bestOffer.discountValue;
+              productDiscount = bestOffer.discountValue * product.quantity;
+            }
+          }
+
+          subtotal += offerPrice * product.quantity;
+          totalOfferDiscount += productDiscount;
+        })
+      );
+    }
+
+    // Recalculate coupon discount based on new subtotal
+    const couponDiscount = recalculateCouponDiscount(req, subtotal);
+    const appliedCoupon = getCurrentCoupon(req);
+    const couponRemoved = !appliedCoupon && req.session.appliedCoupon !== null;
+
+    if (couponRemoved) {
+      req.session.appliedCoupon = null;
+    }
+
+    res.json({
+      success: true,
+      message: 'Product removed from cart',
+      subtotal: subtotal.toFixed(2),
+      totalOfferDiscount: totalOfferDiscount.toFixed(2),
+      couponDiscount: couponDiscount.toFixed(2),
+      appliedCoupon,
+      couponRemoved
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Failed to delete the product from the cart' });
+  }
+};
+
+const getCartTotals = async (req, res) => {
+  const userId = req.session.user;
+
+  try {
+    const cart = await cartModel.findOne({ userId }).lean();
+    if (!cart || !cart.products.length) {
+      req.session.appliedCoupon = null;
+      return res.json({
+        success: true,
+        subtotal: '0.00',
+        totalOfferDiscount: '0.00',
+        couponDiscount: '0.00',
+        appliedCoupon: null,
+        couponRemoved: false
+      });
+    }
+
+    const activeOffers = await offerModel
+      .find({ isActive: true, expireDate: { $gt: new Date() } })
+      .populate([{ path: 'products' }, { path: 'categories' }]);
+
+    let subtotal = 0;
+    let totalOfferDiscount = 0;
+
+    const productsWithDetails = await Promise.all(
+      cart.products.map(async (product) => {
+        const productDetails = await productModel.findById(product.productId).lean();
+        if (!productDetails) return null;
+
         let offerPrice = productDetails.price;
         let productDiscount = 0;
 
@@ -226,119 +409,14 @@ const updateQuantity = async (req, res) => {
         return {
           ...product,
           offerPrice: offerPrice.toFixed(2),
-          quantity: product.quantity,
-          productDiscount: productDiscount.toFixed(2)
+          productDiscount: productDiscount.toFixed(2),
+          variantSize: product.variantSize
         };
       })
     );
 
-    // Recalculate coupon discount based on new subtotal
-    const wasCouponApplied = !!req.session.appliedCoupon;
-    const couponDiscount = recalculateCouponDiscount(req, subtotal);
-    const appliedCoupon = getCurrentCoupon(req);
-    const couponRemoved = wasCouponApplied && !appliedCoupon;
-
-    res.json({
-      success: true,
-      message: "Quantity updated successfully",
-      product: updatedProducts[productIndex],
-      updatedProducts,
-      subtotal: subtotal.toFixed(2),
-      totalOfferDiscount: totalOfferDiscount.toFixed(2),
-      couponDiscount: couponDiscount.toFixed(2),
-      appliedCoupon: appliedCoupon,
-      couponRemoved: couponRemoved
-    });
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
-  }
-};
-
-// to delete the product from a specific user cart
-const deleteCartProduct = async (req, res) => {
-  const productId = req.params.id;
-  const userId = req.session.user;
-
-  try {
-    const deleteProduct = await cartModel.updateOne(
-      { userId: userId },
-      { $pull: { products: { productId: productId } } }
-    );
-
-    if (!deleteProduct) {
-      return res.status(404).json({ success: false, message: 'Product not found' });
-    }
-
-    // After deleting product, we need to recalculate everything
-    // This will be handled by the getCartTotals call in the frontend
-    res.json({ success: true, deleteProduct });
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Failed to delete the product from the cart' });
-  }
-};
-
-const getCartTotals = async (req, res) => {
-  const userId = req.session.user;
-
-  try {
-    const cart = await cartModel.findOne({ userId }).lean();
-
-    if (!cart || !cart.products.length) {
-      // Clear coupon if cart is empty
-      req.session.appliedCoupon = null;
-      return res.json({
-        success: true,
-        subtotal: '0.00',
-        totalOfferDiscount: '0.00',
-        couponDiscount: '0.00',
-        appliedCoupon: null,
-        couponRemoved: false
-      });
-    }
-
-    const activeOffers = await offerModel.find({ isActive: true, expireDate: { $gt: new Date() } }).populate([
-      { path: 'products' },
-      { path: 'categories' }
-    ]);
-
-    let subtotal = 0;
-    let totalOfferDiscount = 0;
-
-    await Promise.all(
-      cart.products.map(async (product) => {
-        const productDetails = await productModel.findById(product.productId).lean();
-        if (!productDetails) return;
-
-        let offerPrice = productDetails.price;
-        let productDiscount = 0;
-
-        const productOffers = activeOffers.filter(offer => {
-          const matchesProduct = offer.products.some(prod => prod._id.equals(product.productId));
-          const productCategoryId = productDetails.category._id || productDetails.category;
-          const matchesCategory = offer.categories.some(cat => cat._id.equals(productCategoryId));
-          return matchesProduct || matchesCategory;
-        });
-
-        if (productOffers.length > 0) {
-          let bestOffer = productOffers[0];
-          if (bestOffer.discountType === 'percentage') {
-            const discountAmount = (productDetails.price * bestOffer.discountValue) / 100;
-            offerPrice = productDetails.price - discountAmount;
-            productDiscount = discountAmount * product.quantity;
-          } else if (bestOffer.discountType === 'amount') {
-            offerPrice = productDetails.price - bestOffer.discountValue;
-            productDiscount = bestOffer.discountValue * product.quantity;
-          }
-        }
-
-        subtotal += offerPrice * product.quantity;
-        totalOfferDiscount += productDiscount;
-      })
-    );
+    // Filter out null products (in case of deleted products)
+    const validProducts = productsWithDetails.filter(p => p !== null);
 
     // Recalculate coupon discount based on current subtotal
     const couponDiscount = recalculateCouponDiscount(req, subtotal);
@@ -346,7 +424,7 @@ const getCartTotals = async (req, res) => {
     const couponRemoved = !appliedCoupon && req.session.appliedCoupon !== null;
 
     if (couponRemoved) {
-      req.session.appliedCoupon = null; // Ensure coupon is cleared
+      req.session.appliedCoupon = null;
     }
 
     res.json({
@@ -354,8 +432,9 @@ const getCartTotals = async (req, res) => {
       subtotal: subtotal.toFixed(2),
       totalOfferDiscount: totalOfferDiscount.toFixed(2),
       couponDiscount: couponDiscount.toFixed(2),
-      appliedCoupon: appliedCoupon,
-      couponRemoved: couponRemoved
+      appliedCoupon,
+      couponRemoved,
+      products: validProducts
     });
   } catch (error) {
     console.error(error);

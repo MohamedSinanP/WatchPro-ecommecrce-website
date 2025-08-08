@@ -1,22 +1,76 @@
 function loadPage(pageNumber) {
   window.location.href = `/admin/inventory?page=${pageNumber}`;
 }
+
 const menuToggle = document.querySelector('.menu-toggle');
 const sidebar = document.querySelector('.sidebar');
 menuToggle.addEventListener('click', () => {
   sidebar.classList.toggle('active');
 });
 
-function openModal(price, stock, id) {
-  document.getElementById("productPrice").value = price;
-  document.getElementById("productStock").value = stock;
-  document.getElementById("productId").value = id;
+function showToast(message, type = 'success') {
+  const toastEl = document.getElementById('appToast');
+  const toastTitle = document.getElementById('toastTitle');
+  const toastBody = document.getElementById('toastBody');
 
-  document.getElementById("editModal").style.display = "block";
+  // Set title and message
+  toastTitle.textContent = type === 'success' ? 'Success' : 'Error';
+  toastBody.textContent = message;
+
+  // Apply appropriate class for styling
+  toastEl.classList.remove('toast-success', 'toast-error');
+  toastEl.classList.add(`toast-${type}`);
+
+  // Initialize and show the toast
+  const toast = new bootstrap.Toast(toastEl, {
+    autohide: true,
+    delay: 3000 // Hide after 3 seconds
+  });
+  toast.show();
 }
 
-function closeModal() {
-  document.getElementById("editModal").style.display = "none";
+function openModal(price, stock, id) {
+  document.getElementById('productPrice').value = price;
+  document.getElementById('productId').value = id;
+
+  // Fetch product details including variants
+  axios.get(`/admin/product/${id}`)
+    .then((response) => {
+      const product = response.data.product;
+      const variants = product.variants || [];
+
+      // Populate variant stock fields
+      const variantContainer = document.getElementById('variantStocks');
+      variantContainer.innerHTML = ''; // Clear previous content
+
+      variants.forEach((variant, index) => {
+        const variantDiv = document.createElement('div');
+        variantDiv.innerHTML = `
+          <label>Stock for Size ${variant.size}</label>
+          <input type="number" name="variantStock${index}" data-variant-id="${variant._id}" value="${variant.stock}" oninput="validateVariantStock(this)" />
+          <div class="error-message" id="variantStockError${index}">Please enter a valid stock number (0 or greater).</div>
+        `;
+        variantContainer.appendChild(variantDiv);
+      });
+
+      document.getElementById('editModal').style.display = 'block';
+    })
+    .catch((error) => {
+      console.error('Error fetching product details:', error);
+      showToast('Failed to load product variants.', 'error');
+    });
+}
+
+function validateVariantStock(input) {
+  const stock = input.value;
+  const errorDiv = input.nextElementSibling;
+  if (stock < 0) {
+    errorDiv.style.display = 'block';
+    return false;
+  } else {
+    errorDiv.style.display = 'none';
+    return true;
+  }
 }
 
 function validatePrice() {
@@ -31,46 +85,50 @@ function validatePrice() {
   }
 }
 
-function validateStock() {
-  const stock = document.getElementById('productStock').value;
-  const stockError = document.getElementById('stockError');
-  if (stock < 0) {
-    stockError.style.display = 'block';
-    return false;
-  } else {
-    stockError.style.display = 'none';
-    return true;
-  }
-}
-
 function saveChanges(event) {
   event.preventDefault();
 
   const productId = document.getElementById('productId').value;
   const price = document.getElementById('productPrice').value;
-  const stock = document.getElementById('productStock').value;
+  const variantInputs = document.querySelectorAll('#variantStocks input[type="number"]');
+  const variants = Array.from(variantInputs).map((input, index) => ({
+    _id: input.dataset.variantId,
+    size: input.previousElementSibling.textContent.replace('Stock for Size ', ''),
+    stock: input.value
+  }));
 
-  if (validatePrice() && validateStock()) {
+  // Validate all inputs
+  let isValid = validatePrice();
+  variantInputs.forEach((input) => {
+    if (!validateVariantStock(input)) {
+      isValid = false;
+    }
+  });
 
+  if (isValid) {
     const data = {
       productId,
       price,
-      stock,
+      variants
     };
-
 
     axios.post(`/admin/updateInventory/${productId}`, data)
       .then((response) => {
         closeModal();
+        showToast('Product updated successfully!', 'success');
         setTimeout(() => {
           window.location.reload();
         }, 300);
       })
       .catch((error) => {
-        console.error('There was an error updating the product:', error);
-        alert('Oops! Something went wrong while saving. Please try again.');
+        console.error('Error updating product:', error);
+        showToast('Oops! Something went wrong while saving.', 'error');
       });
   } else {
-    alert('Please fix the errors in the form before saving. Your products are counting on you!');
+    showToast('Please fix the errors in the form before saving.', 'error');
   }
+}
+
+function closeModal() {
+  document.getElementById('editModal').style.display = 'none';
 }

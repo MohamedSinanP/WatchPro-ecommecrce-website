@@ -180,6 +180,49 @@ body {
 .modal-btn.cancel:hover {
   background: #e53935;
 }
+#variantStocks {
+  margin-bottom: 15px;
+}
+
+#variantStocks label {
+  display: block;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+#variantStocks input {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+#variantStocks .error-message {
+  color: red;
+  font-size: 0.85em;
+  display: none;
+  margin-top: 5px;
+}
+
+/* Toast Styles */
+.toast-success .toast-header {
+  background-color: #28a745;
+  color: white;
+}
+
+.toast-error .toast-header {
+  background-color: #dc3545;
+  color: white;
+}
+
+.toast-container {
+  z-index: 1055;
+}
+
+.toast {
+  min-width: 300px;
+}
 /* Mobile Styles */
 @media (max-width: 768px) {
   .sidebar {

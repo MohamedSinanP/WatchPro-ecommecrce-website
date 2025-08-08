@@ -6,18 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Management</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/css/Admin/users.css"> <!-- Reusing users.css for consistency -->
+    <link rel="stylesheet" href="/css/Admin/users.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Added for search icon -->
 </head>
 
 <body>
     <div class="dashboard-container">
-        <!-- Include Sidebar -->
         <%- include('../partials/admin/sidebar') %>
 
-            <!-- Main Content -->
             <main class="main-content">
                 <header class="main-header">
                     <h1>Product Management</h1>
@@ -25,7 +22,6 @@
                 </header>
 
                 <section class="content">
-                    <!-- Search Form -->
                     <div class="search-section mb-4">
                         <form id="searchForm" class="d-flex position-relative">
                             <div class="input-group">
@@ -43,7 +39,7 @@
                     <div>
                         <button class="btn btn-primary mb-3" id="addProductButton">Add Product</button>
                     </div>
-                    <!-- Product Table Section -->
+
                     <div class="card mb-4">
                         <div class="card-header">Products</div>
                         <div class="card-body">
@@ -57,6 +53,7 @@
                                             <th>Category</th>
                                             <th>Price</th>
                                             <th>Stock</th>
+                                            <th>Variants</th>
                                             <th>Images</th>
                                             <th>Actions</th>
                                         </tr>
@@ -85,6 +82,15 @@
                                                         <%= product.stock %>
                                                     </td>
                                                     <td>
+                                                        <% if (product.variants && product.variants.length> 0) { %>
+                                                            <% product.variants.forEach(variant=> { %>
+                                                                <%= variant.size %>: <%= variant.stock %><br>
+                                                                        <% }); %>
+                                                                            <% } else { %>
+                                                                                No variants
+                                                                                <% } %>
+                                                    </td>
+                                                    <td>
                                                         <% if (product.images && product.images.length> 0) { %>
                                                             <% product.images.forEach(image=> { %>
                                                                 <img src="<%= image %>" alt="Product Image"
@@ -103,6 +109,7 @@
                                                             data-price="<%= product.price %>"
                                                             data-stock="<%= product.stock %>"
                                                             data-images="<%= JSON.stringify(product.images) %>"
+                                                            data-variants="<%= JSON.stringify(product.variants) %>"
                                                             onclick="handleEditClick(this)">
                                                             Edit
                                                         </button>
@@ -116,7 +123,7 @@
                                                 <% }); %>
                                                     <% } else { %>
                                                         <tr>
-                                                            <td colspan="8" class="text-center">No products found.</td>
+                                                            <td colspan="9" class="text-center">No products found.</td>
                                                         </tr>
                                                         <% } %>
                                     </tbody>
@@ -146,6 +153,9 @@
                 </section>
             </main>
     </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
 
     <!-- Add Product Modal -->
     <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel"
@@ -185,7 +195,7 @@
                             <label for="productDescription" class="form-label">Description</label>
                             <textarea class="form-control" id="productDescription" rows="3"
                                 name="description"></textarea>
-                            <div class="invalid-feedback">Please enter a description</div>
+                            <div class="invalid-feedback">Please enter a description.</div>
                         </div>
                         <div class="mb-3">
                             <label for="productPrice" class="form-label">Price</label>
@@ -193,9 +203,33 @@
                             <div class="invalid-feedback">Please enter a valid price.</div>
                         </div>
                         <div class="mb-3">
-                            <label for="productStock" class="form-label">Stock</label>
-                            <input type="number" class="form-control" id="productStock" name="stock">
-                            <div class="invalid-feedback">Please enter a valid stock.</div>
+                            <label class="form-label">Variant Stock</label>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label for="productStockSmall" class="form-label">Small</label>
+                                    <input type="number" class="form-control" id="productStockSmall" name="stockSmall"
+                                        min="0">
+                                    <div class="invalid-feedback">At least one size must have stock > 0.</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="productStockMedium" class="form-label">Medium</label>
+                                    <input type="number" class="form-control" id="productStockMedium" name="stockMedium"
+                                        min="0">
+                                    <div class="invalid-feedback">At least one size must have stock > 0.</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="productStockLarge" class="form-label">Large</label>
+                                    <input type="number" class="form-control" id="productStockLarge" name="stockLarge"
+                                        min="0">
+                                    <div class="invalid-feedback">At least one size must have stock > 0.</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="productStockExtraLarge" class="form-label">ExtraLarge</label>
+                                    <input type="number" class="form-control" id="productStockExtraLarge"
+                                        name="stockExtraLarge" min="0">
+                                    <div class="invalid-feedback">At least one size must have stock > 0.</div>
+                                </div>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label for="productImages" class="form-label">Images</label>
@@ -229,10 +263,12 @@
                         <div class="mb-3">
                             <label for="editProductName" class="form-label">Product Name</label>
                             <input type="text" class="form-control" id="editProductName" required>
+                            <div class="invalid-feedback">Please enter a product name.</div>
                         </div>
                         <div class="mb-3">
                             <label for="editProductBrand" class="form-label">Brand</label>
                             <input type="text" class="form-control" id="editProductBrand" required>
+                            <div class="invalid-feedback">Please enter a brand name.</div>
                         </div>
                         <div class="mb-3">
                             <label for="editProductCategory" class="form-label">Category</label>
@@ -245,18 +281,46 @@
                                     </option>
                                     <% }); %>
                             </select>
+                            <div class="invalid-feedback">Please select a category.</div>
                         </div>
                         <div class="mb-3">
                             <label for="editProductDescription" class="form-label">Description</label>
                             <textarea class="form-control" id="editProductDescription" rows="3" required></textarea>
+                            <div class="invalid-feedback">Please enter a description.</div>
                         </div>
                         <div class="mb-3">
                             <label for="editProductPrice" class="form-label">Price</label>
                             <input type="number" class="form-control" id="editProductPrice" required step="0.01">
+                            <div class="invalid-feedback">Please enter a valid price.</div>
                         </div>
                         <div class="mb-3">
-                            <label for="editProductStock" class="form-label">Stock</label>
-                            <input type="number" class="form-control" id="editProductStock">
+                            <label class="form-label">Variant Stock</label>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label for="editProductStockSmall" class="form-label">Small</label>
+                                    <input type="number" class="form-control" id="editProductStockSmall"
+                                        name="stockSmall" min="0">
+                                    <div class="invalid-feedback">At least one size must have stock > 0.</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="editProductStockMedium" class="form-label">Medium</label>
+                                    <input type="number" class="form-control" id="editProductStockMedium"
+                                        name="stockMedium" min="0">
+                                    <div class="invalid-feedback">At least one size must have stock > 0.</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="editProductStockLarge" class="form-label">Large</label>
+                                    <input type="number" class="form-control" id="editProductStockLarge"
+                                        name="stockLarge" min="0">
+                                    <div class="invalid-feedback">At least one size must have stock > 0.</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="editProductStockExtraLarge" class="form-label">ExtraLarge</label>
+                                    <input type="number" class="form-control" id="editProductStockExtraLarge"
+                                        name="stockExtraLarge" min="0">
+                                    <div class="invalid-feedback">At least one size must have stock > 0.</div>
+                                </div>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label for="editProductImages" class="form-label">Images</label>

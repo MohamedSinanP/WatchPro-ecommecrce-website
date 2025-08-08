@@ -3,7 +3,7 @@ function loadPage(pageNumber) {
 }
 
 // Cancel entire order
-async function cancelOrderProduct(orderId) { // Remove total parameter
+async function cancelOrderProduct(orderId) {
   try {
     const result = await Swal.fire({
       title: 'Cancel Entire Order?',
@@ -18,9 +18,7 @@ async function cancelOrderProduct(orderId) { // Remove total parameter
     });
 
     if (result.isConfirmed) {
-      const response = await axios.delete(`/deleteOrderItem/${orderId}`, {
-        data: {}
-      });
+      const response = await axios.delete(`/deleteOrderItem/${orderId}`, { data: {} });
 
       if (response.data.success) {
         const orderCard = document.querySelector(`.order-card[data-orderid="${orderId}"]`);
@@ -30,8 +28,7 @@ async function cancelOrderProduct(orderId) { // Remove total parameter
             statusDiv.querySelector('p').innerHTML = '<strong>Order Status:</strong> Cancelled';
           }
           const actionsDiv = orderCard.querySelector('.actions');
-          actionsDiv.innerHTML = ''; // Clear actions
-          // Update all product statuses
+          actionsDiv.innerHTML = '';
           const productDivs = orderCard.querySelectorAll('.product-detail');
           productDivs.forEach(div => {
             div.style.opacity = '0.5';
@@ -63,22 +60,24 @@ async function cancelOrderProduct(orderId) { // Remove total parameter
     });
   }
 }
-// Cancel single product
-async function cancelSingleProduct(orderId, productId, productName, productPrice, quantity) {
+
+// Cancel single product with variant size information
+async function cancelSingleProduct(orderId, productId, productName, productPrice, quantity, variantSize) {
   try {
     const refundAmount = productPrice * quantity;
 
     const result = await Swal.fire({
       title: 'Cancel This Product?',
       html: `
-        <div style="text-align: left; margin: 20px 0;">
-          <p><strong>Product:</strong> ${productName}</p>
-          <p><strong>Price:</strong> ₹${productPrice}</p>
-          <p><strong>Quantity:</strong> ${quantity}</p>
-          <p><strong>Refund Amount:</strong> ₹${refundAmount}</p>
-        </div>
-        <p>Do you want to cancel this specific product?</p>
-      `,
+                <div style="text-align: left; margin: 20px 0;">
+                    <p><strong>Product:</strong> ${productName}</p>
+                    <p><strong>Size:</strong> ${variantSize}</p>
+                    <p><strong>Price:</strong> ₹${productPrice}</p>
+                    <p><strong>Quantity:</strong> ${quantity}</p>
+                    <p><strong>Refund Amount:</strong> ₹${refundAmount}</p>
+                </div>
+                <p>Do you want to cancel this specific product?</p>
+            `,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#d33',
@@ -89,17 +88,12 @@ async function cancelSingleProduct(orderId, productId, productName, productPrice
     });
 
     if (result.isConfirmed) {
-      // Send cancellation request
-      const response = await axios.delete(`/deleteOrderItem/${orderId}`, {
-        data: { productId }
-      });
+      const response = await axios.delete(`/deleteOrderItem/${orderId}`, { data: { productId } });
 
       if (response.data.success) {
-        // Fetch updated order data
         const updatedOrderResponse = await axios.get(`/getOrder/${orderId}`);
         const updatedOrder = updatedOrderResponse.data.order;
 
-        // Update the specific product display on the page
         const productDiv = document.querySelector(`.product-detail[data-orderid="${orderId}"][data-productid="${productId}"]`);
         if (productDiv) {
           productDiv.style.opacity = '0.5';
@@ -110,7 +104,6 @@ async function cancelSingleProduct(orderId, productId, productName, productPrice
           }
         }
 
-        // Update order card status and actions on the page
         const orderCard = document.querySelector(`.order-card[data-orderid="${orderId}"]`);
         if (orderCard) {
           const statusDiv = orderCard.previousElementSibling;
@@ -120,35 +113,32 @@ async function cancelSingleProduct(orderId, productId, productName, productPrice
 
           const actionsDiv = orderCard.querySelector('.actions');
           if (updatedOrder.status === 'Cancelled') {
-            // Clear all actions if the entire order is cancelled
             actionsDiv.innerHTML = `
-              <button class="btn btn-primary view-more" data-toggle="modal" data-target="#productDetailsModal" 
-                      data-order='${JSON.stringify(updatedOrder)}' onclick="showProductDetails(this)">
-                View more
-              </button>
-            `;
+                            <button class="btn btn-primary view-more" data-toggle="modal" data-target="#productDetailsModal" 
+                                    data-order='${JSON.stringify(updatedOrder)}' onclick="showProductDetails(this)">
+                                View more
+                            </button>
+                        `;
           } else {
-            // Update actions to reflect the current state
             const activeProducts = updatedOrder.products.filter(p => p.status !== 'Cancelled');
             actionsDiv.innerHTML = `
-              <button class="btn btn-primary view-more" data-toggle="modal" data-target="#productDetailsModal" 
-                      data-order='${JSON.stringify(updatedOrder)}' onclick="showProductDetails(this)">
-                View more
-              </button>
-              ${activeProducts.length > 1 ? `
-                <button class="btn btn-danger cancel-order" onclick="cancelOrderProduct('${orderId}')">
-                  Cancel Entire Order
-                </button>
-              ` : activeProducts.length === 1 ? `
-                <button class="btn btn-danger cancel-order" onclick="cancelOrderProduct('${orderId}')">
-                  Cancel Order
-                </button>
-              ` : ''}
-            `;
+                            <button class="btn btn-primary view-more" data-toggle="modal" data-target="#productDetailsModal" 
+                                    data-order='${JSON.stringify(updatedOrder)}' onclick="showProductDetails(this)">
+                                View more
+                            </button>
+                            ${activeProducts.length > 1 ? `
+                                <button class="btn btn-danger cancel-order" onclick="cancelOrderProduct('${orderId}')">
+                                    Cancel Entire Order
+                                </button>
+                            ` : activeProducts.length === 1 ? `
+                                <button class="btn btn-danger cancel-order" onclick="cancelOrderProduct('${orderId}')">
+                                    Cancel Order
+                                </button>
+                            ` : ''}
+                        `;
           }
         }
 
-        // Update modal content if it's open
         const modal = document.getElementById('productDetailsModal');
         if (modal.classList.contains('show')) {
           const viewMoreButton = document.querySelector(`.order-card[data-orderid="${orderId}"] .view-more`);
@@ -160,7 +150,7 @@ async function cancelSingleProduct(orderId, productId, productName, productPrice
 
         await Swal.fire({
           title: 'Product Cancelled!',
-          text: `${productName} has been cancelled successfully. ${response.data.refundAmount ? `₹${response.data.refundAmount} will be refunded to your wallet.` : ''}`,
+          text: `${productName} (Size: ${variantSize}) has been cancelled successfully. ${response.data.refundAmount ? `₹${response.data.refundAmount} will be refunded to your wallet.` : ''}`,
           icon: 'success',
           confirmButtonColor: '#28a745',
           timer: 4000,
@@ -187,7 +177,7 @@ function hasMultipleActiveProducts(order) {
   return activeProducts.length > 1;
 }
 
-// Updated showProductDetails function to include individual cancel buttons
+// Updated showProductDetails function to include variant size
 function showProductDetails(button) {
   const orderData = JSON.parse(button.getAttribute('data-order'));
 
@@ -198,12 +188,24 @@ function showProductDetails(button) {
   const statusBadge = document.getElementById('modal-order-status');
   statusBadge.textContent = orderData.status || 'Ordered';
   statusBadge.className = `badge ${getStatusBadgeClass(orderData.status)}`;
-  document.getElementById('modal-order-total').textContent = orderData.total || '0';
+  document.getElementById('modal-original-total').textContent = orderData.originalTotal || 'N/A';
   document.getElementById('modal-order-discount').textContent = orderData.totalDiscount || '0';
+  document.getElementById('modal-coupon-code').textContent = orderData.couponCode || orderData.appliedCoupon || 'N/A';
+  document.getElementById('modal-coupon-discount').textContent = orderData.couponDiscount || '0';
+  document.getElementById('modal-order-total').textContent = orderData.total || '0';
   document.getElementById('modal-payment-method').textContent = orderData.paymentMethod || 'N/A';
   const paymentStatusBadge = document.getElementById('modal-payment-status');
   paymentStatusBadge.textContent = orderData.paymentStatus || 'N/A';
   paymentStatusBadge.className = `badge ${getPaymentStatusBadgeClass(orderData.paymentStatus)}`;
+
+  // Show Razorpay ID if available and payment method is Razorpay
+  const razorpayIdRow = document.getElementById('modal-razorpay-id-row');
+  if (orderData.paymentMethod === 'Razorpay' && orderData.razorpayId) {
+    document.getElementById('modal-razorpay-id').textContent = orderData.razorpayId;
+    razorpayIdRow.style.display = 'block';
+  } else {
+    razorpayIdRow.style.display = 'none';
+  }
 
   // Show refunded amount if greater than zero
   const refundedTotalRow = document.getElementById('modal-refunded-total-row');
@@ -227,14 +229,14 @@ function showProductDetails(button) {
 
   // Populate Delivery Address
   const address = orderData.address || {};
-  document.getElementById('modal-address-name').textContent = address.firstName || 'N/A';
+  document.getElementById('modal-address-name').textContent = address.firstName ? `${address.firstName} ${address.lastName || ''}`.trim() : 'N/A';
   document.getElementById('modal-address-phone').textContent = address.phoneNumber || 'N/A';
   document.getElementById('modal-address-full').textContent = address.address || 'N/A';
   document.getElementById('modal-address-city').textContent = address.city || 'N/A';
   document.getElementById('modal-address-state').textContent = address.state || 'N/A';
   document.getElementById('modal-address-pincode').textContent = address.pincode || 'N/A';
 
-  // Populate Products List
+  // Populate Products List with variant size information
   const productsContainer = document.getElementById('modal-products-list');
   productsContainer.innerHTML = '';
 
@@ -256,46 +258,46 @@ function showProductDetails(button) {
 
     const showIndividualCancel = isProductCancellable && hasMultipleActiveProducts(orderData);
 
-    // Use discountedPrice if available, otherwise use price
     const displayPrice = product.discountedPrice !== undefined && product.discountedPrice !== null
       ? product.discountedPrice
       : product.productId.price;
 
     productDiv.innerHTML = `
-      <div class="col-md-3">
-          <img src="${productImage}" 
-               alt="Product Image" class="img-fluid rounded" style="max-height: 100px; object-fit: cover;">
-      </div>
-      <div class="col-md-9">
-          <div class="d-flex justify-content-between align-items-start">
-              <div>
-                  <h6>${product.productId.name}</h6>
-                  <p class="mb-1"><strong>Price:</strong> ₹${displayPrice}</p>
-                  <p class="mb-1"><strong>Quantity:</strong> ${product.quantity}</p>
-                  <p class="mb-1"><strong>Status:</strong> 
-                      <span class="badge ${product.status === 'Cancelled' ? 'badge-danger' : 'badge-success'}">
-                          ${product.status || 'Ordered'}
-                      </span>
-                  </p>
-                  ${product.productId.description
+            <div class="col-md-3">
+                <img src="${productImage}" 
+                     alt="Product Image" class="img-fluid rounded" style="max-height: 100px; object-fit: cover;">
+            </div>
+            <div class="col-md-9">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6>${product.productId.name}</h6>
+                        <p class="mb-1"><strong>Size:</strong> ${product.variantSize}</p>
+                        <p class="mb-1"><strong>Price:</strong> ₹${displayPrice}</p>
+                        <p class="mb-1"><strong>Quantity:</strong> ${product.quantity}</p>
+                        <p class="mb-1"><strong>Status:</strong> 
+                            <span class="badge ${product.status === 'Cancelled' ? 'badge-danger' : 'badge-success'}">
+                                ${product.status || 'Ordered'}
+                            </span>
+                        </p>
+                        ${product.productId.description
         ? `<p class="mb-0 text-muted"><small>${product.productId.description}</small></p>`
         : ''
       }
-              </div>
-              <div>
-                  ${showIndividualCancel
+                    </div>
+                    <div>
+                        ${showIndividualCancel
         ? `
-                      <button class="btn btn-sm btn-danger" 
-                              onclick="cancelSingleProduct('${orderData._id}', '${product.productId._id}', '${product.productId.name}', ${displayPrice}, ${product.quantity})">
-                          Cancel This Item
-                      </button>
-                      `
+                                <button class="btn btn-sm btn-danger" 
+                                        onclick="cancelSingleProduct('${orderData._id}', '${product.productId._id}',&quot;${product.productId.name.replace(/"/g, '&quot;')}&quot;, ${displayPrice}, ${product.quantity}, '${product.variantSize}')">
+                                    Cancel This Item
+                                </button>
+                            `
         : ''
       }
-              </div>
-          </div>
-      </div>
-    `;
+                    </div>
+                </div>
+            </div>
+        `;
     productsContainer.appendChild(productDiv);
   });
 }
@@ -316,11 +318,9 @@ async function returnProduct(orderId) {
     if (result.isConfirmed) {
       const response = await axios.post(`/returnOrder/${orderId}`);
       if (response.data.success) {
-        // Fetch updated order data to get the latest product statuses
         const updatedOrderResponse = await axios.get(`/getOrder/${orderId}`);
         const updatedOrder = updatedOrderResponse.data.order;
 
-        // Update the order card status and product statuses
         const orderCard = document.querySelector(`.order-card[data-orderid="${orderId}"]`);
         if (orderCard) {
           const statusDiv = orderCard.previousElementSibling;
@@ -328,7 +328,6 @@ async function returnProduct(orderId) {
             statusDiv.querySelector('p').innerHTML = '<strong>Order Status:</strong> Returned';
           }
 
-          // Update each product's status in the order card
           const productDivs = orderCard.querySelectorAll('.product-detail');
           productDivs.forEach((div) => {
             const productId = div.getAttribute('data-productid');
@@ -345,17 +344,15 @@ async function returnProduct(orderId) {
             }
           });
 
-          // Clear actions since order is returned
           const actionsDiv = orderCard.querySelector('.actions');
           actionsDiv.innerHTML = `
-            <button class="btn btn-primary view-more" data-toggle="modal" data-target="#productDetailsModal" 
-                    data-order='${JSON.stringify(updatedOrder)}' onclick="showProductDetails(this)">
-              View more
-            </button>
-          `;
+                        <button class="btn btn-primary view-more" data-toggle="modal" data-target="#productDetailsModal" 
+                                data-order='${JSON.stringify(updatedOrder)}' onclick="showProductDetails(this)">
+                            View more
+                        </button>
+                    `;
         }
 
-        // Update modal content if it's open
         const modal = document.getElementById('productDetailsModal');
         if (modal.classList.contains('show')) {
           const viewMoreButton = document.querySelector(`.order-card[data-orderid="${orderId}"] .view-more`);
@@ -394,10 +391,7 @@ async function returnProduct(orderId) {
 
 async function retryPayment(orderId, razorpayId) {
   try {
-    const response = await axios.post('/retryPayment', {
-      orderId,
-      razorpayId
-    });
+    const response = await axios.post('/retryPayment', { orderId, razorpayId });
 
     if (response.data.success) {
       const { orderId: razorpayOrderId, amount, currency, name, email, phoneNumber, order } = response.data;
@@ -414,22 +408,20 @@ async function retryPayment(orderId, razorpayId) {
           if (response.razorpay_payment_id && response.razorpay_order_id && response.razorpay_signature) {
             const result = await axios.post('/paymentSuccess', { orderid });
             if (result.data.success) {
-              // Update the order card
               const orderCard = document.querySelector(`.order-card[data-orderid="${orderid}"]`);
               if (orderCard) {
                 const statusDiv = orderCard.closest('.order-card').previousElementSibling;
                 if (statusDiv) {
                   statusDiv.querySelector('p').innerHTML = '<strong>Order Status:</strong> Confirmed';
                 }
-                // Update actions (remove retry payment button)
                 const actionsDiv = orderCard.querySelector('.actions');
                 actionsDiv.innerHTML = `
-                  <button class="btn btn-primary view-more" data-toggle="modal" data-target="#productDetailsModal" 
-                          data-order='${JSON.stringify({ ...order, status: 'Confirmed', paymentStatus: 'success' })}' 
-                          onclick="showProductDetails(this)">
-                    View more
-                  </button>
-                `;
+                                    <button class="btn btn-primary view-more" data-toggle="modal" data-target="#productDetailsModal" 
+                                            data-order='${JSON.stringify({ ...order, status: 'Confirmed', paymentStatus: 'success' })}' 
+                                            onclick="showProductDetails(this)">
+                                        View more
+                                    </button>
+                                `;
               }
               Toastify({
                 text: "Payment successful!",
@@ -497,23 +489,20 @@ async function downloadInvoice(orderId) {
     const response = await axios.get(`/invoice/${orderId}`, { responseType: 'blob' });
     if (response.status === 200) {
       const blob = new Blob([response.data], { type: 'application/pdf' });
-
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
+      link.href = url;
       link.download = `invoice_${orderId}.pdf`;
       document.body.appendChild(link);
       link.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(link);
-
     }
   } catch (error) {
     console.error('Error downloading invoice:', error);
   }
 }
 
-
-// Helper function to get status badge class
 function getStatusBadgeClass(status) {
   switch (status) {
     case 'Pending': return 'badge-warning';
@@ -526,7 +515,6 @@ function getStatusBadgeClass(status) {
   }
 }
 
-// Helper function to get payment status badge class
 function getPaymentStatusBadgeClass(paymentStatus) {
   switch (paymentStatus) {
     case 'success': return 'badge-success';

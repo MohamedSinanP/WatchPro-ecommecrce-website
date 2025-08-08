@@ -36,6 +36,75 @@
 	<link rel="stylesheet" type="text/css" href="/css/User/css/main.css">
 	<!--===============================================================================================-->
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
+
+	<style>
+		.size-selector {
+			margin: 15px 0;
+		}
+
+		.size-options {
+			display: flex;
+			gap: 10px;
+			flex-wrap: wrap;
+		}
+
+		.size-option {
+			border: 2px solid #e6e6e6;
+			background: #fff;
+			padding: 10px 15px;
+			cursor: pointer;
+			border-radius: 4px;
+			transition: all 0.3s ease;
+			min-width: 50px;
+			text-align: center;
+			font-weight: 500;
+		}
+
+		.size-option:hover {
+			border-color: #717fe0;
+		}
+
+		.size-option.selected {
+			border-color: #717fe0;
+			background-color: #717fe0;
+			color: white;
+		}
+
+		.size-option.out-of-stock {
+			border-color: #ccc;
+			background-color: #f5f5f5;
+			color: #999;
+			cursor: not-allowed;
+			text-decoration: line-through;
+		}
+
+		.stock-info {
+			margin: 10px 0;
+			font-size: 14px;
+		}
+
+		.total-stock {
+			color: #666;
+			margin-bottom: 5px;
+		}
+
+		.selected-stock {
+			color: #28a745;
+			font-weight: 600;
+		}
+
+		.size-error {
+			color: #dc3545;
+			font-size: 13px;
+			margin-top: 5px;
+			display: none;
+		}
+
+		.btn-disabled {
+			opacity: 0.6;
+			cursor: not-allowed;
+		}
+	</style>
 </head>
 
 <body class="animsition">
@@ -176,8 +245,6 @@
 										</div>
 										<% }) %>
 								</div>
-
-
 							</div>
 						</div>
 					</div>
@@ -201,40 +268,62 @@
 									</span>
 									<% } %>
 
+										<!-- Stock Information -->
+										<div class="stock-info">
+											<% let totalStock=product.variants && product.variants.length> 0
+												? product.variants.reduce((sum, variant) => sum + variant.stock, 0)
+												: product.stock;
+												%>
+												<div class="total-stock">Total Stock: <%= totalStock %> items</div>
+												<div class="selected-stock" id="selectedStock" style="display: none;">
+													Selected Size Stock: <span id="selectedStockValue">0</span> items
+												</div>
+										</div>
 
-										<% if (product.stock < 1) { %>
-											<p class="stext-102 cl3 p-t-23 sold-out">Sold Out</p>
-											<% } else { %>
-												<p class="stext-102 cl3 p-t-23 in-stock">In Stock(<%= product.stock %>)</p>
-												<% } %>
-													<p class="stext-102 cl3 p-t-23">
-														<%= product.description %>
-													</p>
+										<p class="stext-102 cl3 p-t-23">
+											<%= product.description %>
+										</p>
 
-													<div class="p-t-33">
+										<!-- Size Selection (only show if variants exist) -->
+										<% if (product.variants && product.variants.length> 0) { %>
+											<div class="size-selector">
+												<label class="stext-102 cl3 p-b-10">Size:</label>
+												<div class="size-options">
+													<% product.variants.forEach(variant=> { %>
+														<div class="size-option <%= variant.stock === 0 ? 'out-of-stock' : '' %>"
+															data-size="<%= variant.size %>" data-stock="<%= variant.stock %>" <%=variant.stock===0
+															? 'data-disabled="true"' : '' %>>
+															<%= variant.size %> (<%= variant.stock %>)
+														</div>
+														<% }) %>
+												</div>
+												<div class="size-error" id="sizeError">Please select a size before adding to cart</div>
+											</div>
+											<% } %>
 
+												<div class="p-t-33">
+													<div class="flex-w flex-r-m p-b-10">
+														<div class="size-204 flex-w flex-m respon6-next">
+															<button
+																class="flex-c-m stext-101 cl0 size-101 bg1 bor1 hov-btn1 p-lr-15 trans-04 js-addcart-detail"
+																data-product-id="<%= product._id %>" data-product-name="<%= product.name %>"
+																data-product-price="<%= product.offerPrice || product.price %>"
+																data-product-quantity="1" id="addToCartBtn">
+																Add to cart
+															</button>
 
-														<div class="flex-w flex-r-m p-b-10">
 															<div class="size-204 flex-w flex-m respon6-next">
-
 																<button
-																	class="flex-c-m stext-101 cl0 size-101 bg1 bor1 hov-btn1 p-lr-15 trans-04 js-addcart-detail"
+																	class="flex-c-m stext-101 cl0 size-101 bg1 bor1 hov-btn1 p-lr-15 trans-04 js-addWishlist-detail mt-2"
 																	data-product-id="<%= product._id %>" data-product-name="<%= product.name %>"
-																	data-product-price="<%= product.price %>" data-product-quantity="1">
-																	Add to cart
+																	data-product-price="<%= product.offerPrice || product.price %>"
+																	data-product-quantity="1" id="addToWishlistBtn">
+																	Add to wishlist
 																</button>
-																<div class="size-204 flex-w flex-m respon6-next">
-
-																	<button
-																		class="flex-c-m stext-101 cl0 size-101 bg1 bor1 hov-btn1 p-lr-15 trans-04 js-addWishlist-detail mt-2"
-																		data-product-id="<%= product._id %>" data-product-name="<%= product.name %>"
-																		data-product-price="<%= product.price %>" data-product-quantity="1">
-																		Add to wishlist
-																	</button>
-																</div>
 															</div>
 														</div>
 													</div>
+												</div>
 						</div>
 					</div>
 
@@ -262,20 +351,6 @@
 					</div>
 				</div>
 		</section>
-
-
-
-
-
-
-		<div class="tab-pane fade" id="reviews" role="tabpanel">
-		</div>
-		</div>
-		</div>
-		</div>
-		</div>
-		</section>
-
 
 		<!-- Related Products -->
 		<section class="sec-relate-product bg0 p-t-45 p-b-105">
@@ -328,8 +403,6 @@
 
 		<!-- Footer -->
 		<%- include('../partials/user/footer') %>
-
-
 
 			<!-- Back to top -->
 			<div class="btn-back-to-top" id="myBtn">

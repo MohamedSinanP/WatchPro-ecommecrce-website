@@ -6,132 +6,146 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard</title>
   <!-- Bootstrap CDN -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
   <!-- Chart.js CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="/css/Admin/dashboard.css">
 </head>
 
 <body>
+  <div class="dashboard-container d-flex">
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar" aria-label="Main navigation">
+      <%- include('../partials/admin/sidebar') %>
+    </nav>
 
-  <div class="dashboard-container">
-    <%- include('../partials/admin/sidebar') %>
+    <!-- Main Content -->
+    <main class="main-content flex-grow-1">
+      <header class="main-header d-flex justify-content-between align-items-center p-3">
+        <h1 class="h3 m-0">Dashboard</h1>
+        <button class="menu-toggle btn btn-dark d-md-none" aria-label="Toggle navigation">
+          ☰
+        </button>
+      </header>
 
-      <main class="main-content">
-        <header class="main-header d-flex justify-content-between align-items-center">
-          <h1>Dashboard</h1>
-          <button class="menu-toggle">☰</button>
-        </header>
-
-        <section class="content mt-4">
-          <!-- Chart Section -->
-          <div class="chart-container">
-            <h2>Sales Overview</h2>
+      <section class="content p-4">
+        <!-- Chart Section -->
+        <div class="chart-container card mb-4">
+          <div class="card-header">
+            <h2 class="h4 mb-0">Sales Overview</h2>
+          </div>
+          <div class="card-body">
             <div class="mb-3">
               <label for="chartFilter" class="form-label">Select Period</label>
-              <select id="chartFilter" class="form-select" onchange="updateChart()">
+              <select id="chartFilter" class="form-select" aria-label="Select chart period" onchange="updateChart()">
                 <option value="monthly">Monthly</option>
                 <option value="yearly">Yearly</option>
               </select>
             </div>
-            <canvas id="salesChart" width="300" height="140"></canvas>
+            <canvas id="salesChart" aria-label="Sales chart"></canvas>
           </div>
+        </div>
 
-          <!-- Top Products, Categories, and Brands Cards -->
-          <div class="row mt-5">
-            <!-- Top Selling Products Card -->
-            <div class="col-md-4">
-              <div class="card">
-                <div class="card-header">
-                  <h3>Top Selling Products (Top 10)</h3>
-                </div>
-                <div class="card-body">
-                  <ul>
-                    <% topSellingProducts.forEach(product=> { %>
-                      <li>
-                        <%= product.name %>
-                      </li>
-                      <% }) %>
-                  </ul>
-                </div>
+        <!-- Cards Section -->
+        <div class="row g-4">
+          <!-- Top Selling Products -->
+          <div class="col-md-4">
+            <div class="card h-100">
+              <div class="card-header">
+                <h3 class="h5 mb-0">Top Selling Products (Top 10)</h3>
               </div>
-            </div>
-
-            <!-- Top Selling Categories Card -->
-            <div class="col-md-4">
-              <div class="card">
-                <div class="card-header">
-                  <h3>Top Selling Categories (Top 10)</h3>
-                </div>
-                <div class="card-body">
-                  <ul>
-                    <% topSellingCategories.forEach(category=> { %>
-                      <li>
-                        <%= category.categoryName %>
-                      </li>
-                      <% }) %>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <!-- Top Selling Brands Card -->
-            <div class="col-md-4">
-              <div class="card">
-                <div class="card-header">
-                  <h3>Top Selling Brands (Top 10)</h3>
-                </div>
-                <div class="card-body">
-                  <ul>
-                    <% topSellingBrands.forEach(brand=> { %>
-                      <li>
-                        <%= brand._id %>
-                      </li>
-                      <% }) %>
-                  </ul>
-                </div>
+              <div class="card-body">
+                <ul class="list-unstyled">
+                  <% topSellingProducts.forEach(product=> { %>
+                    <li class="mb-2">
+                      <%= product.name %> (₹<%= product.totalRevenue.toFixed(2) %>)
+                    </li>
+                    <% }) %>
+                </ul>
               </div>
             </div>
           </div>
-        </section>
-      </main>
+
+          <!-- Top Selling Categories -->
+          <div class="col-md-4">
+            <div class="card h-100">
+              <div class="card-header">
+                <h3 class="h5 mb-0">Top Selling Categories (Top 10)</h3>
+              </div>
+              <div class="card-body">
+                <ul class="list-unstyled">
+                  <% topSellingCategories.forEach(category=> { %>
+                    <li class="mb-2">
+                      <%= category.categoryName %> (₹<%= category.totalRevenue.toFixed(2) %>)
+                    </li>
+                    <% }) %>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top Selling Brands -->
+          <div class="col-md-4">
+            <div class="card h-100">
+              <div class="card-header">
+                <h3 class="h5 mb-0">Top Selling Brands (Top 10)</h3>
+              </div>
+              <div class="card-body">
+                <ul class="list-unstyled">
+                  <% topSellingBrands.forEach(brand=> { %>
+                    <li class="mb-2">
+                      <%= brand.brandName %> (₹<%= brand.totalRevenue.toFixed(2) %>)
+                    </li>
+                    <% }) %>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
   </div>
 
+  <!-- Bootstrap JS and Popper.js -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+    crossorigin="anonymous"></script>
   <script>
+    // Sidebar Toggle
+    document.querySelector('.menu-toggle').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('active');
+    });
+
+    // Chart.js Logic
     let monthlySalesData = [];
     let yearlySalesData = [];
 
-    // Parse data safely
     try {
       monthlySalesData = JSON.parse('<%- JSON.stringify(monthlySales) %>');
       yearlySalesData = JSON.parse('<%- JSON.stringify(yearlySales) %>');
-      console.log(monthlySalesData, yearlySalesData);
     } catch (error) {
-      console.error("Parsing error:", error);
+      console.error("Error parsing sales data:", error);
     }
 
-    // Define month labels and year range (from 2024 to the current year)
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const startYear = 2024;
+    const startYear = 2025;
     const currentYear = new Date().getFullYear();
-
-    // Prepare monthly and yearly labels
-    const allMonths = months;  // Jan to Dec
     const allYears = Array.from({ length: currentYear - startYear + 1 }, (_, i) => startYear + i);
 
-    // Initialize arrays for sales data (filling with zero sales for all months and years)
-    const monthlySales = Array(12).fill(0); // 12 months in a year
-    const yearlySales = Array(currentYear - startYear + 1).fill(0); // All years from 2024 to current year
+    // Initialize sales arrays
+    const monthlySales = Array(12).fill(0);
+    const yearlySales = Array(allYears.length).fill(0);
 
-    // Populate monthly sales data (if data exists in monthlySalesData)
+    // Populate monthly sales data
     monthlySalesData.forEach(sale => {
-      const monthIndex = sale.month - 1; // Adjusting for zero-based index (Jan = 0, Feb = 1, ...)
+      const monthIndex = sale.month - 1;
       if (monthIndex >= 0 && monthIndex < 12) {
         monthlySales[monthIndex] = sale.totalSales;
       }
     });
 
-    // Populate yearly sales data (if data exists in yearlySalesData)
+    // Populate yearly sales data
     yearlySalesData.forEach(sale => {
       const yearIndex = sale.year - startYear;
       if (yearIndex >= 0 && yearIndex < yearlySales.length) {
@@ -139,78 +153,104 @@
       }
     });
 
-    // Proceed if the data is in the expected format
     if (Array.isArray(monthlySalesData) && Array.isArray(yearlySalesData)) {
-      // Prepare data for the monthly and yearly charts
       const monthlyData = {
-        labels: allMonths, // Labels for all months (Jan-Dec)
+        labels: months,
         datasets: [{
           label: 'Total Sales (Monthly)',
-          data: monthlySales, // Populate sales data for all months
+          data: monthlySales,
           fill: false,
-          borderColor: 'rgba(75, 192, 192, 1)',
-          tension: 0.1
+          borderColor: '#0d6efd',
+          tension: 0.3,
+          pointBackgroundColor: '#0d6efd',
+          pointBorderColor: '#fff',
+          pointHoverRadius: 8
         }]
       };
 
       const yearlyData = {
-        labels: allYears.map(year => year.toString()), // Labels for all years (2024, 2025, ...)
+        labels: allYears.map(year => year.toString()),
         datasets: [{
           label: 'Total Sales (Yearly)',
-          data: yearlySales, // Populate sales data for all years
+          data: yearlySales,
           fill: false,
-          borderColor: 'rgba(75, 192, 192, 1)',
-          tension: 0.1
+          borderColor: '#0d6efd',
+          tension: 0.3,
+          pointBackgroundColor: '#0d6efd',
+          pointBorderColor: '#fff',
+          pointHoverRadius: 8
         }]
       };
 
-      let currentChart = 'monthly'; // Default to monthly data
-
-      // Initialize chart with monthly data by default
+      let currentChart = 'monthly';
       const ctx = document.getElementById('salesChart').getContext('2d');
-      let salesChart = new Chart(ctx, {
+      const salesChart = new Chart(ctx, {
         type: 'line',
         data: monthlyData,
         options: {
           responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: {
+                font: {
+                  size: 14,
+                  family: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif'
+                }
+              }
+            }
+          },
           scales: {
             y: {
               beginAtZero: true,
               min: 0,
-              max: 1000000, // Adjust as needed for monthly data
+              max: 1000000,
               ticks: {
                 callback: function (value) {
-                  return '$' + value.toFixed(2);
+                  return '₹' + value.toFixed(2);
+                },
+                font: {
+                  size: 12,
+                  family: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif'
                 }
+              },
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)'
+              }
+            },
+            x: {
+              ticks: {
+                font: {
+                  size: 12,
+                  family: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif'
+                }
+              },
+              grid: {
+                display: false
               }
             }
           }
         }
       });
 
-      // Function to update the chart when the period filter changes
-      function updateChart() {
+      window.updateChart = function () {
         const selectedPeriod = document.getElementById('chartFilter').value;
-
         if (selectedPeriod === 'monthly' && currentChart !== 'monthly') {
           salesChart.data = monthlyData;
-          salesChart.options.scales.y.max = 1000000; // Static max for monthly
+          salesChart.options.scales.y.max = 1000000;
           salesChart.update();
           currentChart = 'monthly';
         } else if (selectedPeriod === 'yearly' && currentChart !== 'yearly') {
           salesChart.data = yearlyData;
-          salesChart.options.scales.y.max = 1000000; // Static max for yearly
+          salesChart.options.scales.y.max = 1000000;
           salesChart.update();
           currentChart = 'yearly';
         }
-      }
+      };
     } else {
-      console.error("Data is not in expected format (array).");
+      console.error("Sales data is not in the expected array format.");
     }
   </script>
-
-
-
 </body>
 
 </html>

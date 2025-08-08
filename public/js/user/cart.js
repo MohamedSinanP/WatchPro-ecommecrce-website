@@ -127,6 +127,7 @@ function fetchAndUpdateCartTotals() {
 
 function updateQuantity(cartId, productId, change) {
   const input = document.querySelector(`input[name='num-product${productId}']`);
+  const variantSize = input.closest('tr').querySelector('.column-2 span').textContent.replace('Size: ', '').trim();
   let quantity = parseInt(input.value, 10);
   if (isNaN(quantity)) {
     quantity = 1;
@@ -151,20 +152,21 @@ function updateQuantity(cartId, productId, change) {
   }
 
   input.value = quantity;
-  sendQuantityUpdate(cartId, productId, quantity);
+  sendQuantityUpdate(cartId, productId, quantity, variantSize);
 }
 
-function sendQuantityUpdate(cartId, productId, quantity) {
+function sendQuantityUpdate(cartId, productId, quantity, variantSize) {
   axios.patch('/updateQuantity', {
-    cartId: cartId,
+    cartId,
     id: productId,
-    quantity: quantity
+    quantity,
+    variantSize
   })
     .then(response => {
       if (response.data.success) {
         const product = response.data.product;
         const subtotal = response.data.subtotal;
-        const wasCouponApplied = isCouponApplied; // Store previous state
+        const wasCouponApplied = isCouponApplied;
         couponDiscount = parseFloat(response.data.couponDiscount) || 0;
         isCouponApplied = !!response.data.appliedCoupon;
         appliedCouponId = response.data.appliedCoupon ? response.data.appliedCoupon.id : null;
@@ -188,12 +190,10 @@ function sendQuantityUpdate(cartId, productId, quantity) {
           });
         }
 
-        // Update UI elements
         updateDiscountDisplay();
         updateCartTotal();
         updateCheckoutButton();
 
-        // Update coupon button states
         const applyButton = document.querySelector('.apply-coupon-btn');
         const removeButton = document.querySelector('.remove-coupon-btn');
         if (isCouponApplied) {
@@ -232,18 +232,41 @@ function sendQuantityUpdate(cartId, productId, quantity) {
 }
 
 function deleteProduct(productId) {
-  axios.delete(`/deleteProduct/${productId}`)
+  const row = document.querySelector(`#total-price-${productId}`).closest('tr');
+  const variantSize = row.querySelector('.column-2 span').textContent.replace('Size: ', '').trim();
+  axios.delete(`/deleteProduct/${productId}/${variantSize}`)
     .then(response => {
       if (response.data.success) {
-        const productRow = document.querySelector(`#total-price-${productId}`).closest('tr');
-        if (productRow) {
-          productRow.remove();
+        row.remove();
+        toastr.success('Product removed from cart', 'Success');
+
+        // Update cart totals
+        const subtotalElement = document.querySelector('#subtotal');
+        subtotalElement.textContent = `₹ ${response.data.subtotal}`;
+        couponDiscount = parseFloat(response.data.couponDiscount) || 0;
+        isCouponApplied = !!response.data.appliedCoupon;
+        appliedCouponId = response.data.appliedCoupon ? response.data.appliedCoupon.id : null;
+
+        if (response.data.couponRemoved) {
+          toastr.warning('Coupon removed due to cart total below minimum purchase limit', 'Coupon Invalid');
         }
 
-        // Fetch updated cart totals
-        fetchAndUpdateCartTotals();
+        updateDiscountDisplay();
+        updateCartTotal();
+        updateCheckoutButton();
 
-        toastr.success('Product removed from cart', 'Success');
+        // Update coupon button states
+        const applyButton = document.querySelector('.apply-coupon-btn');
+        const removeButton = document.querySelector('.remove-coupon-btn');
+        if (isCouponApplied) {
+          applyButton.style.pointerEvents = 'none';
+          applyButton.classList.add('disabled');
+          removeButton.style.display = 'inline-flex';
+        } else {
+          applyButton.style.pointerEvents = 'auto';
+          applyButton.classList.remove('disabled');
+          removeButton.style.display = 'none';
+        }
 
         // Check if cart is empty
         if (!document.querySelectorAll('.table_row').length) {
@@ -262,7 +285,6 @@ function deleteProduct(productId) {
       toastr.error('An error occurred while trying to delete the product');
     });
 }
-
 function updateDiscountDisplay() {
   const couponDiscountRow = document.getElementById('coupon-discount-row');
   const couponDiscountElement = document.getElementById('couponDiscount');

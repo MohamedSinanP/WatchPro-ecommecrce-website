@@ -2,9 +2,7 @@ const categoryModel = require('../../models/categoryModel');
 const productModel = require('../../models/productModel');
 require('dotenv').config();
 
-
-// to show products in admin side 
-
+// Load products in admin side
 const loadProducts = async (req, res) => {
   try {
     const page = Number.isNaN(parseInt(req.query.page)) ? 1 : parseInt(req.query.page);
@@ -31,7 +29,6 @@ const loadProducts = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
-
     const totalPages = Math.ceil(totalProducts / limit);
     const currentPage = page;
     res.render('admin/products', { products, categories, currentPage, limit, totalPages, search });
@@ -41,28 +38,66 @@ const loadProducts = async (req, res) => {
   }
 };
 
-// to add new product in products collection
-
+// Add new product
 const addProduct = async (req, res) => {
   try {
-    const { name, brand, price, description, category, stock } = req.body;
+    const { name, brand, price, description, category, variants } = req.body;
 
-    if (!name || !brand || !price || !description || !category || !stock) {
+    // Parse variants if it's a string (from JSON.stringify in frontend)
+    let parsedVariants;
+    try {
+      parsedVariants = typeof variants === 'string' ? JSON.parse(variants) : variants;
+    } catch (error) {
       return res.status(400).json({
         success: false,
-        message: 'All fields are required'
+        message: 'Invalid variants format',
+      });
+    }
+    console.log('Parsed Variants:', parsedVariants);
+
+    // Validate required fields
+    if (!name || !brand || !price || !description || !category || !parsedVariants) {
+      return res.status(400).json({
+        success: false,
+        message: 'All fields are required, including at least one variant',
       });
     }
 
+    // Validate variants
+    const validSizes = ['Small', 'Medium', 'Large', 'ExtraLarge'];
+    if (!Array.isArray(parsedVariants) || parsedVariants.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'At least one variant is required',
+      });
+    }
+
+    // Validate each variant
+    const variantsArray = parsedVariants.map(variant => ({
+      size: variant.size,
+      stock: parseInt(variant.stock) || 0,
+    }));
+
+    const hasValidVariant = variantsArray.some(variant => validSizes.includes(variant.size) && variant.stock > 0);
+    if (!hasValidVariant) {
+      return res.status(400).json({
+        success: false,
+        message: 'At least one valid variant with stock greater than 0 is required',
+      });
+    }
+
+    // Validate images
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'At least one image is required'
+        message: 'At least one image is required',
       });
     }
 
-    const images = req.files;
-    const imageUrls = images.map(file => file.path);
+    const imageUrls = req.files.map(file => file.path);
+
+    // Calculate total stock
+    const totalStock = variantsArray.reduce((sum, variant) => sum + variant.stock, 0);
 
     const newProduct = new productModel({
       name: name.trim(),
@@ -70,8 +105,9 @@ const addProduct = async (req, res) => {
       price: parseFloat(price),
       description: description.trim(),
       category,
-      stock: parseInt(stock),
-      images: imageUrls
+      stock: totalStock,
+      images: imageUrls,
+      variants: variantsArray,
     });
 
     await newProduct.save();
@@ -79,38 +115,67 @@ const addProduct = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Product added successfully!',
-      product: newProduct
+      product: newProduct,
     });
   } catch (error) {
     console.error('Error adding product:', error);
     res.status(500).json({
       success: false,
       message: 'Error adding product',
-      error: error.message
+      error: error.message,
     });
   }
 };
 
-// edit existing product in products collection
-
+// Edit existing product
 const editProduct = async (req, res) => {
   try {
     const productId = req.params.id;
-    const {
-      name,
-      brand,
-      category,
-      description,
-      price,
-      stock
-    } = req.body;
+    const { name, brand, category, description, price, variants } = req.body;
 
-    if (!name || !brand || !category || !description || !price || !stock) {
+    // Parse variants if it's a string
+    let parsedVariants;
+    try {
+      parsedVariants = typeof variants === 'string' ? JSON.parse(variants) : variants;
+    } catch (error) {
       return res.status(400).json({
         success: false,
-        message: 'All fields are required'
+        message: 'Invalid variants format',
       });
     }
+
+    // Validate required fields
+    if (!name || !brand || !category || !description || !price || !parsedVariants) {
+      return res.status(400).json({
+        success: false,
+        message: 'All fields are required, including at least one variant',
+      });
+    }
+
+    // Validate variants
+    const validSizes = ['Small', 'Medium', 'Large', 'ExtraLarge'];
+    if (!Array.isArray(parsedVariants) || parsedVariants.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'At least one variant is required',
+      });
+    }
+
+    const variantsArray = parsedVariants.map(variant => ({
+      size: variant.size,
+      stock: parseInt(variant.stock) || 0,
+    }));
+
+    const hasValidVariant = variantsArray.some(variant => validSizes.includes(variant.size) && variant.stock > 0);
+    if (!hasValidVariant) {
+      return res.status(400).json({
+        success: false,
+        message: 'At least one valid variant with stock greater than 0 is required',
+      });
+    }
+
+    // Calculate total stock
+    const totalStock = variantsArray.reduce((sum, variant) => sum + variant.stock, 0);
 
     const updateData = {
       name: name.trim(),
@@ -118,7 +183,8 @@ const editProduct = async (req, res) => {
       category,
       description: description.trim(),
       price: parseFloat(price),
-      stock: parseInt(stock)
+      stock: totalStock,
+      variants: variantsArray,
     };
 
     if (req.files && req.files.length > 0) {
@@ -126,16 +192,12 @@ const editProduct = async (req, res) => {
       updateData.images = imageUrls;
     }
 
-    const updatedProduct = await productModel.findByIdAndUpdate(
-      productId,
-      updateData,
-      { new: true }
-    );
+    const updatedProduct = await productModel.findByIdAndUpdate(productId, updateData, { new: true });
 
     if (!updatedProduct) {
       return res.status(404).json({
         success: false,
-        message: 'Product not found'
+        message: 'Product not found',
       });
     }
 
@@ -149,14 +211,12 @@ const editProduct = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'An error occurred while updating the product',
-      error: error.message
+      error: error.message,
     });
   }
 };
 
-
-// to change the status of the products (listed/unlisted)
-
+// Change product listing status
 const isListedProduct = async (req, res) => {
   try {
     const { productId, isListed } = req.body;
@@ -169,7 +229,7 @@ const isListedProduct = async (req, res) => {
     if (updatedProduct) {
       res.json({ success: true });
     } else {
-      res.json({ success: false, message: 'Category not found' });
+      res.json({ success: false, message: 'Product not found' });
     }
   } catch (error) {
     console.error('Error updating product:', error);
@@ -177,10 +237,9 @@ const isListedProduct = async (req, res) => {
   }
 };
 
-
 module.exports = {
   loadProducts,
   addProduct,
   editProduct,
-  isListedProduct
-}
+  isListedProduct,
+};

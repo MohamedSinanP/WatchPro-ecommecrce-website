@@ -133,99 +133,88 @@ const updateOrderStatus = async (req, res) => {
   const { status } = req.body;
 
   try {
-    const order = await orderModel.findById(id).populate('products.productId');
-    if (!order) {
-      return res.status(404).json({ success: false, message: 'Order not found' });
-    }
+    const order = await orderModel.findById(id)
+      .populate('products.productId')
+      .populate('appliedCoupon');
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
 
-    // Check if status update is allowed
     if (!isStatusUpdateAllowed(order.status, status)) {
-      return res.status(400).json({
-        success: false,
-        message: `Cannot change order status from '${order.status}' to '${status}'. Invalid status progression.`
-      });
+      return res.status(400).json({ success: false, message: `Invalid status change from '${order.status}' to '${status}'` });
     }
 
     order.status = status;
-
     let refundAmount = 0;
+    let couponRemoved = false;
 
     if (status === 'Delivered') {
       order.deliveryDate = new Date();
-    }
-
-    if (['Confirmed', 'Shipped', 'Delivered'].includes(status)) {
-      order.products.forEach(product => {
-        if (!['Cancelled', 'Returned'].includes(product.status)) {
-          product.status = status;
+      order.products.forEach(p => {
+        if (!['Cancelled', 'Returned'].includes(p.status)) {
+          p.status = 'Delivered';
         }
       });
     }
 
-    if (status === 'Cancelled' || status === 'Returned') {
+    if (status === 'Cancelled') {
+      // FULL ORDER CANCELLATION
       for (const product of order.products) {
-        const isCancelledRefund = status === 'Cancelled' && !['Delivered', 'Returned', 'Cancelled'].includes(product.status);
-        const isReturnedRefund = status === 'Returned' && product.status === 'Delivered';
-
-        if (isCancelledRefund || isReturnedRefund) {
-          // Restore product stock
-          await productModel.findByIdAndUpdate(
-            product.productId,
-            { $inc: { stock: product.quantity } },
-            { new: true }
-          );
-
-          product.status = status; // Set product status to Cancelled or Returned
-          refundAmount += (product.discountedPrice ?? product.price) * product.quantity;
+        if (product.status !== 'Cancelled') {
+          await restoreStock(product.productId, product.variantSize, product.quantity);
+          product.status = 'Cancelled';
         }
       }
-
+      refundAmount = (order.total || 0) - (order.refundedTotal || 0);
       order.refundedTotal = (order.refundedTotal || 0) + refundAmount;
+
+      if (order.appliedCoupon) {
+        couponRemoved = true;
+        order.appliedCoupon = null;
+        order.couponCode = null;
+        order.couponDiscount = 0;
+        order.totalDiscount = 0;
+      }
     }
 
-    // Ensure single-product order reflects Returned status
-    if (order.products.length === 1 && status === 'Returned') {
-      order.products[0].status = 'Returned';
-    }
-
-    // Process refund to wallet for Razorpay
-    if ((status === 'Cancelled' || status === 'Returned') && order.paymentMethod === 'Razorpay' && refundAmount > 0) {
-      let wallet = await walletModel.findOne({ userId: order.userId });
-
-      const transactionType = 'credit';
-      const description = `Refund for ${status.toLowerCase()} order ${id}`;
-
-      try {
-        if (wallet) {
-          wallet.transaction.push({
-            transactionType,
-            amount: refundAmount.toString(),
-            date: new Date(),
-            description
-          });
-          wallet.balance += refundAmount;
-          await wallet.save();
-        } else {
-          wallet = new walletModel({
-            userId: order.userId,
-            transaction: [{
-              transactionType,
-              amount: refundAmount.toString(),
-              date: new Date(),
-              description
-            }],
-            balance: refundAmount
-          });
-          await wallet.save();
+    if (status === 'Returned') {
+      // WHOLE ORDER RETURN → refund total - ₹100 delivery charge
+      for (const product of order.products) {
+        if (product.status === 'Delivered') {
+          await restoreStock(product.productId, product.variantSize, product.quantity);
+          product.status = 'Returned';
         }
-      } catch (walletError) {
-        console.error('Error updating wallet:', walletError);
-        return res.status(500).json({ success: false, message: 'Failed to process refund' });
+      }
+      refundAmount = Math.max((order.total || 0) - 100, 0);
+      order.refundedTotal = (order.refundedTotal || 0) + refundAmount;
+
+      if (order.appliedCoupon) {
+        couponRemoved = true;
+        order.appliedCoupon = null;
+        order.couponCode = null;
+        order.couponDiscount = 0;
+        order.totalDiscount = 0;
+      }
+    }
+
+    // Wallet Refund
+    if ((status === 'Cancelled' || status === 'Returned') && ['Razorpay', 'Wallet'].includes(order.paymentMethod) && refundAmount > 0) {
+      let wallet = await walletModel.findOne({ userId: order.userId });
+      const description = `${status} refund for order ${id}${couponRemoved ? ' (coupon removed)' : ''}`;
+      if (wallet) {
+        wallet.transaction.push({ transactionType: 'credit', amount: refundAmount, date: new Date(), description });
+        wallet.balance += refundAmount;
+        await wallet.save();
+      } else {
+        wallet = new walletModel({
+          userId: order.userId,
+          transaction: [{ transactionType: 'credit', amount: refundAmount, date: new Date(), description }],
+          balance: refundAmount
+        });
+        await wallet.save();
       }
     }
 
     await order.save();
-    res.json({ success: true, message: 'Order status updated successfully' });
+    res.json({ success: true, message: `Order marked as ${status}`, refundAmount, couponRemoved });
 
   } catch (error) {
     console.error('Error updating order status:', error);
@@ -239,93 +228,76 @@ const updateProductStatus = async (req, res) => {
   const { status } = req.body;
 
   try {
-    const order = await orderModel.findById(orderId).populate('products.productId');
-    if (!order) {
-      return res.status(404).json({ success: false, message: 'Order not found' });
-    }
-    const product = order.products.id(productId);
-    if (!product) {
-      return res.status(404).json({ success: false, message: 'Product not found in order' });
-    }
+    const order = await orderModel.findById(orderId)
+      .populate('products.productId')
+      .populate('appliedCoupon');
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
 
-    // Check if product status update is allowed
-    const currentProductStatus = product.status || 'Pending';
-    if (!isStatusUpdateAllowed(currentProductStatus, status)) {
-      return res.status(400).json({
-        success: false,
-        message: `Cannot change product status from '${currentProductStatus}' to '${status}'. Invalid status progression.`
-      });
+    const product = order.products.id(productId);
+    if (!product) return res.status(404).json({ success: false, message: 'Product not found in order' });
+
+    if (!isStatusUpdateAllowed(product.status || 'Pending', status)) {
+      return res.status(400).json({ success: false, message: `Invalid status change from '${product.status}' to '${status}'` });
     }
 
     let refundAmount = 0;
-    if (['Cancelled', 'Returned'].includes(status)) {
-      // Update stock for cancelled or returned products
-      await productModel.findByIdAndUpdate(
-        product.productId,
-        { $inc: { stock: product.quantity } },
-        { new: true }
-      );
-      refundAmount = (product.discountedPrice ?? product.price) * product.quantity;
+    let couponRemoved = false;
+
+    if (status === 'Cancelled') {
+      // Before change — proportional refund
+      const preTotals = recalcOrderTotals(order.products, order.appliedCoupon);
+      const productSubtotalBefore = (product.discountedPrice ?? product.price) * product.quantity;
+
+      let productPaid = productSubtotalBefore;
+      if (preTotals.discountedSubtotal > 0 && preTotals.couponDiscount > 0) {
+        const couponShare = (productSubtotalBefore / preTotals.discountedSubtotal) * preTotals.couponDiscount;
+        productPaid = productSubtotalBefore - couponShare;
+      }
+
+      // Restore stock
+      await restoreStock(product.productId, product.variantSize, product.quantity);
+      product.status = 'Cancelled';
+
+      // After change — check coupon validity
+      const postTotals = recalcOrderTotals(order.products, order.appliedCoupon);
+      if (!postTotals.couponStillValid && order.appliedCoupon) {
+        couponRemoved = true;
+        order.appliedCoupon = null;
+        order.couponCode = null;
+        order.couponDiscount = 0;
+        order.totalDiscount = postTotals.offerDiscount;
+      } else {
+        order.couponDiscount = postTotals.couponDiscount;
+        order.totalDiscount = postTotals.totalDiscount;
+      }
+
+      refundAmount = productPaid;
       order.refundedTotal = (order.refundedTotal || 0) + refundAmount;
     }
 
-    // Update product status
     product.status = status;
+    order.status = determineOrderStatus(order.products);
 
-    // For single-product orders, ensure product status matches when returned
-    if (order.products.length === 1 && status === 'Returned') {
-      product.status = 'Returned';
-    }
-
-    // Process refund to wallet only for Razorpay payment method
-    if (['Cancelled', 'Returned'].includes(status) && order.paymentMethod === 'Razorpay' && refundAmount > 0) {
+    // Wallet Refund
+    if (status === 'Cancelled' && ['Razorpay', 'Wallet'].includes(order.paymentMethod) && refundAmount > 0) {
       let wallet = await walletModel.findOne({ userId: order.userId });
-
-      const transactionType = 'credit';
-      const description = `Refund for ${status.toLowerCase()} product ${productId} in order ${orderId}`;
-
-      try {
-        if (wallet) {
-          wallet.transaction.push({
-            transactionType,
-            amount: refundAmount.toString(),
-            date: new Date(),
-            description
-          });
-          wallet.balance += refundAmount;
-          await wallet.save();
-        } else {
-          wallet = new walletModel({
-            userId: order.userId,
-            transaction: [{
-              transactionType,
-              amount: refundAmount.toString(),
-              date: new Date(),
-              description
-            }],
-            balance: refundAmount
-          });
-          await wallet.save();
-        }
-      } catch (walletError) {
-        console.error('Error updating wallet:', walletError);
-        return res.status(500).json({ success: false, message: 'Failed to process refund' });
+      const description = `Refund for cancelled product ${productId} in order ${orderId}${couponRemoved ? ' (coupon removed)' : ''}`;
+      if (wallet) {
+        wallet.transaction.push({ transactionType: 'credit', amount: refundAmount, date: new Date(), description });
+        wallet.balance += refundAmount;
+        await wallet.save();
+      } else {
+        wallet = new walletModel({
+          userId: order.userId,
+          transaction: [{ transactionType: 'credit', amount: refundAmount, date: new Date(), description }],
+          balance: refundAmount
+        });
+        await wallet.save();
       }
     }
 
-    const newOrderStatus = determineOrderStatus(order.products);
-    order.status = newOrderStatus;
-
-    if (newOrderStatus === 'Delivered' && !order.deliveryDate) {
-      order.deliveryDate = new Date();
-    }
-
     await order.save();
-    res.json({
-      success: true,
-      message: 'Product status updated successfully',
-      newOrderStatus: newOrderStatus
-    });
+    res.json({ success: true, message: `Product status updated to ${status}`, refundAmount, couponRemoved });
 
   } catch (error) {
     console.error('Error updating product status:', error);
@@ -347,6 +319,65 @@ const deleteOrder = async (req, res) => {
     console.error('Error deleting order:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
+};
+
+
+// === Restore stock helper ===
+const restoreStock = async (productId, variantSize, qty) => {
+  const product = await productModel.findById(productId);
+  if (product) {
+    const variant = product.variants.find(v => v.size === variantSize);
+    if (variant) variant.stock += qty;
+    product.stock += qty;
+    await product.save();
+  }
+};
+
+// === Recalculate totals & coupon logic ===
+const recalcOrderTotals = (products, appliedCoupon) => {
+  const activeProducts = products.filter(p => p.status !== 'Cancelled');
+
+  const originalSubtotal = activeProducts.reduce(
+    (sum, p) => sum + (p.price ?? 0) * (p.quantity ?? 0), 0
+  );
+
+  const discountedSubtotal = activeProducts.reduce((sum, p) => {
+    const price = (p.discountedPrice ?? p.price) ?? 0;
+    return sum + price * (p.quantity ?? 0);
+  }, 0);
+
+  const offerDiscount = originalSubtotal - discountedSubtotal;
+
+  let couponDiscount = 0;
+  let couponStillValid = false;
+
+  if (appliedCoupon && discountedSubtotal >= appliedCoupon.minPurchaseLimit) {
+    couponStillValid = true;
+    if (appliedCoupon.discountType === 'percentage') {
+      couponDiscount = Math.min(
+        (discountedSubtotal * appliedCoupon.discount) / 100,
+        appliedCoupon.maxDiscount || Infinity
+      );
+    } else {
+      couponDiscount = Math.min(
+        appliedCoupon.discount,
+        appliedCoupon.maxDiscount || appliedCoupon.discount
+      );
+    }
+  }
+
+  const totalDiscount = offerDiscount + couponDiscount;
+  const finalTotal = discountedSubtotal - couponDiscount;
+
+  return {
+    originalSubtotal,
+    discountedSubtotal,
+    offerDiscount,
+    couponDiscount,
+    couponStillValid,
+    totalDiscount,
+    finalTotal
+  };
 };
 
 module.exports = {

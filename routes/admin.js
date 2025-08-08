@@ -8,12 +8,14 @@ const orderController = require('../controllers/admin/orderController');
 const couponController = require('../controllers/admin/couponController');
 const offerController = require('../controllers/admin/offerController');
 const salesController = require('../controllers/admin/salesController');
+const dashboardController = require('../controllers/admin/dashboardController');
+const inventoryController = require('../controllers/admin/inventoryController');
 const adminAuth = require('../middlewares/adminAuth');
 const uploadMiddleware = require('../utils/multer');
 
 router.get('/login', adminAuth.isLogin, authController.loadLogin);
 router.post('/login', authController.login);
-router.get('/dashboard', adminAuth.checkSession, adminController.loadDashboard);
+router.get('/dashboard', adminAuth.checkSession, dashboardController.loadDashboard);
 router.get('/users', adminAuth.checkSession, adminController.loadUsers);
 router.patch('/blockUser', adminAuth.checkSession, adminController.blockUser);
 router.post('/logout', adminAuth.checkSession, authController.logout);
@@ -39,9 +41,9 @@ router.patch('/productListing', adminAuth.checkSession, prodcutController.isList
 
 // inventory management 
 
-router.get('/inventory', adminAuth.checkSession, adminController.loadInventory);
-router.post('/updateInventory/:id', adminAuth.checkSession, adminController.updateInventory);
-
+router.get('/inventory', adminAuth.checkSession, inventoryController.loadInventory);
+router.post('/updateInventory/:id', adminAuth.checkSession, inventoryController.updateInventory);
+router.get('/product/:id', adminAuth.checkSession, inventoryController.getProductDetails);
 // order management 
 
 router.get('/orders', adminAuth.checkSession, orderController.loadOrders);

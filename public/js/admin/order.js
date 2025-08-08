@@ -4,7 +4,7 @@ function loadPage(pageNumber) {
   window.location.href = `/admin/orders?page=${pageNumber}`;
 }
 
-// Function to get allowed statuses based on current status
+// Function to get allowed statuses based on current status (FOR PRODUCTS ONLY)
 function getAllowedStatuses(currentStatus) {
   switch (currentStatus) {
     case 'Pending':
@@ -14,11 +14,11 @@ function getAllowedStatuses(currentStatus) {
     case 'Shipped':
       return ['Shipped', 'Delivered', 'Cancelled'];
     case 'Delivered':
-      return ['Delivered', 'Returned'];
+      return ['Delivered']; // Removed 'Returned' - products can't be individually returned
     case 'Cancelled':
       return ['Cancelled'];
     case 'Returned':
-      return ['Returned'];
+      return ['Returned']; // Keep this for existing returned products (read-only)
     default:
       return ['Pending', 'Confirmed', 'Cancelled'];
   }
@@ -148,7 +148,7 @@ function viewOrderDetails(orderId) {
   orderDetailsModal.show();
 }
 
-// Function to get help text for status progression
+// Function to get help text for status progression (UPDATED FOR PRODUCTS)
 function getStatusHelpText(currentStatus) {
   switch (currentStatus) {
     case 'Pending':
@@ -158,7 +158,7 @@ function getStatusHelpText(currentStatus) {
     case 'Shipped':
       return 'Can move to: Delivered, Cancelled';
     case 'Delivered':
-      return 'Can move to: Returned only';
+      return 'Final status for products';
     case 'Cancelled':
       return 'Final status - cannot change';
     case 'Returned':

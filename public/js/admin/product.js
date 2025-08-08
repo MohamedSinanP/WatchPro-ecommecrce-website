@@ -44,6 +44,30 @@ function resetSearch() {
 let croppers = [];
 let editCroppers = [];
 
+// Show toast notification
+function showToast(message) {
+    const toastContainer = document.getElementById('toastContainer');
+    const toastId = `toast-${Date.now()}`;
+    const toastHTML = `
+        <div id="${toastId}" class="toast top-right-toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto">Message</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ${message}
+            </div>
+        </div>
+    `;
+    toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+    const toastElement = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
+    toast.show();
+    toastElement.addEventListener('hidden.bs.toast', () => {
+        toastElement.remove();
+    });
+}
+
 // Toggle product listing
 async function toggleListing(productId, isCurrentlyListed) {
     try {
@@ -63,18 +87,18 @@ async function toggleListing(productId, isCurrentlyListed) {
         if (data.success) {
             location.reload();
         } else {
-            alert('Failed to update product listing status. Please try again.');
+            showToast('Failed to update product listing status. Please try again.');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('An error occurred while updating the product status.');
+        showToast('An error occurred while updating the product status.');
     }
 }
 
-// Function to handle image uploads and initialize croppers for ADD modal
+// Function to handle image uploads and initialize croppers
 function handleImageUpload(files, previewElement, croppersArray) {
-    previewElement.innerHTML = ''; // Clear previous previews
-    croppersArray.length = 0; // Reset cropper instances
+    previewElement.innerHTML = '';
+    croppersArray.length = 0;
 
     for (let i = 0; i < Math.min(files.length, 3); i++) {
         const reader = new FileReader();
@@ -107,7 +131,6 @@ function handleImageUpload(files, previewElement, croppersArray) {
             imgContainer.appendChild(changeButton);
             previewElement.appendChild(imgContainer);
 
-            // Initialize cropper for each image
             const cropper = new Cropper(img, {
                 aspectRatio: NaN,
                 viewMode: 2,
@@ -120,9 +143,9 @@ function handleImageUpload(files, previewElement, croppersArray) {
                 ready: function () {
                     cropper.setCropBoxData({
                         width: cropper.getImageData().naturalWidth,
-                        height: cropper.getImageData().naturalHeight
+                        height: cropper.getImageData().naturalHeight,
                     });
-                }
+                },
             });
             croppersArray.push(cropper);
         };
@@ -197,19 +220,20 @@ async function uploadProduct(formData) {
     try {
         const response = await fetch('/admin/addProduct', {
             method: 'POST',
-            body: formData
+            body: formData,
         });
 
         if (response.ok) {
             $('#addProductModal').modal('hide');
             location.reload();
         } else {
-            console.error('Upload failed');
-            alert('Failed to add product. Please try again.');
+            const errorData = await response.json();
+            console.error('Upload failed:', errorData.message);
+            showToast(`Failed to add product: ${errorData.message}`);
         }
     } catch (error) {
-        console.error("Error in uploadProduct:", error);
-        alert('An error occurred while adding the product.');
+        console.error('Error in uploadProduct:', error);
+        showToast('An error occurred while adding the product.');
     }
 }
 
@@ -223,26 +247,32 @@ function handleEditClick(button) {
     const price = button.dataset.price;
     const stock = button.dataset.stock;
     const images = JSON.parse(button.dataset.images);
-    openEditModal(id, name, brand, category, description, price, stock, images);
+    const variants = JSON.parse(button.dataset.variants || '[]');
+    openEditModal(id, name, brand, category, description, price, stock, images, variants);
 }
 
 // Open Edit Modal and Populate Data
-async function openEditModal(id, name, brand, categoryid, description, price, stock, images) {
-    // Populate form fields
+async function openEditModal(id, name, brand, categoryid, description, price, stock, images, variants) {
     $('#editProductId').val(id);
     $('#editProductName').val(name);
     $('#editProductBrand').val(brand);
     $('#editProductDescription').val(description);
     $('#editProductPrice').val(price);
-    $('#editProductStock').val(stock);
     $('#editProductCategory').val(categoryid);
+
+    // Populate variant fields
+    const sizes = ['Small', 'Medium', 'Large', 'ExtraLarge'];
+    sizes.forEach(size => {
+        const variant = variants.find(v => v.size === size);
+        $(`#editProductStock${size.replace(' ', '')}`).val(variant ? variant.stock : 0);
+    });
 
     // Clear previous image previews and reset croppers
     $('#editImagePreview').html('');
     editCroppers.length = 0;
 
     // Load existing images into the preview
-    const imageArray = Array.isArray(images) ? images : JSON.parse(images || "[]");
+    const imageArray = Array.isArray(images) ? images : JSON.parse(images || '[]');
 
     imageArray.forEach((imageSrc, index) => {
         if (imageSrc) {
@@ -290,14 +320,18 @@ async function openEditModal(id, name, brand, categoryid, description, price, st
     $('#editProductModal').modal('show');
 }
 
-// Document ready - SINGLE INSTANCE
+// Document ready
 $(document).ready(function () {
     // Add Product Modal
     $('#addProductButton').click(function () {
         $('#addProductModal').modal('show');
         $('#imagePreview').html('');
         $('#productForm')[0].reset();
-        croppers.length = 0; // Reset croppers array
+        croppers.length = 0;
+        // Reset variant fields
+        ['Small', 'Medium', 'Large', 'ExtraLarge'].forEach(size => {
+            $(`#productStock${size}`).val('');
+        });
     });
 
     // Handle image upload for ADD modal
@@ -312,7 +346,7 @@ $(document).ready(function () {
         event.preventDefault();
 
         // Validation
-        let fields = ['productName', 'productBrand', 'productCategory', 'productDescription', 'productPrice', 'productStock', 'productImages'];
+        let fields = ['productName', 'productBrand', 'productCategory', 'productDescription', 'productPrice', 'productImages'];
         fields.forEach(field => {
             document.getElementById(field).classList.remove('is-invalid');
         });
@@ -349,11 +383,24 @@ $(document).ready(function () {
             isValid = false;
         }
 
-        let productStock = document.getElementById('productStock');
-        let stockValue = productStock.value.trim();
-        if (stockValue === '' || Number(stockValue) < 0) {
-            productStock.classList.add('is-invalid');
+        // Validate variants
+        const sizes = ['Small', 'Medium', 'Large', 'ExtraLarge'];
+        const variants = sizes.map(size => ({
+            size,
+            stock: parseInt($(`#productStock${size}`).val()) || 0,
+        }));
+
+        let hasValidVariant = variants.some(variant => variant.stock > 0);
+        if (!hasValidVariant) {
+            sizes.forEach(size => {
+                $(`#productStock${size}`).addClass('is-invalid');
+            });
             isValid = false;
+            showToast('At least one size must have stock greater than 0.');
+        } else {
+            sizes.forEach(size => {
+                $(`#productStock${size}`).removeClass('is-invalid');
+            });
         }
 
         let productImages = document.getElementById('productImages');
@@ -363,14 +410,13 @@ $(document).ready(function () {
         }
 
         if (isValid) {
-            // Submit form
             const formData = new FormData();
             formData.append('name', $('#productName').val());
             formData.append('brand', $('#productBrand').val());
             formData.append('category', $('#productCategory').val());
             formData.append('description', $('#productDescription').val());
             formData.append('price', $('#productPrice').val());
-            formData.append('stock', $('#productStock').val());
+            formData.append('variants', JSON.stringify(variants));
 
             prepareImageData(formData, croppers).then(() => {
                 uploadProduct(formData);
@@ -382,34 +428,100 @@ $(document).ready(function () {
     $('#saveChangesButton').on('click', async function (e) {
         e.preventDefault();
 
-        const formData = new FormData();
-        formData.append('name', $('#editProductName').val());
-        formData.append('brand', $('#editProductBrand').val());
-        formData.append('category', $('#editProductCategory').val());
-        formData.append('description', $('#editProductDescription').val());
-        formData.append('price', $('#editProductPrice').val());
-        formData.append('stock', $('#editProductStock').val());
+        // Validation
+        let isValid = true;
 
-        await prepareImageData(formData, editCroppers);
+        let editProductName = $('#editProductName');
+        if (editProductName.val().trim() === '') {
+            editProductName.addClass('is-invalid');
+            isValid = false;
+        } else {
+            editProductName.removeClass('is-invalid');
+        }
 
-        const productId = $('#editProductId').val();
+        let editProductBrand = $('#editProductBrand');
+        if (editProductBrand.val().trim() === '') {
+            editProductBrand.addClass('is-invalid');
+            isValid = false;
+        } else {
+            editProductBrand.removeClass('is-invalid');
+        }
 
-        try {
-            const response = await fetch(`/admin/editProduct/${productId}`, {
-                method: 'PUT',
-                body: formData
+        let editProductCategory = $('#editProductCategory');
+        if (editProductCategory.val() === '') {
+            editProductCategory.addClass('is-invalid');
+            isValid = false;
+        } else {
+            editProductCategory.removeClass('is-invalid');
+        }
+
+        let editProductDescription = $('#editProductDescription');
+        if (editProductDescription.val().trim() === '') {
+            editProductDescription.addClass('is-invalid');
+            isValid = false;
+        } else {
+            editProductDescription.removeClass('is-invalid');
+        }
+
+        let editProductPrice = $('#editProductPrice');
+        if (editProductPrice.val() === '' || editProductPrice.val() <= 0) {
+            editProductPrice.addClass('is-invalid');
+            isValid = false;
+        } else {
+            editProductPrice.removeClass('is-invalid');
+        }
+
+        // Validate variants
+        const sizes = ['Small', 'Medium', 'Large', 'ExtraLarge'];
+        const variants = sizes.map(size => ({
+            size,
+            stock: parseInt($(`#editProductStock${size}`).val()) || 0,
+        }));
+
+        let hasValidVariant = variants.some(variant => variant.stock > 0);
+        if (!hasValidVariant) {
+            sizes.forEach(size => {
+                $(`#editProductStock${size}`).addClass('is-invalid');
             });
+            isValid = false;
+            showToast('At least one size must have stock greater than 0.');
+        } else {
+            sizes.forEach(size => {
+                $(`#editProductStock${size}`).removeClass('is-invalid');
+            });
+        }
 
-            if (response.ok) {
-                $('#editProductModal').modal('hide');
-                location.reload();
-            } else {
-                console.error('Update failed');
-                alert('Failed to update product. Please try again.');
+        if (isValid) {
+            const formData = new FormData();
+            formData.append('name', $('#editProductName').val());
+            formData.append('brand', $('#editProductBrand').val());
+            formData.append('category', $('#editProductCategory').val());
+            formData.append('description', $('#editProductDescription').val());
+            formData.append('price', $('#editProductPrice').val());
+            formData.append('variants', JSON.stringify(variants));
+
+            await prepareImageData(formData, editCroppers);
+
+            const productId = $('#editProductId').val();
+
+            try {
+                const response = await fetch(`/admin/editProduct/${productId}`, {
+                    method: 'PUT',
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    $('#editProductModal').modal('hide');
+                    location.reload();
+                } else {
+                    const errorData = await response.json();
+                    console.error('Update failed:', errorData.message);
+                    showToast(`Failed to update product: ${errorData.message}`);
+                }
+            } catch (error) {
+                console.error('Error updating product:', error);
+                showToast('An error occurred while updating the product.');
             }
-        } catch (error) {
-            console.error('Error updating product:', error);
-            alert('An error occurred while updating the product.');
         }
     });
 });

@@ -10,26 +10,36 @@ const downloadInvoice = async (req, res) => {
       .populate('userId')
       .populate('products.productId');
 
-    const subtotal = order.products.reduce((total, product) => total + (product.quantity * product.price), 0);
+    // Calculate totals considering discountedPrice
+    const subtotal = order.products.reduce((total, product) => {
+      const price = product.discountedPrice || product.price;
+      return total + (product.quantity * price);
+    }, 0);
     const totalDiscount = order.totalDiscount || 0;
-    const total = subtotal - totalDiscount;
+    const couponDiscount = order.couponDiscount || 0;
+    const total = order.total || (subtotal - totalDiscount - couponDiscount);
 
     const invoice = {
       invoice_nr: `2024.000${orderId.slice(-4)}`,
       subtotal,
+      totalDiscount,
+      couponDiscount,
       paid: total,
       shipping: {
-        name: order.userId.fullName,
+        name: `${order.address.firstName} ${order.address.lastName}`,
         address: order.address.address,
         city: order.address.city,
-        state: "Kerala",
-        country: "India"
+        state: order.address.state,
+        country: "India",
+        pincode: order.address.pincode
       },
       items: order.products.map(product => ({
-        item: product.productId.name,
-        amount: product.quantity * product.price,
+        item: `${product.name} (${product.variantSize})`,
+        unitCost: product.discountedPrice || product.price,
+        amount: product.quantity * (product.discountedPrice || product.price),
         quantity: product.quantity
-      }))
+      })),
+      couponCode: order.couponCode || 'N/A'
     };
 
     const doc = new PDFDocument({ size: "A4", margin: 50 });
@@ -40,7 +50,6 @@ const downloadInvoice = async (req, res) => {
 
     // Register NotoSans font
     const fontPath = path.join(__dirname, '..', '..', 'public', 'fonts', 'NotoSans-Regular.ttf');
-    console.log('Font Path:', fontPath);
     doc.registerFont('NotoSans', fontPath);
 
     // Helper functions
@@ -52,7 +61,7 @@ const downloadInvoice = async (req, res) => {
         .text('WatchPro', 50, 30, { align: 'left' })
         .fontSize(10)
         .fillColor('#444444')
-        .text('Pottikkallu 123, Hyderabad', 350, 40, { align: 'right' })
+        .text('Pottikkallu 123, Othukkungal', 350, 40, { align: 'right' })
         .text('Malappuram, India', 350, 55, { align: 'right' })
         .text('Email: contact@watchpro.in', 350, 70, { align: 'right' })
         .text('Phone: +91 123 456 7890', 350, 85, { align: 'right' });
@@ -86,6 +95,8 @@ const downloadInvoice = async (req, res) => {
         .font('NotoSans')
         .text('Invoice Date:', 50, customerInformationTop + 15)
         .text(formatDate(new Date()), 150, customerInformationTop + 15)
+        .text('Coupon Code:', 50, customerInformationTop + 30)
+        .text(invoice.couponCode, 150, customerInformationTop + 30)
         .font('NotoSans')
         .fontSize(12)
         .fillColor('#003087')
@@ -94,7 +105,7 @@ const downloadInvoice = async (req, res) => {
         .fillColor('#444444')
         .text(invoice.shipping.name, 300, customerInformationTop + 15)
         .text(invoice.shipping.address, 300, customerInformationTop + 30)
-        .text(`${invoice.shipping.city}, ${invoice.shipping.state}, ${invoice.shipping.country}`, 300, customerInformationTop + 45)
+        .text(`${invoice.shipping.city}, ${invoice.shipping.state}, ${invoice.shipping.country} - ${invoice.shipping.pincode}`, 300, customerInformationTop + 45)
         .moveDown();
 
       generateHr(doc, 230);
@@ -143,7 +154,7 @@ const downloadInvoice = async (req, res) => {
             doc,
             80,
             item.item,
-            formatCurrency(item.amount / item.quantity),
+            formatCurrency(item.unitCost),
             item.quantity.toString(),
             formatCurrency(item.amount)
           );
@@ -153,7 +164,7 @@ const downloadInvoice = async (req, res) => {
             doc,
             position,
             item.item,
-            formatCurrency(item.amount / item.quantity),
+            formatCurrency(item.unitCost),
             item.quantity.toString(),
             formatCurrency(item.amount)
           );
@@ -162,18 +173,21 @@ const downloadInvoice = async (req, res) => {
       }
 
       const subtotalPosition = invoiceTableTop + (i + 1) * 30;
-      if (subtotalPosition + 80 > doc.page.height - 50) {
+      if (subtotalPosition + 100 > doc.page.height - 50) {
         doc.addPage();
       }
 
       generateTableRow(doc, subtotalPosition, '', 'Subtotal', '', formatCurrency(invoice.subtotal));
 
       const discountPosition = subtotalPosition + 20;
-      generateTableRow(doc, discountPosition, '', 'Discount', '', formatCurrency(totalDiscount));
+      generateTableRow(doc, discountPosition, '', 'Discount', '', formatCurrency(invoice.totalDiscount));
 
-      const totalPosition = discountPosition + 25;
+      const couponPosition = discountPosition + 20;
+      generateTableRow(doc, couponPosition, '', 'Coupon Discount', '', formatCurrency(invoice.couponDiscount));
+
+      const totalPosition = couponPosition + 25;
       doc.font('NotoSans').fontSize(12).fillColor('#003087');
-      generateTableRow(doc, totalPosition, '', 'Total', '', formatCurrency(total));
+      generateTableRow(doc, totalPosition, '', 'Total', '', formatCurrency(invoice.paid));
       doc.font('NotoSans').fontSize(10).fillColor('#444444');
     };
 
@@ -192,7 +206,7 @@ const downloadInvoice = async (req, res) => {
     };
 
     const generateTableRow = (doc, y, item, unitCost, quantity, lineTotal) => {
-      const colWidths = [220, 90, 90, 100]; // Adjusted to fit within 500 points
+      const colWidths = [220, 90, 90, 100];
       const xPositions = [50, 270, 360, 450];
       doc
         .fontSize(10)
@@ -233,7 +247,6 @@ const downloadInvoice = async (req, res) => {
   }
 };
 
-
 module.exports = {
   downloadInvoice
-}
+};

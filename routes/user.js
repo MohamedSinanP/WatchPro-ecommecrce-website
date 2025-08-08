@@ -3,7 +3,10 @@ const router = express.Router();
 const authController = require('../controllers/user/authController');
 const userController = require('../controllers/user/userController');
 const prodcutController = require('../controllers/user/productController');
-const orderController = require('../controllers/user/orderController');
+const orderCreationController = require('../controllers/user/orderCreationController');
+const paymentController = require('../controllers/user/paymentController');
+const orderManagementController = require('../controllers/user/orderManagementController');
+const orderViewController = require('../controllers/user/orderViewController');
 const couponController = require('../controllers/user/couponController');
 const cartController = require('../controllers/user/cartController');
 const wishlistController = require('../controllers/user/wishlistController');
@@ -41,7 +44,7 @@ router.post('/addAddress', userController.addAddress);
 router.put('/updateAddress/:id', userController.updateAddress);
 router.delete('/deleteAddress/:id', userController.deleteAddress);
 router.post('/defaultAddress', userController.addDefaultAddress);
-router.get('/orders', userAuth.checkSession, orderController.loadOrdersPage);
+router.get('/orders', userAuth.checkSession, orderViewController.loadOrdersPage);
 
 // routes for cart 
 
@@ -49,7 +52,7 @@ router.get('/cart', userAuth.checkSession, cartController.loadCartPage);
 router.get('/api/cart', userAuth.checkSession, cartController.getCart);
 router.post('/cart', userAuth.checkSession, cartController.addToCart);
 router.patch('/updateQuantity', cartController.updateQuantity);
-router.delete('/deleteProduct/:id', cartController.deleteCartProduct);
+router.delete('/deleteProduct/:id/:size', cartController.deleteCartProduct);
 router.get('/getCartTotals', cartController.getCartTotals);
 
 // coupon routes 
@@ -67,7 +70,7 @@ router.delete('/deleteWishlistProduct/:id', wishlistController.deleteWishlistPro
 // routes for wallet
 
 router.get('/wallet', userAuth.checkSession, walletController.loadWalletPage);
-router.post('/walletOrder', orderController.walletOrder);
+router.post('/walletOrder', orderCreationController.walletOrder);
 
 // routes for company pages
 
@@ -77,15 +80,15 @@ router.get('/about', userController.loadAboutPage);
 // routes for checkout and place order
 
 router.get('/checkout', userAuth.checkSession, checkoutController.loadCheckoutPage);
-router.post('/placeOrder', userAuth.checkSession, orderController.createOrderWithOCD);
-router.post('/createOrder', userAuth.checkSession, orderController.createOrderWithRazorpay);
-router.delete('/deleteOrderItem/:id', userAuth.checkSession, orderController.cancelOrder);
-router.get('/getOrder/:id', userAuth.checkSession, orderController.getOrder);
-router.get('/greetings', orderController.loadGreetingsPage);
-router.post('/returnOrder/:id', userAuth.checkSession, orderController.returnOrder);
-router.post('/paymentSuccess', userAuth.checkSession, orderController.paymentSuccess);
-router.post('/retryPayment', userAuth.checkSession, orderController.retryPayment);
+router.post('/placeOrder', userAuth.checkSession, orderCreationController.createOrderWithOCD);
+router.post('/createOrder', userAuth.checkSession, orderCreationController.createOrderWithRazorpay);
+router.delete('/deleteOrderItem/:id', userAuth.checkSession, orderManagementController.cancelOrder);
+router.get('/getOrder/:id', userAuth.checkSession, orderManagementController.getOrder);
+router.get('/greetings', orderViewController.loadGreetingsPage);
+router.post('/returnOrder/:id', userAuth.checkSession, orderManagementController.returnOrder);
+router.post('/paymentSuccess', userAuth.checkSession, paymentController.paymentSuccess);
+router.post('/retryPayment', userAuth.checkSession, paymentController.retryPayment);
 router.get('/invoice/:id', userAuth.checkSession, invoiceController.downloadInvoice);
-router.get('/retryPaymentPage/:id', userAuth.checkSession, orderController.loadRetryPaymentPage);
+router.get('/retryPaymentPage/:id', userAuth.checkSession, paymentController.loadRetryPaymentPage);
 
 module.exports = router;

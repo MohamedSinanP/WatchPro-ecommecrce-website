@@ -66,7 +66,7 @@
                                                                 <%= transaction.transactionType %>
                                                             </td>
                                                             <td>
-                                                                <%= transaction.amount %>
+                                                                <%= Number(transaction.amount).toFixed(2) %>
                                                             </td>
                                                         </tr>
                                                         <% }) %>

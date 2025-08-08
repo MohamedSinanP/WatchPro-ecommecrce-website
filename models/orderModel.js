@@ -12,6 +12,10 @@ const orderSchema = new mongoose.Schema({
       ref: 'product',
       required: true
     },
+    variantSize: {
+      type: String,
+      required: true
+    },
     quantity: {
       type: Number,
       required: true
