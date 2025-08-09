@@ -146,7 +146,6 @@ const loadSingleProductPage = async (req, res) => {
 const filterProduct = async (req, res) => {
 
   const { category, genderType, sortBy, price, order, page = 1, limit = 10 } = req.query;
-
   try {
     let categoryFilter = {};
 
@@ -189,7 +188,7 @@ const filterProduct = async (req, res) => {
 
     const modifiedProducts = products.map(product => ({
       ...product,
-      imageUrl: product.images[product.images.length - 1],
+      imageUrl: product.images[0],
     }));
 
     res.json({

@@ -216,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         });
     } else {
-      alert('Please enter a search term');
+      toastr.warning('Please enter a search term');
     }
   }
 

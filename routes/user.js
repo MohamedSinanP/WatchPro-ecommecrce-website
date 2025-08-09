@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/user/authController');
 const userController = require('../controllers/user/userController');
-const prodcutController = require('../controllers/user/productController');
+const productController = require('../controllers/user/productController');
 const orderCreationController = require('../controllers/user/orderCreationController');
 const paymentController = require('../controllers/user/paymentController');
 const orderManagementController = require('../controllers/user/orderManagementController');
@@ -29,10 +29,10 @@ router.get('/home', userController.loadHomePage);
 
 // routes for product listing
 
-router.get('/products', prodcutController.loadProductPage);
-router.get('/singleProduct/:id', prodcutController.loadSingleProductPage);
-router.get('/products/filter', prodcutController.filterProduct);
-router.get('/searchProduct', prodcutController.searchProduct);
+router.get('/products', productController.loadProductPage);
+router.get('/singleProduct/:id', productController.loadSingleProductPage);
+router.get('/products/filter', productController.filterProduct);
+router.get('/searchProduct', productController.searchProduct);
 
 // routes user account management 
 
